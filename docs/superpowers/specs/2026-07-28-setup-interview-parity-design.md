@@ -39,8 +39,11 @@ Verified reference material (upstream clone):
    irrelevant to an OpenCode port.
 4. **Bundle the nine style guides in-repo** and install them; setup copies from
    a fixed installed path.
-5. **No `resume.py`.** The agent performs the missing-artifact check inline via
-   file reads.
+5. **Reproduce `resume.py` as an inline shell snippet, not a bundled script.**
+   `setup.md` embeds the artifact-existence check via OpenCode's ``!`...` ``
+   shell-output syntax, so the check is deterministic and structured (same
+   behavior as upstream's script) without adding a `python3` runtime dependency
+   or a separately installed file.
 
 ## Interview Flow (setup.md contract)
 
@@ -49,13 +52,14 @@ prompt. Each question lists the recommended option first (labeled
 "(Recommended)"); the tool supplies the "type your own" affordance. Questions
 are asked one at a time.
 
-1. **Audit & resume.** Check existence of `conductor/{product.md,
-   product-guidelines.md, tech-stack.md, code_styleguides/, workflow.md,
-   tracks.md, index.md}`.
+1. **Audit & resume.** Run an inline ``!`...` `` shell snippet that checks
+   existence of `conductor/{product.md, product-guidelines.md, tech-stack.md,
+   code_styleguides/, workflow.md, index.md}` and reports the first missing
+   artifact in the chain product → product-guidelines → tech-stack →
+   code_styleguides → workflow (reproducing `resume.py`'s output).
    - If `index.md` exists: announce the project is already initialized and HALT.
    - If partial: summarize done/missing in human-readable terms (no section
-     numbers) and resume at the first missing artifact in the chain
-     product → product-guidelines → tech-stack → code_styleguides → workflow.
+     numbers) and resume at the first missing artifact reported by the snippet.
 2. **Maturity detection.**
    - Brownfield indicators: dependency manifests (`package.json`, `go.mod`,
      `requirements.txt`, `pom.xml`, `Cargo.toml`), source dirs, or a `.git`
@@ -106,7 +110,7 @@ are asked one at a time.
 ## Non-Goals
 
 - No `catalog.md` / agent-skill-selection step.
-- No `resume.py` script.
+- No `resume.py` script (reproduced inline as a shell snippet instead).
 - Not adopting upstream's 442-line `workflow.md`.
 - No changes to `/implement`, `/review`, or `/new-track` doctrine.
 - Not implementing the review archive step (separate track).
