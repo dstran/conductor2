@@ -29,13 +29,16 @@ install_opencode_surface() {
   local config="$HOME/.config/opencode"
   local skill_dir="$config/skills/conductor"
   local command_dir="$config/command/conductor"
+  local assets_dir="$command_dir/assets/code_styleguides"
 
   rm -rf "$skill_dir" "$command_dir"
-  mkdir -p "$skill_dir" "$command_dir"
+  mkdir -p "$skill_dir" "$command_dir" "$assets_dir"
   cp "$ROOT/skill/SKILL.md" "$skill_dir/SKILL.md"
   cp "$ROOT"/.opencode/command/*.md "$command_dir/"
+  cp "$ROOT"/conductor/assets/code_styleguides/*.md "$assets_dir/"
   echo "  $skill_dir"
   echo "  $command_dir (/conductor/*)"
+  echo "  $assets_dir (style guides)"
 }
 
 install_gemini_flavor() {
