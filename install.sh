@@ -21,13 +21,21 @@ install_skill_flavor() {
   echo "  $dir"
 }
 
-install_packaged_surface() {
-  local dir="$1"
-  rm -rf "$dir"
-  mkdir -p "$dir"
-  cp -R "$ROOT/.opencode" "$dir"
-  cp -R "$ROOT/conductor" "$dir"
-  echo "  $dir"
+install_opencode_surface() {
+  # OpenCode discovers global skills under ~/.config/opencode/skills/<name>/SKILL.md
+  # and global commands under ~/.config/opencode/command/**/*.md. Command names are
+  # derived from the path after the "command/" prefix, so nesting under conductor/
+  # exposes them as /conductor/<name>.
+  local config="$HOME/.config/opencode"
+  local skill_dir="$config/skills/conductor"
+  local command_dir="$config/command/conductor"
+
+  rm -rf "$skill_dir" "$command_dir"
+  mkdir -p "$skill_dir" "$command_dir"
+  cp "$ROOT/skill/SKILL.md" "$skill_dir/SKILL.md"
+  cp "$ROOT"/.opencode/command/*.md "$command_dir/"
+  echo "  $skill_dir"
+  echo "  $command_dir (/conductor/*)"
 }
 
 install_gemini_flavor() {
@@ -41,8 +49,7 @@ install_gemini_flavor() {
   echo "  $dir (Gemini CLI)"
 }
 
-install_skill_flavor "$HOME/.opencode/skill/conductor"
-install_packaged_surface "$HOME/.opencode/conductor"
+install_opencode_surface
 
 for dir in "$HOME/.claude/skills/conductor" "$HOME/.codex/skills/conductor"; do
   install_skill_flavor "$dir"
