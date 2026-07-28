@@ -1,3 +1,129 @@
+# Setup Interview Parity Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Rewrite `.opencode/command/setup.md` into a faithful OpenCode port of the upstream Gemini `conductor-setup` interactive interview, and install the bundled `code_styleguides/` assets so `/setup` can copy them.
+
+**Architecture:** `setup.md` is a command-doc prompt (no runtime code). It drives an interview using OpenCode's native `question` tool and an inline ``!`...` `` shell snippet for the resume check. The nine style-guide assets already live in-repo at `conductor/assets/code_styleguides/`; `install.sh` copies them to a fixed global path that `setup.md` reads from. The existing local 91-line `conductor/workflow.md` is the workflow content setup writes.
+
+**Tech Stack:** Bash (install.sh), Markdown command docs, OpenCode command/skill discovery, OpenCode `question` tool, OpenCode ``!`...` `` shell-output syntax.
+
+## Global Constraints
+
+- Change scope is `/setup` and its assets only. Do NOT modify `/implement`, `/review`, `/new-track`, or `conductor/workflow.md` content.
+- Setup writes the existing local 91-line task-type-enforcement `conductor/workflow.md`, never the upstream 442-line version.
+- No `catalog.md` / agent-skill-selection step. No `resume.py` script.
+- Style guides are copied, never invented. The nine bundled files are: `cpp.md`, `csharp.md`, `dart.md`, `general.md`, `go.md`, `html-css.md`, `javascript.md`, `python.md`, `typescript.md`.
+- Fixed installed asset path: `~/.config/opencode/command/conductor/assets/code_styleguides/`.
+- Installer must not run from the repo root (existing guard). Prior fix must stay intact: skill at `~/.config/opencode/skills/conductor/SKILL.md`, commands at `~/.config/opencode/command/conductor/*.md`, nothing under `~/.opencode/`.
+- Commit message for setup completion inside the flow: `conductor(setup): Initialize project context and standards`.
+- The `conductor/index.md` handshake written by setup uses relative links: Definition (`./product.md`, `./product-guidelines.md`, `./tech-stack.md`), Workflow (`./workflow.md`, `./code_styleguides/`), Tracks (`./tracks.md`, `./tracks/`).
+
+---
+
+### Task 1: Install the bundled style guides via install.sh
+
+**Files:**
+- Modify: `install.sh` (the `install_opencode_surface()` function, currently lines 24-39)
+- Reference (already in-repo, do not recreate): `conductor/assets/code_styleguides/*.md`
+
+**Interfaces:**
+- Consumes: `$ROOT/conductor/assets/code_styleguides/*.md` (the nine bundled guides committed earlier).
+- Produces: guides installed at `~/.config/opencode/command/conductor/assets/code_styleguides/`, which Task 2's `setup.md` reads from.
+
+- [ ] **Step 1: Add the asset copy to `install_opencode_surface`**
+
+Edit `install.sh`. The current function is:
+
+```bash
+install_opencode_surface() {
+  # OpenCode discovers global skills under ~/.config/opencode/skills/<name>/SKILL.md
+  # and global commands under ~/.config/opencode/command/**/*.md. Command names are
+  # derived from the path after the "command/" prefix, so nesting under conductor/
+  # exposes them as /conductor/<name>.
+  local config="$HOME/.config/opencode"
+  local skill_dir="$config/skills/conductor"
+  local command_dir="$config/command/conductor"
+
+  rm -rf "$skill_dir" "$command_dir"
+  mkdir -p "$skill_dir" "$command_dir"
+  cp "$ROOT/skill/SKILL.md" "$skill_dir/SKILL.md"
+  cp "$ROOT"/.opencode/command/*.md "$command_dir/"
+  echo "  $skill_dir"
+  echo "  $command_dir (/conductor/*)"
+}
+```
+
+Replace it with (adds an `assets_dir` under `command_dir` and copies the guides):
+
+```bash
+install_opencode_surface() {
+  # OpenCode discovers global skills under ~/.config/opencode/skills/<name>/SKILL.md
+  # and global commands under ~/.config/opencode/command/**/*.md. Command names are
+  # derived from the path after the "command/" prefix, so nesting under conductor/
+  # exposes them as /conductor/<name>.
+  local config="$HOME/.config/opencode"
+  local skill_dir="$config/skills/conductor"
+  local command_dir="$config/command/conductor"
+  local assets_dir="$command_dir/assets/code_styleguides"
+
+  rm -rf "$skill_dir" "$command_dir"
+  mkdir -p "$skill_dir" "$command_dir" "$assets_dir"
+  cp "$ROOT/skill/SKILL.md" "$skill_dir/SKILL.md"
+  cp "$ROOT"/.opencode/command/*.md "$command_dir/"
+  cp "$ROOT"/conductor/assets/code_styleguides/*.md "$assets_dir/"
+  echo "  $skill_dir"
+  echo "  $command_dir (/conductor/*)"
+  echo "  $assets_dir (style guides)"
+}
+```
+
+- [ ] **Step 2: Verify the installer lays down assets and preserves the prior fix**
+
+Run (sandbox HOME, from a non-repo dir so the guard passes):
+
+```bash
+SANDBOX=/var/folders/7v/jgj55gd12n5438pdh778gt5mzf5y4m/T/opencode/setup-install-verify
+rm -rf "$SANDBOX"; mkdir -p "$SANDBOX/run"
+cd "$SANDBOX/run"
+HOME="$SANDBOX" bash /Users/dt105/git/playground/conductor2/install.sh
+echo "--- assets ---"; ls "$SANDBOX/.config/opencode/command/conductor/assets/code_styleguides/"
+echo "--- guide count (expect 9) ---"; ls "$SANDBOX/.config/opencode/command/conductor/assets/code_styleguides/" | wc -l
+echo "--- commands (expect 6) ---"; ls "$SANDBOX/.config/opencode/command/conductor/"*.md | wc -l
+echo "--- skill ---"; ls "$SANDBOX/.config/opencode/skills/conductor/SKILL.md"
+echo "--- must be absent ---"; [ -e "$SANDBOX/.opencode" ] && echo "FAIL ~/.opencode exists" || echo "OK no ~/.opencode"
+```
+
+Expected: 9 guides listed, guide count `9`, command count `6`, the skill path prints, and `OK no ~/.opencode`.
+
+- [ ] **Step 3: Clean up the sandbox**
+
+Run: `rm -rf /var/folders/7v/jgj55gd12n5438pdh778gt5mzf5y4m/T/opencode/setup-install-verify`
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /Users/dt105/git/playground/conductor2
+git add install.sh
+git commit -m "Install bundled style guides for /setup"
+```
+
+---
+
+### Task 2: Rewrite setup.md as the full interview
+
+**Files:**
+- Modify (full rewrite): `.opencode/command/setup.md`
+
+**Interfaces:**
+- Consumes: the installed asset path from Task 1 (`~/.config/opencode/command/conductor/assets/code_styleguides/`).
+- Produces: the `/conductor/setup` command prompt. Downstream `/conductor/new-track`, `/conductor/implement`, `/conductor/review` rely on setup having produced `conductor/index.md`, `conductor/product.md`, `conductor/product-guidelines.md`, `conductor/tech-stack.md`, `conductor/tech-stack.md`, `conductor/workflow.md`, `conductor/code_styleguides/`, and `conductor/tracks.md`.
+
+- [ ] **Step 1: Replace the entire contents of `.opencode/command/setup.md`**
+
+Write exactly this file:
+
+````markdown
 ---
 description: Initialize the Conductor project through an interactive interview that audits the codebase, defines product/tech context, copies code style guides, writes the workflow, and builds the handshake index
 agent: build
@@ -205,3 +331,95 @@ Stage the `conductor/` directory and commit with the message `conductor(setup): 
 ## 11. Completion
 
 Present a short summary of the initialized scaffolding, then ask a Yes/No question offering to plan the first track now with `/conductor/new-track`.
+````
+
+- [ ] **Step 2: Verify every path setup.md references is installer-produced or repo-relative**
+
+Run:
+
+```bash
+cd /Users/dt105/git/playground/conductor2
+echo "--- asset path referenced ---"
+grep -n 'command/conductor/assets/code_styleguides' .opencode/command/setup.md
+echo "--- conductor-relative artifacts referenced ---"
+grep -nE 'conductor/(product|product-guidelines|tech-stack|workflow|tracks|index)\.md|conductor/code_styleguides' .opencode/command/setup.md | head
+echo "--- no forbidden references (catalog / resume.py / 442-line workflow) ---"
+grep -niE 'catalog|resume\.py' .opencode/command/setup.md && echo "FAIL forbidden ref found" || echo "OK none"
+```
+
+Expected: the asset path matches Task 1's install target; the conductor-relative artifacts all appear; `OK none` for forbidden references.
+
+- [ ] **Step 3: Confirm the embedded workflow matches the repo's canonical workflow.md**
+
+Run:
+
+```bash
+cd /Users/dt105/git/playground/conductor2
+# Extract the fenced workflow block from setup.md and diff against the canonical file.
+awk '/^# Workflow$/{f=1} f{print} /No final closure commit happens/{if(f){exit}}' .opencode/command/setup.md > /tmp/setup_workflow.md
+diff <(sed -n '1,91p' conductor/workflow.md) /tmp/setup_workflow.md && echo "OK workflow matches" || echo "REVIEW: differences above"
+```
+
+Expected: `OK workflow matches`. If differences appear, correct the embedded block in `setup.md` to match `conductor/workflow.md` verbatim, then re-run.
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /Users/dt105/git/playground/conductor2
+git add .opencode/command/setup.md
+git commit -m "Rewrite /setup as full interactive interview"
+```
+
+---
+
+### Task 3: End-to-end install + surface verification
+
+**Files:**
+- No file changes. Verification only.
+
+**Interfaces:**
+- Consumes: the committed `install.sh` (Task 1) and `setup.md` (Task 2).
+- Produces: confidence that a clean install exposes the full setup surface.
+
+- [ ] **Step 1: Clean install into a sandbox HOME and assert the full surface**
+
+```bash
+SANDBOX=/var/folders/7v/jgj55gd12n5438pdh778gt5mzf5y4m/T/opencode/setup-e2e-verify
+rm -rf "$SANDBOX"; mkdir -p "$SANDBOX/run"
+cd "$SANDBOX/run"
+HOME="$SANDBOX" bash /Users/dt105/git/playground/conductor2/install.sh
+CMD="$SANDBOX/.config/opencode/command/conductor"
+echo "--- setup.md installed ---"; test -f "$CMD/setup.md" && echo OK || echo FAIL
+echo "--- 6 commands ---"; ls "$CMD"/*.md | wc -l
+echo "--- 9 style guides ---"; ls "$CMD/assets/code_styleguides/"*.md | wc -l
+echo "--- skill ---"; test -f "$SANDBOX/.config/opencode/skills/conductor/SKILL.md" && echo OK || echo FAIL
+echo "--- no ~/.opencode ---"; [ -e "$SANDBOX/.opencode" ] && echo FAIL || echo OK
+echo "--- gemini flavor still complete ---"; test -f "$SANDBOX/.gemini/extensions/conductor/SKILL.md" && echo OK || echo FAIL
+```
+
+Expected: `setup.md` OK, command count `6`, guide count `9`, skill OK, `OK` no `~/.opencode`, gemini OK.
+
+- [ ] **Step 2: Clean up the sandbox**
+
+Run: `rm -rf /var/folders/7v/jgj55gd12n5438pdh778gt5mzf5y4m/T/opencode/setup-e2e-verify`
+
+- [ ] **Step 3: No commit**
+
+This task changes no tracked files; nothing to commit.
+
+---
+
+## Self-Review
+
+**Spec coverage:**
+- Full interview parity (audit/resume, maturity, product, guidelines, tech-stack, styleguides, workflow, tracks, index, commit, completion) → Task 2 setup.md sections 1–11. ✓
+- Keep local workflow.md → Task 2 section 7 embeds the 91-line content; Task 2 Step 3 diffs it against `conductor/workflow.md`. ✓
+- Drop skill-catalog step → Task 2 Step 2 asserts no `catalog`/`resume.py` refs. ✓
+- Bundle nine guides in-repo → committed earlier; Task 1 installs them; verified in Tasks 1 & 3. ✓
+- Inline shell resume check → Task 2 section 1 uses ``!`...` ``. ✓
+- Fixed installed asset path → Task 1 installs to it, Task 2 reads from it, Task 2 Step 2 asserts they match. ✓
+- Install wiring + prior fix intact → Task 1 Step 2 and Task 3 Step 1 assert skill/commands present and no `~/.opencode`. ✓
+
+**Placeholder scan:** No TBD/TODO/"handle edge cases". All file content is given verbatim; all verification commands are concrete. ✓
+
+**Type consistency:** The asset path `~/.config/opencode/command/conductor/assets/code_styleguides/` is identical in Task 1 (install target), Task 2 (setup.md reads it), and Task 2 Step 2 (assertion). The nine guide names match the spec and the in-repo files. ✓
