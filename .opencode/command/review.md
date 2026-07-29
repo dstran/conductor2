@@ -97,12 +97,41 @@ If the user gives feedback instead of approving:
    the last one — loop for as many rounds as the user needs, with
    no cap.
 
-## 9. After explicit approval only
+## 9. After explicit approval only — closure commit
 1. Re-run the full test suite one final time.
-2. Update `conductor/tracks.md` as the final closure step that `/review` owns: remove the awaiting-review note, move the track entry from `## Active` to `## Completed`, and mark it `[x]` using the exact registry encoding defined in `conductor/tracks.md`.
-3. Stage and commit the review-loop fixes (if any) plus the `conductor/tracks.md` closure update with a short, clear summary message following `conductor/workflow.md`'s commit strategy (e.g. `conductor(track): <track_id> <title>`).
+2. Mark the track complete in `conductor/tracks.md`: remove the
+   awaiting-review note and change the track entry to `[x]`. The entry
+   stays in `## Active` — there is no separate completed section.
+3. Stage and commit the review-loop fixes (if any) plus the
+   `conductor/tracks.md` `[x]` marking with a short, clear summary
+   message following `conductor/workflow.md`'s commit strategy
+   (e.g. `conductor(track): <track_id> <title>`).
 4. Attach the full verification report as a **git note** on that
    commit — not in the commit message body:
    `git notes add -m "$(cat conductor/tracks/$ARGUMENTS/review.md)" <commit-sha>`
    This keeps the commit message short while preserving a full,
    auditable record attached to the commit itself.
+
+## 10. Track cleanup
+Ask the user, with a multiple-choice question, what to do with the
+now-completed track:
+   - **Archive:** move the track out of the working tree, keeping it for
+     the record.
+   - **Delete:** permanently remove the track folder.
+   - **Skip:** leave the track in place.
+
+Then act on the choice:
+   a. **Archive:** ensure `conductor/archive/` exists, then move
+      `conductor/tracks/$ARGUMENTS/` to `conductor/archive/$ARGUMENTS/`.
+      Remove the track's entry from `conductor/tracks.md`. Stage the move
+      and the registry edit and commit with the message
+      `chore(conductor): Archive track '$ARGUMENTS'`. Tell the user the
+      track was archived. This is a separate commit from the step 9
+      closure commit.
+   b. **Delete:** ask a Yes/No question warning that this is an
+      irreversible deletion. On yes, delete `conductor/tracks/$ARGUMENTS/`,
+      remove the track's entry from `conductor/tracks.md`, and commit with
+      the message `chore(conductor): Delete track '$ARGUMENTS'`. On no,
+      treat it as Skip.
+   c. **Skip:** leave the `[x]` entry in `## Active` and the folder in
+      `conductor/tracks/` unchanged. No second commit.
