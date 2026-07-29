@@ -170,7 +170,7 @@ made.
 
 ## 8. Tracks registry (`conductor/tracks.md`)
 
-If `conductor/tracks.md` is missing, create it with the standard registry skeleton (`# Tracks Registry` header plus empty `## Active`, `## Blocked`, and `## Completed` sections and the lifecycle-encoding notes). Do not add any track entries — `/new-track` owns those.
+If `conductor/tracks.md` is missing, create it with the standard registry skeleton (`# Tracks Registry` header plus empty `## Active` and `## Blocked` sections and the lifecycle-encoding notes). Do not add any track entries — `/new-track` owns those.
 
 ## 9. Handshake index (`conductor/index.md`)
 
