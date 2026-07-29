@@ -27,7 +27,7 @@ echo "Fetching Conductor ($REF) from $REPO ..."
 
 if [ -d "$CLONE_DIR/.git" ]; then
   git -C "$CLONE_DIR" remote set-url origin "$REPO"
-  git -C "$CLONE_DIR" fetch --quiet origin
+  git -C "$CLONE_DIR" fetch --quiet --tags origin
   git -C "$CLONE_DIR" checkout --quiet "$REF"
   git -C "$CLONE_DIR" reset --hard --quiet "origin/$REF"
 else
