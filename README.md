@@ -50,7 +50,7 @@ commands. Run them in your own project's directory:
 - `/conductor/new-track` — plan a new track (spec + phased plan + registry entry).
 - `/conductor/implement` — implement an approved track phase-by-phase.
 - `/conductor/review` — review a completed track before closing it.
-- `/conductor/status` — summarize active, blocked, and completed tracks.
+- `/conductor/status` — summarize active, blocked, and archived tracks.
 - `/conductor/revert` — revert a track, phase, or task.
 
 Setup creates the project state under `conductor/` in your working directory;
