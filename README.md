@@ -12,7 +12,32 @@ per-project state under a `conductor/` directory.
 - Shared lifecycle artifact templates: `conductor/index.md`, `conductor/workflow.md`, `conductor/tracks.md`
 - `gemini-extension.json` is Gemini host metadata, not doctrine
 
-## Installation
+## Install / update (always latest)
+
+Install or update to the latest version from GitHub with one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dstran/conductor2/main/install-latest.sh | bash
+```
+
+Run the same command again any time to update. It keeps a cache clone at
+`~/.cache/conductor2` (honoring `$XDG_CACHE_HOME`), syncs it to the latest, and
+runs the installer. Then restart your AI shell.
+
+Overrides (environment variables):
+
+- `CONDUCTOR_REF` — branch or tag to install (default `main`).
+- `CONDUCTOR_REPO` — git URL to clone (default `https://github.com/dstran/conductor2.git`).
+
+Prefer to inspect before running remote code? Download, read, then run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dstran/conductor2/main/install-latest.sh -o install-latest.sh
+less install-latest.sh
+bash install-latest.sh
+```
+
+## Install from a local clone
 
 Run the installer from **outside** this source tree (it refuses to run from the
 repository root):
