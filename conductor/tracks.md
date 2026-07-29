@@ -13,7 +13,8 @@ between sections as its lifecycle changes:
   note formats below when the state needs to be distinguished:
   - `Status: implementation complete — awaiting review.`
   - `Blocker: <short explanation>`
-- `[x]` means complete.
+- `[x]` means complete. A completed track stays in `## Active` as `[x]`
+  unless `/review` archives or deletes it.
 
 Exact lifecycle encodings:
 
@@ -24,7 +25,10 @@ Exact lifecycle encodings:
   below the track entry.
 - Blocked: place the track in `## Blocked` as `[~]` with the note
   `Blocker: <short explanation>` directly below the track entry.
-- Complete: place the track in `## Completed` as `[x]`.
+- Complete: mark the track `[x]` in `## Active`.
+- Archived/Deleted: `/review` may move a completed track's folder to
+  `conductor/archive/<track_id>/` (removing its registry entry) or delete
+  it outright.
 
 ## Active
 
@@ -33,7 +37,3 @@ Exact lifecycle encodings:
 ## Blocked
 
 <!-- Move blocked track entries here as [~] and include the Blocker note below the entry. -->
-
-## Completed
-
-<!-- /review moves approved track entries here as [x]. -->
