@@ -81,7 +81,11 @@ If the user gives feedback instead of approving:
    If any appended fix task is marked `[needs classification]`, pause
    and ask the user to classify it before implementing the fix.
 2. Apply the same TDD enforcement from `conductor/workflow.md` to each fix
-    (a backend fix still gets a test-first treatment, etc.).
+    (a backend fix still gets a test-first treatment, etc.), and once a
+    fix task's test(s) pass, commit it via `conductor/workflow.md`'s task
+    commit procedure — same two-commit sequence (code, then the
+    `- [x] Task: ... [<sha>]` plan update) as any other task, so `/revert`
+    can find and undo a review-fix task the same way it finds any other.
 3. Re-run the specific checks from steps 1–5 above that the fix
    could have affected — not necessarily the entire review from
    scratch, but don't skip a check just because it passed last time
