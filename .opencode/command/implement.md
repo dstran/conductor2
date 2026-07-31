@@ -40,8 +40,12 @@ For each task in the current phase, in order:
       `conductor/workflow.md`, matching the task's enforcement level exactly.
       Do not skip the "confirm it fails first" step for test-first
       tasks.
-   d. Mark the task `[~]` in `plan.md` while in progress, `[x]` only
-      after its test(s) actually run and pass.
+   d. Mark the task `[~]` in `plan.md` while in progress. Once its
+      test(s) actually run and pass, follow the **task commit
+      procedure** in `conductor/workflow.md` exactly: commit the code,
+      then commit `plan.md` with the task marked
+      `- [x] Task: <description> [<task-type>] <sha>` (two separate
+      commits, in that order).
    e. If a task turns out to be blocked (missing dependency, unclear
       requirement, conflicts with `spec.md`), stop immediately and
       report the blocker. Do not skip ahead to later tasks or into
@@ -49,8 +53,8 @@ For each task in the current phase, in order:
 
 ## 3. Phase checkpoint (trigger this the moment a phase's last task is `[x]`)
 Do not silently continue to the next phase. Instead:
-   a. Identify the git commit SHA at the start of this phase (from
-      the previous phase's checkpoint note, or the track's first
+   a. Identify the git commit SHA at the start of this phase (the
+      previous phase's `[checkpoint: <sha>]`, or the track's creation
       commit if this is phase 1). Scope everything below to files
       changed since that point.
    b. Run the automated tests relevant to this phase's changes
@@ -64,18 +68,18 @@ Do not silently continue to the next phase. Instead:
       automated test results, and any manual verification steps.
       Ask: "Does this meet expectations? Reply yes to checkpoint and
       continue, or tell me what to change." PAUSE and wait.
-   e. If the user gives feedback: fix it in place (using the correct
-      test-first/test-after loop for what changed), re-run only the
+   e. If the user gives feedback: fix it in place (using the task
+      commit procedure for whatever changed), re-run only the
       checks that fix could affect, and re-present the phase summary.
       Loop until they say yes. No round cap, same as `/review`'s
       correction loop — but note if this is the 3rd+ round on the
       same file or area, same as `/review` does.
-   f. On explicit yes: commit with message
-      `conductor(checkpoint): Checkpoint end of Phase <N> — <title>`.
-      Attach the phase summary (test results + manual verification
-      steps) as a **git note** on that commit — not in the commit
-      body. If no files changed in this phase, commit empty rather
-      than skipping the checkpoint.
+   f. On explicit yes: follow the **phase checkpoint procedure** in
+      `conductor/workflow.md` exactly — attach the phase summary (test
+      results + manual verification steps) as a git note on the last
+      task commit in this phase, then commit `plan.md` with the phase
+      heading marked `## Phase <N>: <title> [checkpoint: <sha>]`. Do
+      not create a new empty commit.
    g. Move to the next phase and repeat from step 2. If this was the
       last phase, go to step 4.
 
@@ -93,7 +97,35 @@ Once every phase has its own checkpoint commit:
      awaiting review.` directly below it.
    - Tell the user the track is ready for `/review $ARGUMENTS`.
 
-## 5. If you stop early due to a blocker
+## 5. Synchronize project documentation
+
+Once every phase has its own checkpoint commit and `plan.md` has been
+updated per step 4, check whether this track's changes should be
+reflected in the project's own context files:
+
+   a. Read the track's `spec.md`.
+   b. For `product.md`: does this track materially change the product
+      description itself (new capability, changed scope)? If yes,
+      present a proposed diff and ask a Yes/No question; apply the edit
+      only on explicit yes. If no material change, state that briefly
+      and move on — do not ask a question.
+   c. For `tech-stack.md`: does this track introduce, remove, or change
+      a technology, library, or architectural choice? If yes, present a
+      proposed diff and ask a Yes/No question; apply only on explicit
+      yes. If no material change, state that briefly and move on.
+   d. For `product-guidelines.md`: only consider this file if `spec.md`
+      explicitly describes a branding, voice, tone, or UX-philosophy
+      change. If so, present the diff with an explicit warning that this
+      file defines the product's core identity, then ask a Yes/No
+      question; apply only on explicit yes. If `spec.md` says nothing
+      about branding/voice/tone, skip this file entirely — do not even
+      mention it.
+   e. If any of `product.md`, `tech-stack.md`, or `product-guidelines.md`
+      were changed, stage them together and commit:
+      `docs(conductor): Synchronize docs for track '<track_id>'`. If
+      nothing changed, make no commit and say so.
+
+## 6. If you stop early due to a blocker
 Leave completed tasks `[x]`, phases with completed checkpoints as
 checkpointed, and the blocked task as `[~]` with a note explaining
 why — so the user can resume with the same command after resolving

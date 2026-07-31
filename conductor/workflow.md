@@ -57,35 +57,77 @@ For tasks enforced as test-after (still required):
 - No task is marked `[x]` on the strength of an assumption that a
   test "would" pass. It must have actually been run.
 
-## Manual review gate
+## Task commit procedure
 
-`/implement` pauses at the end of every phase, presents a summary,
-asks "does this meet expectations?", and only commits that phase's
-checkpoint after an explicit yes (looping on feedback the same way
-`/review` does, including the same 3rd-round nudge). Nothing beyond
-a phase checkpoint is finalized without that.
+Every task, once its test-first/test-after loop (per the enforcement
+table above) has actually passed, is committed in exactly two steps —
+whether the task came from `/new-track`'s original plan or from
+`/review`'s appended "Review Fixes" phase (see `review.md`'s correction
+loop). This procedure is the single source of truth for both:
 
-Once all phases are checkpointed, `/implement` stops and hands off
-to `/review` for the track-level pass: full test suite, style,
-security, and plan compliance across the whole track. `/review` has
-its own pause-and-ask gate before the final track-closure commit is
-made.
+1. **Task code commit.** Stage the code and test changes for this task
+   only. Commit with a short conventional message describing the change
+   (e.g. `feat(auth): Add login endpoint`). Get its SHA:
+   `git log -1 --format=%h`.
+2. **Task plan-update commit.** Edit `plan.md`: change the task's
+   checkbox from `[~]` to `[x]` and append the task's type tag and the
+   7-character SHA from step 1, producing exactly:
+   `- [x] Task: <description> [<task-type>] <sha>`
+   Stage only `plan.md` and commit with message
+   `conductor(plan): Mark task '<task>' as complete`.
+
+Never combine these into one commit, and never write the SHA into
+`plan.md` before the code commit exists — the SHA must reference a real,
+already-made commit.
+
+## Phase checkpoint procedure
+
+`/implement` pauses at the end of every phase, presents a summary, asks
+"does this meet expectations?", and only checkpoints the phase after an
+explicit yes (looping on feedback the same way `/review` does, including
+the same 3rd-round nudge). Nothing beyond a phase checkpoint is finalized
+without that.
+
+On explicit yes:
+
+1. Identify the last task code commit made in this phase (from step 1 of
+   the task commit procedure above, for the phase's final task). Do NOT
+   create a new empty commit — the checkpoint always points at an
+   existing task commit.
+2. Attach the phase summary (automated test results + manual verification
+   steps) as a **git note** on that commit — not in a commit message body:
+   `git notes add -m "<summary>" <sha>`
+3. Edit `plan.md`: append `[checkpoint: <sha>]` to the phase's heading,
+   producing exactly: `## Phase <N>: <title> [checkpoint: <sha>]`
+   Stage only `plan.md` and commit with message
+   `conductor(plan): Mark phase '<N> — <title>' as complete`.
+
+Once all phases are checkpointed, `/implement` stops and hands off to
+`/review` for the track-level pass: full test suite, style, security, and
+plan compliance across the whole track. `/review` has its own
+pause-and-ask gate before the final track-closure commit is made.
 
 ## Commit strategy
 
-- `/implement` makes one checkpoint commit per approved phase.
+- `/implement` and `/review` both follow the **task commit procedure**
+  above for every task they complete (two commits per task: code, then
+  plan update) and the **phase checkpoint procedure** above at the end of
+  each phase (one plan-only commit per phase, referencing the last task
+  commit — never a new empty commit).
 - `/review` makes the final approval-gated track closure commit after
   its full-track pass, including any review-loop fixes and the
   `tracks.md` move to complete.
-- Commit messages stay short and clean: phase checkpoints use
-  `conductor(checkpoint): Checkpoint end of Phase <N> - <title>`;
-  review closure uses a concise `conductor(track): <title>` summary
-  with the track ID.
+- Commit messages stay short and clean: task code commits are
+  conventional (`feat(...)`, `fix(...)`, etc.); task plan updates use
+  `conductor(plan): Mark task '<task>' as complete`; phase plan updates
+  use `conductor(plan): Mark phase '<N> — <title>' as complete`; review
+  closure uses a concise `conductor(track): <title>` summary with the
+  track ID.
 - Attach the phase summary or full review report to the corresponding
   commit as a **git note**, not in the commit message body. This keeps
   `git log` readable while preserving a complete, auditable record.
-- No checkpoint commit happens before the user has explicitly approved
-  the current phase summary.
-- No final closure commit happens before `/review` has run and the
-  user has explicitly approved the current `review.md` after any
-  correction loop.
+- No task plan-update commit happens before that task's test(s) have
+  actually run and passed. No phase plan-update commit happens before the
+  user has explicitly approved the current phase summary. No final
+  closure commit happens before `/review` has run and the user has
+  explicitly approved the current `review.md` after any correction loop.

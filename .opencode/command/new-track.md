@@ -33,7 +33,7 @@ Under the generated track ID, create:
 
 `metadata.json` records the track ID, type, status (`new`), and created/updated timestamps.
 
-Planning is first-class: `/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`).
+Planning is first-class: `/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`). Write every task line as `- [ ] Task: <description> [<task-type>]` and every phase heading as `## Phase <N>: <title>` — `/implement` and `/review` complete these into `- [x] Task: <description> [<task-type>] <sha>` and `## Phase <N>: <title> [checkpoint: <sha>]` per `conductor/workflow.md`'s task commit procedure.
 
 ## 4. Update the registry
 
@@ -41,6 +41,13 @@ Add a new entry to `conductor/tracks.md` under `## Active` that links to the tra
 
 `- [ ] **Track: <description>** *Link: [tracks/<track_id>/plan.md](./tracks/<track_id>/plan.md)*`
 
-## 5. Pause for approval
+## 5. Commit the new track
+
+Stage `conductor/tracks/<track_id>/` and `conductor/tracks.md`, then
+commit with the message `chore(conductor): initialize track '<track_id>'`.
+This is the anchor commit `/revert` uses to find and undo an entire
+track.
+
+## 6. Pause for approval
 
 Tell the user the generated track ID and that the next step is `/conductor/implement <track_id>`. Pause for approval before `/implement`.
