@@ -206,8 +206,12 @@ Rewrite `revert.md` into a numbered protocol:
 
 ## Testing / verification approach
 
-No runtime code exists to unit test — these are markdown command
-specifications consumed by an LLM. Verification is:
+These are markdown protocols interpreted by an LLM, not runtime code — so
+"does it parse" (static check) and "does it behave" (live agent execution)
+are different questions, and both are required. Grep alone only proves the
+first.
+
+### Layer 1 — Static checks
 
 - Grep-based structural checks (exact strings/formats present, stale
   strings absent), same style as the precedent in
@@ -216,7 +220,44 @@ specifications consumed by an LLM. Verification is:
   are internally consistent (step references, renumbering after insertions).
 - Cross-file consistency check: commit message formats and SHA formats
   match verbatim everywhere they're referenced (`workflow.md`,
-  `implement.md`, `revert.md`).
+  `implement.md`, `review.md`, `revert.md`).
+
+### Layer 2 — Behavioral checks (live agent runs against a disposable fixture)
+
+`opencode run --command <name> "<args>" --dir <fixture>` resolves a
+directory's **project-local** `.opencode/command/*.md` (confirmed: it does
+not fall back to the globally-installed copy under
+`~/.config/opencode/command/conductor/`, which may be stale). This makes it
+possible to actually execute the edited command against known-state git
+fixtures under `/tmp` and assert on ground truth — real `git log` entries,
+real `plan.md` content, real file diffs — instead of trusting the doc's
+prose.
+
+Per changed command, one fixture-driven run whose outcome is checked
+mechanically (`git log --oneline`, `grep` on the resulting `plan.md`,
+`git diff`), not just read and eyeballed:
+
+| Command | Fixture precondition | Mechanical assertion |
+|---|---|---|
+| `/new-track` (G12) | fresh `conductor/` from `/setup`, no tracks | `git log --oneline` contains a commit matching `chore(conductor): initialize track '<id>'` |
+| `/implement` (G6 SHA format) | one approved track, 1 phase / 2 tasks | each `[x]` task line matches `- \[x\] Task: .* \[<sha>\]` and `<sha>` resolves via `git cat-file -e`; the phase heading contains `[checkpoint: <sha>]` for a real commit |
+| `/implement` (G1 doc-sync, positive) | track whose `spec.md` clearly changes the tech stack | `tech-stack.md` is modified; `git log` contains `docs(conductor): Synchronize docs for track '<id>'` |
+| `/implement` (G1 doc-sync, negative control) | track with no product/tech-stack/guidelines impact | `product.md`, `tech-stack.md`, `product-guidelines.md` are byte-identical to before the run; no `docs(conductor):` commit exists |
+| `/status` (G4) | `plan.md` with a known, hand-crafted mix of `[x]`/`[~]`/`[ ]` (e.g. 2 of 5 tasks done) | reported completion is exactly `2/5 (40%)`; reported next-pending task matches the fixture's first `[ ]` line |
+| `/revert` (G5, Safe strategy) | a track produced by a real `/implement` run (so task/phase/plan-update commits and SHAs are genuine) | after revert: target task/phase line is back to `[ ]` with no SHA/`[checkpoint]` annotation; `git log` shows new revert commits; `git diff <pre-task-sha> HEAD -- <touched files>` is empty |
+| `/revert` (G5, ghost-commit path) | fixture where a recorded SHA has been rebased away | run halts with the ghost-commit Yes/No prompt rather than silently failing or fabricating a SHA |
+
+Interactive Yes/No and single-choice prompts inside these runs are steered
+by stating the intended answers directly in the `opencode run` message
+(e.g. "approve every checkpoint and confirmation with yes"). Any
+unexpected `permission requested` / tool-rejection / halt encountered
+during a fixture run is itself a **failure** of that task, not something
+to script around — it means the command doc caused the agent to attempt
+something the fixture didn't anticipate or a tool it can't use unprompted.
+
+Each implementation-plan task's "done" criteria includes both layers: the
+static grep/consistency check AND the specific fixture run(s) from the
+table above relevant to that task.
 
 ## Risks / trade-offs
 
@@ -231,3 +272,7 @@ specifications consumed by an LLM. Verification is:
   are inherently risky operations; the design keeps upstream's explicit
   warnings and halts-on-ambiguity behavior rather than simplifying them
   away.
+- **Behavioral fixture runs cost real tokens/time per task** (each is a
+  live multi-turn agent session). Accepted because static checks alone
+  cannot verify LLM-interpreted protocol behavior — this is the direct
+  answer to "how do we know it adheres to the spec."
