@@ -191,7 +191,7 @@ Otherwise, run the following loop before generating a track ID or creating any a
 2. **Find decision forks.** Do two things internally (do not narrate this mechanism to the user — only its results):
    - **Mental `/implement` dry-run:** walk the draft spec as if implementing it, task by task. Every point where you would have to guess, or where `/implement` would have to stop and ask the user, is a decision fork.
    - **Ambiguity-category checklist:** confirm each of the following is resolved or explicitly not applicable: data shapes/models, external or internal API contracts, error handling and failure paths, edge cases and boundaries, acceptance/success criteria, tech and library choices, out-of-scope boundaries, test expectations. Any unresolved category is a decision fork.
-   - If both the dry-run and the checklist come back clean, there are no more forks — go to step 5.
+   - If both the dry-run and the checklist come back clean, there are no more forks — go to step 4.
 3. **Resolve forks, one question at a time.** For each fork:
    - If there is more than one viable option, present the options with trade-offs and your recommendation, then ask.
    - If there is exactly one sane option, state it — do not offer it as a choice.
