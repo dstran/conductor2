@@ -425,13 +425,32 @@ opencode run --command implement "$TRACK_ID Use node's built-in test runner (nod
 BGPID=$!
 sleep 90
 if kill -0 $BGPID 2>/dev/null; then echo "STILL_RUNNING - inspect /tmp/brainstorm_scenarioB.json"; kill $BGPID; else echo FINISHED; fi
-grep -inE '"(question|ask|clarify)"' /tmp/brainstorm_scenarioB.json | grep -viE 'phase.*checkpoint|does this meet expectations' && echo "FAIL: implement asked a genuine content question" || echo "OK: no unresolved content ambiguity surfaced"
+grep -ioE '[^.!?"\\]{5,}\?(\\n|")' /tmp/brainstorm_scenarioB.json | grep -viE 'phase.*checkpoint|does this meet expectations|shall i (proceed|continue)|(ready|ok|okay) to (proceed|continue)|sound good\??|look(s)? good\??|proceed\??$|continue\??$' && echo "FAIL: implement asked a genuine content question" || echo "OK: no unresolved content ambiguity surfaced"
 ```
 
 Expected: `OK: no unresolved content ambiguity surfaced` — the only
 questions `/implement` should raise, if any, are the existing
-phase-checkpoint yes/no gates, not content ambiguity. This is the
-mechanical evidence for the "implementation-ready" claim in the spec.
+phase-checkpoint yes/no gates, not content ambiguity.
+
+NOTE on this grep's role: this is a **secondary heuristic signal only**,
+not the primary evidence for the scenario's pass/fail verdict. The
+pattern above scans for sentence fragments ending in a literal `?`
+inside the JSON-encoded transcript (matching either an escaped newline
+or a closing quote right after the `?`, since `opencode run --format
+json` emits one JSON object per line with prose embedded in string
+fields — a bare `"(question|ask|clarify)"` token match, as used in an
+earlier draft of this check, can never fire on natural-language prose
+and was confirmed structurally unable to catch a real embedded
+question during Task 3's execution). Even broadened, this grep can
+still emit false positives (unanticipated checkpoint phrasing) or false
+negatives (a genuine question that doesn't end in a literal `?`, e.g.
+"Which do you want:"). The **primary evidence** for this scenario's
+verdict must be a human (or subagent) reading the actual transcript
+turn-by-turn and judging whether any turn raised a genuine unresolved
+content question — the mechanical grep above is a quick triage aid to
+point attention at candidate lines, not a substitute for that reading.
+Record the manual read's conclusion explicitly in the task report even
+when the grep prints `OK`.
 
 - [ ] **Step 4: Scenario C — "exit brainstorming now" populates the double-check section**
 
