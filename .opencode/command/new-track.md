@@ -13,7 +13,7 @@ If `conductor/tracks.md` is missing, stop and route back to `/setup` rather than
 
 ## 1. Track brainstorming
 
-Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not the track's shortname. If `$ARGUMENTS` is empty, ask the user for a brief description of what they want to build before continuing.
+Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not the track's shortname. If `$ARGUMENTS` is empty, ask the user for a brief description of what they want to build before continuing. Infer and confirm the track type (feature, bug, chore, refactor, MVP) before continuing — independently of whether the rest of this step's brainstorming loop runs or is skipped.
 
 **Skip hatch:** if the user's request explicitly says the spec is already decided and to skip brainstorming (e.g. "skip brainstorming", "spec is already decided"), do not run the loop below — proceed directly to Step 2 using `$ARGUMENTS` as the final description, exactly as this command behaved before this step existed.
 
