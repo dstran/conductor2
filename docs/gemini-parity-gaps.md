@@ -120,3 +120,6 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done · `[skip]` intenti
 - Git notes for reports instead of commit bodies — cleaner `git log`.
   (But restore G6: plan.md SHA recording that revert needs.)
 - `unbias` contract in `skill/SKILL.md` — genuine addition, not in upstream.
+- Zero-ambiguity per-feature brainstorming step in `/new-track` (see
+  `docs/superpowers/specs/2026-08-19-new-track-brainstorming-design.md`) —
+  genuine addition, not in upstream. Does not auto-invoke `/implement`.
