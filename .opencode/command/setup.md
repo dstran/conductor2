@@ -159,30 +159,48 @@ already-made commit.
 
 ## Phase checkpoint procedure
 
-`/implement` pauses at the end of every phase, presents a summary, asks
-"does this meet expectations?", and only checkpoints the phase after an
-explicit yes (looping on feedback the same way `/review` does, including
-the same 3rd-round nudge). Nothing beyond a phase checkpoint is finalized
-without that.
+Every phase heading in `plan.md` is either tagged `[manual-checkpoint]`
+or left untagged. `/new-track` sets this tag at plan-generation time
+based on its tagging heuristic (see `new-track.md`); the user may add or
+remove the tag by hand at any point before `/implement` reaches that
+phase's checkpoint step. `/implement` reads the heading fresh each time
+it reaches this step — it has no memory of a tag that was later removed,
+and it never adds the tag itself.
 
-On explicit yes:
+- **Tagged `[manual-checkpoint]`:** `/implement` pauses at the end of the
+  phase, presents a summary, asks "does this meet expectations?", and
+  only checkpoints the phase after an explicit yes (looping on feedback
+  the same way `/review` does, including the same 3rd-round nudge).
+  Nothing beyond a phase checkpoint is finalized without that.
+- **Untagged (the default):** `/implement` runs the phase's tests,
+  presents the same summary plus the line "No manual checkpoint
+  required — auto-checkpointing," and proceeds straight to checkpointing
+  — no pause, no wait for a reply.
+
+Once a phase is ready to checkpoint (explicit yes for a tagged phase;
+immediately for an untagged phase):
 
 1. Identify the last task code commit made in this phase (from step 1 of
    the task commit procedure above, for the phase's final task). Do NOT
    create a new empty commit — the checkpoint always points at an
    existing task commit.
 2. Attach the phase summary (automated test results + manual verification
-   steps) as a **git note** on that commit — not in a commit message body:
-   `git notes add -m "<summary>" <sha>`
-3. Edit `plan.md`: append `[checkpoint: <sha>]` to the phase's heading,
-   producing exactly: `## Phase <N>: <title> [checkpoint: <sha>]`
-   Stage only `plan.md` and commit with message
+   steps, if any) as a **git note** on that commit — not in a commit
+   message body: `git notes add -m "<summary>" <sha>`
+3. Edit `plan.md`: append `[checkpoint: <sha>]` to the phase's heading —
+   after any existing `[manual-checkpoint]` tag — producing exactly:
+   `## Phase <N>: <title> [checkpoint: <sha>]` (untagged phase), or
+   `## Phase <N>: <title> [manual-checkpoint] [checkpoint: <sha>]`
+   (tagged phase). Stage only `plan.md` and commit with message
    `conductor(plan): Mark phase '<N> — <title>' as complete`.
 
 Once all phases are checkpointed, `/implement` stops and hands off to
 `/review` for the track-level pass: full test suite, style, security, and
 plan compliance across the whole track. `/review` has its own
 pause-and-ask gate before the final track-closure commit is made.
+`/implement` never invokes `/review` itself — regardless of how many
+phases in the track were tagged, the user must separately run
+`/review <track_id>`.
 
 ## Commit strategy
 
