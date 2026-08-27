@@ -63,6 +63,8 @@ Write `spec.md` using the exact content approved in Step 1's Gate A (do not re-d
 
 Planning is first-class: `/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`). Write every task line as `- [ ] Task: <description> [<task-type>]` and every phase heading as `## Phase <N>: <title>` — `/implement` and `/review` complete these into `- [x] Task: <description> [<task-type>] <sha>` and `## Phase <N>: <title> [checkpoint: <sha>]` per `conductor/workflow.md`'s task commit procedure.
 
+**Phase checkpoint tagging:** when writing each phase heading, tag it `## Phase <N>: <title> [manual-checkpoint]` if the phase contains an `e2e-flow` task, or contains both a `frontend-ui` task and an `api-client`/`api-contract` task (i.e. a UI wired to a real backend call within that phase). Otherwise leave the heading untagged: `## Phase <N>: <title>`. Untagged is the default — `/implement` auto-checkpoints untagged phases without pausing (see `conductor/workflow.md`'s phase checkpoint procedure). These tags are visible in the plan the user already reviews before approval; the user may add or remove `[manual-checkpoint]` on any phase heading by hand at any time before `/implement` reaches that phase's checkpoint step.
+
 ## 4. Update the registry
 
 Add a new entry to `conductor/tracks.md` under `## Active` that links to the track by its generated ID and uses the human-readable description as the entry label, e.g.:
