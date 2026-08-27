@@ -181,7 +181,7 @@ If `conductor/tracks.md` is missing, stop and route back to `/setup` rather than
 
 ## 1. Track brainstorming
 
-Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not the track's shortname. If `$ARGUMENTS` is empty, ask the user for a brief description of what they want to build before continuing.
+Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not the track's shortname. If `$ARGUMENTS` is empty, ask the user for a brief description of what they want to build before continuing. Infer and confirm the track type (feature, bug, chore, refactor, MVP) before continuing — independently of whether the rest of this step's brainstorming loop runs or is skipped.
 
 **Skip hatch:** if the user's request explicitly says the spec is already decided and to skip brainstorming (e.g. "skip brainstorming", "spec is already decided"), do not run the loop below — proceed directly to Step 2 using `$ARGUMENTS` as the final description, exactly as this command behaved before this step existed.
 
@@ -191,7 +191,7 @@ Otherwise, run the following loop before generating a track ID or creating any a
 2. **Find decision forks.** Do two things internally (do not narrate this mechanism to the user — only its results):
    - **Mental `/implement` dry-run:** walk the draft spec as if implementing it, task by task. Every point where you would have to guess, or where `/implement` would have to stop and ask the user, is a decision fork.
    - **Ambiguity-category checklist:** confirm each of the following is resolved or explicitly not applicable: data shapes/models, external or internal API contracts, error handling and failure paths, edge cases and boundaries, acceptance/success criteria, tech and library choices, out-of-scope boundaries, test expectations. Any unresolved category is a decision fork.
-   - If both the dry-run and the checklist come back clean, there are no more forks — go to step 5.
+   - If both the dry-run and the checklist come back clean, there are no more forks — go to step 4.
 3. **Resolve forks, one question at a time.** For each fork:
    - If there is more than one viable option, present the options with trade-offs and your recommendation, then ask.
    - If there is exactly one sane option, state it — do not offer it as a choice.
@@ -425,13 +425,32 @@ opencode run --command implement "$TRACK_ID Use node's built-in test runner (nod
 BGPID=$!
 sleep 90
 if kill -0 $BGPID 2>/dev/null; then echo "STILL_RUNNING - inspect /tmp/brainstorm_scenarioB.json"; kill $BGPID; else echo FINISHED; fi
-grep -inE '"(question|ask|clarify)"' /tmp/brainstorm_scenarioB.json | grep -viE 'phase.*checkpoint|does this meet expectations' && echo "FAIL: implement asked a genuine content question" || echo "OK: no unresolved content ambiguity surfaced"
+grep -ioE '[^.!?"\\]{5,}\?(\\n|")' /tmp/brainstorm_scenarioB.json | grep -viE 'phase.*checkpoint|does this meet expectations|shall i (proceed|continue)|(ready|ok|okay) to (proceed|continue)|sound good\??|look(s)? good\??|proceed\??$|continue\??$' && echo "FAIL: implement asked a genuine content question" || echo "OK: no unresolved content ambiguity surfaced"
 ```
 
 Expected: `OK: no unresolved content ambiguity surfaced` — the only
 questions `/implement` should raise, if any, are the existing
-phase-checkpoint yes/no gates, not content ambiguity. This is the
-mechanical evidence for the "implementation-ready" claim in the spec.
+phase-checkpoint yes/no gates, not content ambiguity.
+
+NOTE on this grep's role: this is a **secondary heuristic signal only**,
+not the primary evidence for the scenario's pass/fail verdict. The
+pattern above scans for sentence fragments ending in a literal `?`
+inside the JSON-encoded transcript (matching either an escaped newline
+or a closing quote right after the `?`, since `opencode run --format
+json` emits one JSON object per line with prose embedded in string
+fields — a bare `"(question|ask|clarify)"` token match, as used in an
+earlier draft of this check, can never fire on natural-language prose
+and was confirmed structurally unable to catch a real embedded
+question during Task 3's execution). Even broadened, this grep can
+still emit false positives (unanticipated checkpoint phrasing) or false
+negatives (a genuine question that doesn't end in a literal `?`, e.g.
+"Which do you want:"). The **primary evidence** for this scenario's
+verdict must be a human (or subagent) reading the actual transcript
+turn-by-turn and judging whether any turn raised a genuine unresolved
+content question — the mechanical grep above is a quick triage aid to
+point attention at candidate lines, not a substitute for that reading.
+Record the manual read's conclusion explicitly in the task report even
+when the grep prints `OK`.
 
 - [ ] **Step 4: Scenario C — "exit brainstorming now" populates the double-check section**
 
