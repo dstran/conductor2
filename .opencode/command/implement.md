@@ -60,26 +60,35 @@ Do not silently continue to the next phase. Instead:
    b. Run the automated tests relevant to this phase's changes
       (not necessarily the full suite — that's `/review`'s job at
       track end).
-   c. If anything in this phase can't be confirmed by an automated
-      test (e.g. requires a running server, a manual UI check, an
-      external service), write out explicit manual verification
-      steps — exact commands to run and what result confirms success.
-   d. Present a short phase summary to the user: what was built,
-      automated test results, and any manual verification steps.
-      Ask: "Does this meet expectations? Reply yes to checkpoint and
-      continue, or tell me what to change." PAUSE and wait.
-   e. If the user gives feedback: fix it in place (using the task
-      commit procedure for whatever changed), re-run only the
-      checks that fix could affect, and re-present the phase summary.
-      Loop until they say yes. No round cap, same as `/review`'s
-      correction loop — but note if this is the 3rd+ round on the
-      same file or area, same as `/review` does.
-   f. On explicit yes: follow the **phase checkpoint procedure** in
-      `conductor/workflow.md` exactly — attach the phase summary (test
-      results + manual verification steps) as a git note on the last
-      task commit in this phase, then commit `plan.md` with the phase
-      heading marked `## Phase <N>: <title> [checkpoint: <sha>]`. Do
-      not create a new empty commit.
+   c. Read the phase heading in `plan.md` fresh (do not reuse an earlier
+      read) to check for a `[manual-checkpoint]` tag — the user may have
+      added or removed it since this phase started.
+   d. **If tagged `[manual-checkpoint]`:** write out explicit manual
+      verification steps (exact commands to run and what result
+      confirms success). Present a short phase summary to the user:
+      what was built, automated test results, and the manual
+      verification steps. Ask: "Does this meet expectations? Reply yes
+      to checkpoint and continue, or tell me what to change." PAUSE and
+      wait.
+      - If the user gives feedback: fix it in place (using the task
+        commit procedure for whatever changed), re-run only the checks
+        that fix could affect, and re-present the phase summary. Loop
+        until they say yes. No round cap, same as `/review`'s
+        correction loop — but note if this is the 3rd+ round on the
+        same file or area, same as `/review` does.
+      - Do not proceed to step f until the user has given an explicit
+        yes.
+   e. **If untagged:** present the same short phase summary as above,
+      plus the line "No manual checkpoint required —
+      auto-checkpointing." Do not pause or wait for a reply — proceed
+      immediately to step f.
+   f. Follow the **phase checkpoint procedure** in `conductor/workflow.md`
+      exactly — attach the phase summary (test results + manual
+      verification steps, if any) as a git note on the last task commit
+      in this phase, then commit `plan.md` with the phase heading marked
+      `## Phase <N>: <title> [checkpoint: <sha>]` (appended after any
+      existing `[manual-checkpoint]` tag). Do not create a new empty
+      commit.
    g. Move to the next phase and repeat from step 2. If this was the
       last phase, go to step 4.
 
