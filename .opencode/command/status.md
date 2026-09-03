@@ -34,7 +34,20 @@ For each track's `plan.md`:
   directories inside it. These have been removed from the registry and
   have no live progress to report.
 
-## 3. Present the summary
+## 3. Workflow doctrine staleness
+
+Compare the last line of `conductor/workflow.md` against the last line
+of `~/.config/opencode/command/conductor/assets/workflow-template.md`
+(same marker format `/conductor/update` reads: `<!-- conductor-workflow-version:
+<sha> -->`). A missing marker on either side counts as not matching.
+
+- If they match: the report line is `Workflow doctrine: up to date
+  (<sha>).`
+- If they differ (including a missing marker on the target): the report
+  line is `Workflow doctrine: stale (installed <installed-sha>, project
+  <project-sha-or-"none">) — run /conductor/update`.
+
+## 4. Present the summary
 
 Report, in this order:
 
@@ -50,6 +63,7 @@ Report, in this order:
 4. **Blockers:** every `Blocker:` note found under `## Blocked`.
 5. **Archived tracks:** the list from step 2, or "none" if
    `conductor/archive/` doesn't exist.
+6. **Workflow doctrine line** from step 3, always shown last.
 
 If `conductor/tracks.md` has no entries under `## Active` or `## Blocked`,
 report that the registry is empty and skip steps 1 and 3.
