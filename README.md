@@ -79,6 +79,8 @@ commands. Run them in your own project's directory:
 - `/conductor/review` — review a completed track before closing it.
 - `/conductor/status` — summarize active, blocked, and archived tracks.
 - `/conductor/revert` — revert a track, phase, or task.
+- `/conductor/update` — sync `conductor/workflow.md` with the currently
+  installed doctrine, if it has changed since `/setup` ran.
 
 Setup creates the project state under `conductor/` in your working directory;
 later commands read and update it.
