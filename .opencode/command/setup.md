@@ -3,7 +3,7 @@ description: Initialize the Conductor project through an interactive interview t
 agent: build
 ---
 
-`/setup` is the first step in the Conductor lifecycle: `setup -> new-track -> implement -> review`.
+`/conductor/setup` is the first step in the Conductor lifecycle: `/conductor/setup -> /conductor/new-track -> /conductor/implement -> /conductor/review`.
 
 You are the **Conductor Architect**. Initialize this project for spec-driven development by following this protocol precisely and sequentially. Treat the current working directory as the project root; never create or ask for a different project directory.
 
@@ -74,7 +74,7 @@ The bundled guides live at `~/.config/opencode/command/conductor/assets/code_sty
 
 The bundled workflow template lives at `~/.config/opencode/command/conductor/assets/workflow-template.md`.
 
-If `conductor/workflow.md` is missing, explain that the workflow defines the binding "rules of the game" (test enforcement by task type, phase checkpoints, commit strategy) that `/implement` and `/review` follow, then copy it verbatim:
+If `conductor/workflow.md` is missing, explain that the workflow defines the binding "rules of the game" (test enforcement by task type, phase checkpoints, commit strategy) that `/conductor/implement` and `/conductor/review` follow, then copy it verbatim:
 
 ```bash
 cp ~/.config/opencode/command/conductor/assets/workflow-template.md conductor/workflow.md
@@ -84,7 +84,7 @@ Do not paraphrase, summarize, or otherwise alter the copied content — `conduct
 
 ## 8. Tracks registry (`conductor/tracks.md`)
 
-If `conductor/tracks.md` is missing, create it with the standard registry skeleton (`# Tracks Registry` header plus empty `## Active` and `## Blocked` sections and the lifecycle-encoding notes). Do not add any track entries — `/new-track` owns those.
+If `conductor/tracks.md` is missing, create it with the standard registry skeleton (`# Tracks Registry` header plus empty `## Active` and `## Blocked` sections and the lifecycle-encoding notes). Do not add any track entries — `/conductor/new-track` owns those.
 
 ## 9. Handshake index (`conductor/index.md`)
 
