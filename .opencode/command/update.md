@@ -1,5 +1,5 @@
 ---
-description: Sync conductor/workflow.md with the currently installed Conductor doctrine, if it has changed since /setup ran
+description: Sync conductor/workflow.md with the currently installed Conductor doctrine, if it has changed since /conductor/setup ran
 agent: build
 ---
 
@@ -11,7 +11,7 @@ Conductor doctrine is currently installed. It touches only
 `conductor/tracks/`, and `conductor/code_styleguides/` are never read or
 modified by this command.
 
-If `conductor/index.md` is missing, offer to run `/setup` (Yes/No) and
+If `conductor/index.md` is missing, offer to run `/conductor/setup` (Yes/No) and
 HALT if declined.
 
 ## 1. Locate both copies
@@ -32,7 +32,7 @@ Read the last line of each file.
   (this should not normally happen, but is not a reason to halt).
 - **Target's marker:** if `conductor/workflow.md`'s last line matches
   that same format, extract `<sha>`. If it does not match (no marker
-  line at all — a target repo whose `/setup` ran before this feature
+  line at all — a target repo whose `/conductor/setup` ran before this feature
   existed), treat the target as having no marker.
   **A missing marker on the target always counts as stale** — never
   treat it as an error or ask a different question than the stale-path

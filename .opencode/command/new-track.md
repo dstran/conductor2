@@ -3,13 +3,13 @@ description: Generate a new Conductor track with a concise shortname_YYYYMMDD ID
 agent: build
 ---
 
-`/new-track` is the second step in the Conductor lifecycle: `setup -> new-track -> implement -> review`.
+`/conductor/new-track` is the second step in the Conductor lifecycle: `/conductor/setup -> /conductor/new-track -> /conductor/implement -> /conductor/review`.
 
 Read `conductor/index.md` first, and use it to locate the workflow and tracks registry before creating any track.
 
-If `conductor/index.md` is missing, stale, or does not point to the expected workflow and tracks registry, stop and repair the handshake through `/setup` before creating the track.
+If `conductor/index.md` is missing, stale, or does not point to the expected workflow and tracks registry, stop and repair the handshake through `/conductor/setup` before creating the track.
 
-If `conductor/tracks.md` is missing, stop and route back to `/setup` rather than recreating setup-owned handshake state during `/new-track`.
+If `conductor/tracks.md` is missing, stop and route back to `/conductor/setup` rather than recreating setup-owned handshake state during `/conductor/new-track`.
 
 ## 1. Track brainstorming
 
@@ -21,7 +21,7 @@ Otherwise, run the following loop before generating a track ID or creating any a
 
 1. **Draft understanding.** From the seed, identify the purpose, constraints, and success criteria as currently understood.
 2. **Find decision forks.** Do two things internally (do not narrate this mechanism to the user — only its results):
-   - **Mental `/implement` dry-run:** walk the draft spec as if implementing it, task by task. Every point where you would have to guess, or where `/implement` would have to stop and ask the user, is a decision fork.
+   - **Mental `/conductor/implement` dry-run:** walk the draft spec as if implementing it, task by task. Every point where you would have to guess, or where `/conductor/implement` would have to stop and ask the user, is a decision fork.
    - **Ambiguity-category checklist:** confirm each of the following is resolved or explicitly not applicable: data shapes/models, external or internal API contracts, error handling and failure paths, edge cases and boundaries, acceptance/success criteria, tech and library choices, out-of-scope boundaries, test expectations. Any unresolved category is a decision fork.
    - If both the dry-run and the checklist come back clean, there are no more forks — go to step 4.
 3. **Resolve forks, one question at a time.** For each fork:
@@ -37,7 +37,7 @@ Otherwise, run the following loop before generating a track ID or creating any a
    - `## Assumptions & agent-made decisions` — every fork resolved via "you decide this one"/"I don't know", each as a bullet: the decision and a one-line rationale. Leave the header with no bullets beneath it if this never happened.
    - `## Open questions auto-decided by agent — PLEASE DOUBLE-CHECK` — every fork resolved via "you decide the rest"/"exit brainstorming now", each as a bullet: the decision and a one-line rationale. Leave the header with no bullets beneath it if this never happened.
 5. **Self-review the draft once**, inline, before presenting it: scan for placeholders ("TBD", "TODO", incomplete sections), internal contradictions, and any requirement that could be read two ways — fix issues directly in the draft, no separate re-review pass.
-6. **Present the design** (the drafted spec content) to the user and ask for approval. If they ask for changes, revise and re-present — loop with no round cap until they approve. This is Gate A; it is separate from, and earlier than, the pause-for-approval in Step 7 below — approving here does not start `/implement`, it only unlocks artifact creation in Step 3.
+6. **Present the design** (the drafted spec content) to the user and ask for approval. If they ask for changes, revise and re-present — loop with no round cap until they approve. This is Gate A; it is separate from, and earlier than, the pause-for-approval in Step 7 below — approving here does not start `/conductor/implement`, it only unlocks artifact creation in Step 3.
 
 Do not proceed to Step 2 until either the skip hatch was used, or Gate A above has an explicit approval.
 
@@ -61,9 +61,9 @@ Write `spec.md` using the exact content approved in Step 1's Gate A (do not re-d
 
 `metadata.json` records the track ID, type, status (`new`), and created/updated timestamps. If Step 1's "Open questions auto-decided by agent — PLEASE DOUBLE-CHECK" section is non-empty, also record `"needsReview": true` in `metadata.json`.
 
-Planning is first-class: `/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`). Write every task line as `- [ ] Task: <description> [<task-type>]` and every phase heading as `## Phase <N>: <title>` — `/implement` and `/review` complete these into `- [x] Task: <description> [<task-type>] <sha>` and `## Phase <N>: <title> [checkpoint: <sha>]` per `conductor/workflow.md`'s task commit procedure.
+Planning is first-class: `/conductor/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`). Write every task line as `- [ ] Task: <description> [<task-type>]` and every phase heading as `## Phase <N>: <title>` — `/conductor/implement` and `/conductor/review` complete these into `- [x] Task: <description> [<task-type>] <sha>` and `## Phase <N>: <title> [checkpoint: <sha>]` per `conductor/workflow.md`'s task commit procedure.
 
-**Phase checkpoint tagging:** when writing each phase heading, tag it `## Phase <N>: <title> [manual-checkpoint]` if the phase contains an `e2e-flow` task, or contains both a `frontend-ui` task and an `api-client`/`api-contract` task (i.e. a UI wired to a real backend call within that phase). Otherwise leave the heading untagged: `## Phase <N>: <title>`. Untagged is the default — `/implement` auto-checkpoints untagged phases without pausing (see `conductor/workflow.md`'s phase checkpoint procedure). These tags are visible in the plan the user already reviews before approval; the user may add or remove `[manual-checkpoint]` on any phase heading by hand at any time before `/implement` reaches that phase's checkpoint step.
+**Phase checkpoint tagging:** when writing each phase heading, tag it `## Phase <N>: <title> [manual-checkpoint]` if the phase contains an `e2e-flow` task, or contains both a `frontend-ui` task and an `api-client`/`api-contract` task (i.e. a UI wired to a real backend call within that phase). Otherwise leave the heading untagged: `## Phase <N>: <title>`. Untagged is the default — `/conductor/implement` auto-checkpoints untagged phases without pausing (see `conductor/workflow.md`'s phase checkpoint procedure). These tags are visible in the plan the user already reviews before approval; the user may add or remove `[manual-checkpoint]` on any phase heading by hand at any time before `/conductor/implement` reaches that phase's checkpoint step.
 
 ## 4. Update the registry
 
@@ -77,7 +77,7 @@ If `metadata.json` was written with `"needsReview": true`, append `— **needs r
 
 Stage `conductor/tracks/<track_id>/` and `conductor/tracks.md`, then
 commit with the message `chore(conductor): initialize track '<track_id>'`.
-This is the anchor commit `/revert` uses to find and undo an entire
+This is the anchor commit `/conductor/revert` uses to find and undo an entire
 track.
 
 ## 6. Announce readiness
@@ -86,4 +86,4 @@ Tell the user, in a short summary: the ambiguity-category checklist categories t
 
 ## 7. Pause for approval
 
-Tell the user the generated track ID and that the next step is `/conductor/implement <track_id>`. Pause for approval before `/implement`. Do not invoke `/implement` yourself under any circumstances — this command ends here and the user must separately run `/implement`.
+Tell the user the generated track ID and that the next step is `/conductor/implement <track_id>`. Pause for approval before `/conductor/implement`. Do not invoke `/conductor/implement` yourself under any circumstances — this command ends here and the user must separately run `/conductor/implement`.
