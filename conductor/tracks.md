@@ -1,7 +1,7 @@
 # Tracks Registry
 
-This is the shared Conductor track registry consumed by `/new-track`,
-`/implement`, `/review`, `/status`, and `/revert`.
+This is the shared Conductor track registry consumed by `/conductor/new-track`,
+`/conductor/implement`, `/conductor/review`, `/conductor/status`, and `/conductor/revert`.
 
 Use one track entry per line in the format below and move the entry
 between sections as its lifecycle changes:
@@ -14,7 +14,7 @@ between sections as its lifecycle changes:
   - `Status: implementation complete — awaiting review.`
   - `Blocker: <short explanation>`
 - `[x]` means complete. A completed track stays in `## Active` as `[x]`
-  unless `/review` archives or deletes it.
+  unless `/conductor/review` archives or deletes it.
 
 Exact lifecycle encodings:
 
@@ -26,13 +26,13 @@ Exact lifecycle encodings:
 - Blocked: place the track in `## Blocked` as `[~]` with the note
   `Blocker: <short explanation>` directly below the track entry.
 - Complete: mark the track `[x]` in `## Active`.
-- Archived/Deleted: `/review` may move a completed track's folder to
+- Archived/Deleted: `/conductor/review` may move a completed track's folder to
   `conductor/archive/<track_id>/` (removing its registry entry) or delete
   it outright.
 
 ## Active
 
-<!-- /new-track adds new entries here and links each entry to plan.md. -->
+<!-- /conductor/new-track adds new entries here and links each entry to plan.md. -->
 
 ## Blocked
 

@@ -1,14 +1,14 @@
 # Workflow
 
 This file defines *how* work gets done on this project: methodology,
-test enforcement, and commit conventions. `/implement` and `/review`
+test enforcement, and commit conventions. `/conductor/implement` and `/conductor/review`
 both read this file before acting — it is binding, not a suggestion.
 
 ## Test enforcement by task type
 
 Every task in a track's `plan.md` must be tagged with one of the
-types below. `/new-track` adds the initial tags before plan approval,
-and `/review` must tag any tasks it appends in a `Review Fixes`
+types below. `/conductor/new-track` adds the initial tags before plan approval,
+and `/conductor/review` must tag any tasks it appends in a `Review Fixes`
 phase before those fixes are implemented.
 
 | Task type | Enforcement | Rationale |
@@ -53,7 +53,7 @@ For tasks enforced as test-after (still required):
 - Every `backend-logic` and `api-client` task must have at least one
   passing unit test before the task is marked complete.
 - `e2e-flow` tasks are validated once, at the end of the track during
-  `/review` — not per-task.
+  `/conductor/review` — not per-task.
 - No task is marked `[x]` on the strength of an assumption that a
   test "would" pass. It must have actually been run.
 
@@ -61,8 +61,8 @@ For tasks enforced as test-after (still required):
 
 Every task, once its test-first/test-after loop (per the enforcement
 table above) has actually passed, is committed in exactly two steps —
-whether the task came from `/new-track`'s original plan or from
-`/review`'s appended "Review Fixes" phase (see `review.md`'s correction
+whether the task came from `/conductor/new-track`'s original plan or from
+`/conductor/review`'s appended "Review Fixes" phase (see `review.md`'s correction
 loop). This procedure is the single source of truth for both:
 
 1. **Task code commit.** Stage the code and test changes for this task
@@ -83,19 +83,19 @@ already-made commit.
 ## Phase checkpoint procedure
 
 Every phase heading in `plan.md` is either tagged `[manual-checkpoint]`
-or left untagged. `/new-track` sets this tag at plan-generation time
+or left untagged. `/conductor/new-track` sets this tag at plan-generation time
 based on its tagging heuristic (see `new-track.md`); the user may add or
-remove the tag by hand at any point before `/implement` reaches that
-phase's checkpoint step. `/implement` reads the heading fresh each time
+remove the tag by hand at any point before `/conductor/implement` reaches that
+phase's checkpoint step. `/conductor/implement` reads the heading fresh each time
 it reaches this step — it has no memory of a tag that was later removed,
 and it never adds the tag itself.
 
-- **Tagged `[manual-checkpoint]`:** `/implement` pauses at the end of the
+- **Tagged `[manual-checkpoint]`:** `/conductor/implement` pauses at the end of the
   phase, presents a summary, asks "does this meet expectations?", and
   only checkpoints the phase after an explicit yes (looping on feedback
-  the same way `/review` does, including the same 3rd-round nudge).
+  the same way `/conductor/review` does, including the same 3rd-round nudge).
   Nothing beyond a phase checkpoint is finalized without that.
-- **Untagged (the default):** `/implement` runs the phase's tests,
+- **Untagged (the default):** `/conductor/implement` runs the phase's tests,
   presents the same summary plus the line "No manual checkpoint
   required — auto-checkpointing," and proceeds straight to checkpointing
   — no pause, no wait for a reply.
@@ -117,22 +117,22 @@ immediately for an untagged phase):
    (tagged phase). Stage only `plan.md` and commit with message
    `conductor(plan): Mark phase '<N> — <title>' as complete`.
 
-Once all phases are checkpointed, `/implement` stops and hands off to
-`/review` for the track-level pass: full test suite, style, security, and
-plan compliance across the whole track. `/review` has its own
+Once all phases are checkpointed, `/conductor/implement` stops and hands off to
+`/conductor/review` for the track-level pass: full test suite, style, security, and
+plan compliance across the whole track. `/conductor/review` has its own
 pause-and-ask gate before the final track-closure commit is made.
-`/implement` never invokes `/review` itself — regardless of how many
+`/conductor/implement` never invokes `/conductor/review` itself — regardless of how many
 phases in the track were tagged, the user must separately run
-`/review <track_id>`.
+`/conductor/review <track_id>`.
 
 ## Commit strategy
 
-- `/implement` and `/review` both follow the **task commit procedure**
+- `/conductor/implement` and `/conductor/review` both follow the **task commit procedure**
   above for every task they complete (two commits per task: code, then
   plan update) and the **phase checkpoint procedure** above at the end of
   each phase (one plan-only commit per phase, referencing the last task
   commit — never a new empty commit).
-- `/review` makes the final approval-gated track closure commit after
+- `/conductor/review` makes the final approval-gated track closure commit after
   its full-track pass, including any review-loop fixes and the
   `tracks.md` move to complete.
 - Commit messages stay short and clean: task code commits are
@@ -147,5 +147,5 @@ phases in the track were tagged, the user must separately run
 - No task plan-update commit happens before that task's test(s) have
   actually run and passed. No phase plan-update commit happens before the
   user has explicitly approved the current phase summary. No final
-  closure commit happens before `/review` has run and the user has
+  closure commit happens before `/conductor/review` has run and the user has
   explicitly approved the current `review.md` after any correction loop.
