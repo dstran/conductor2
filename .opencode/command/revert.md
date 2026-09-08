@@ -12,7 +12,7 @@ agent: build
 description if the user wants to revert something narrower than the
 whole track.
 
-If `conductor/index.md` is missing, offer to run `/setup` (Yes/No) and
+If `conductor/index.md` is missing, offer to run `/conductor/setup` (Yes/No) and
 HALT if declined.
 
 ## 1. Target selection
