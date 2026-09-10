@@ -31,7 +31,7 @@ that occurs if it doesn't) are already validated empirically and
 recorded as evidence in `spec.md`'s "Key design property" section —
 that evidence is not re-derived per task.
 
-## Phase 1: `/conductor/new-track` creates the worktree
+## Phase 1: `/conductor/new-track` creates the worktree [checkpoint: dee74da]
 
 - [x] Task: Add Step 2.5 to `new-track.md` — after the track-ID
       collision check and before artifact creation — run
