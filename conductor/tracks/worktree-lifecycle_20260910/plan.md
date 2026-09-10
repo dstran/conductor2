@@ -182,10 +182,17 @@ that evidence is not re-derived per task.
       discovered registry, not just the current one. Verify via grep
       assertion: confirm both target lines explicitly reference "every
       discovered" registry/worktree [backend-logic] 1d2b80d
-- [ ] Task: Run a final repo-wide grep sweep confirming no command doc
+- [x] Task: Run a final repo-wide grep sweep confirming no command doc
       under `.opencode/command/` still implies a single global
       `conductor/tracks.md` shared by all tracks simultaneously (i.e.
       no unqualified "the tracks registry" without "in the track's
       worktree" or equivalent phrasing anywhere in the five touched
       files). This is the phase's closing verification, run after all
       four edits above, not a per-file edit of its own [backend-logic]
+      Sweep run three times during implementation; surfaced two genuine
+      functional gaps (missing worktree preamble in review.md; current-
+      worktree-only ambiguity in status.md Steps 1/4), both fixed as
+      separate tasks above (34fcfa3, 1d2b80d). Final pass confirms all
+      remaining line-level grep hits are qualified by adjacent-line
+      prose, not real gaps — verified by manual read of each hit's
+      surrounding context, not just the regex.
