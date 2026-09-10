@@ -42,12 +42,12 @@ that evidence is not re-derived per task.
       `git worktree add` with the `.worktrees/<track_id>` path and
       `-b track/<track_id>` branch name, plus the no-fallback stop
       language [backend-logic] beed03e
-- [ ] Task: Update `new-track.md` Steps 3–5 to operate relative to the
+- [x] Task: Update `new-track.md` Steps 3–5 to operate relative to the
       new worktree path, and Step 3's `metadata.json` write to include
       `worktreePath`, `branch`, and `baseRef` (the commit SHA `HEAD`
       pointed to before worktree creation). Verify via grep assertion:
       confirm Step 3's `metadata.json` description names all three new
-      fields [backend-logic]
+      fields [backend-logic] f4afe90
 - [ ] Task: Update `new-track.md` Step 6 (pause for approval) to tell
       the user the worktree path alongside the track ID, so they know
       where to `cd` before running `/conductor/implement`. Verify via
