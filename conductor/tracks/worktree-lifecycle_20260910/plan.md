@@ -130,11 +130,11 @@ that evidence is not re-derived per task.
       by default. Verify via grep assertion: confirm both named sections
       contain the per-worktree/worktree-creation language
       [backend-logic] a3796a6
-- [ ] Task: Update `setup.md` Step 8 (tracks registry skeleton) with a
+- [x] Task: Update `setup.md` Step 8 (tracks registry skeleton) with a
       one-line note that this file's scope is the current
       worktree/branch once tracks begin using dedicated worktrees.
       Verify via grep assertion: confirm Step 8 contains this note
-      [backend-logic]
+      [backend-logic] 22ef579
 - [ ] Task: Update the root `AGENTS.md` compatibility-wrapper note (if
       it references the tracks registry) to match, keeping `skill/
       SKILL.md` as the canonical source per this repo's own doctrine
