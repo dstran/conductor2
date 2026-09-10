@@ -82,7 +82,7 @@ create:
 
 Write `spec.md` using the exact content approved in Step 1's Gate A (do not re-draft it here), including its two provenance sections.
 
-`metadata.json` records the track ID, type, status (`new`), and created/updated timestamps. If Step 1's "Open questions auto-decided by agent — PLEASE DOUBLE-CHECK" section is non-empty, also record `"needsReview": true` in `metadata.json`.
+`metadata.json` records the track ID, type, status (`new`), created/updated timestamps, and the worktree fields from Step 2.5: `worktreePath` (`.worktrees/<track_id>`), `branch` (`track/<track_id>`), and `baseRef` (the base commit SHA recorded in Step 2.5). If Step 1's "Open questions auto-decided by agent — PLEASE DOUBLE-CHECK" section is non-empty, also record `"needsReview": true` in `metadata.json`.
 
 Planning is first-class: `/conductor/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`). Write every task line as `- [ ] Task: <description> [<task-type>]` and every phase heading as `## Phase <N>: <title>` — `/conductor/implement` and `/conductor/review` complete these into `- [x] Task: <description> [<task-type>] <sha>` and `## Phase <N>: <title> [checkpoint: <sha>]` per `conductor/workflow.md`'s task commit procedure.
 
