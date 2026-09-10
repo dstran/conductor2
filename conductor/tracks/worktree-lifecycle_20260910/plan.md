@@ -79,7 +79,7 @@ that evidence is not re-derived per task.
 
 ## Phase 3: `/conductor/review` archives on-branch, then opens a PR
 
-- [ ] Task: Extend `review.md` Step 10's Archive branch: after the
+- [x] Task: Extend `review.md` Step 10's Archive branch: after the
       existing move-and-commit, add a PR-opening step — check for `gh`
       on PATH and authenticated (`gh auth status`); if present, run
       `gh pr create` against the track's recorded `baseRef` with a
@@ -90,13 +90,13 @@ that evidence is not re-derived per task.
       grep assertion: confirm Step 10's Archive branch contains the
       `gh pr create` invocation, the `baseRef` reference, the manual
       fallback instructions, and the "never merges" statement
-      [backend-logic]
-- [ ] Task: Add a line to `review.md` clarifying that Delete and Skip
+      [backend-logic] 59a98d4
+- [x] Task: Add a line to `review.md` clarifying that Delete and Skip
       (Step 10's other two branches) do not open a PR — only Archive
       does, since Delete/Skip leave no clean merge-back state per
       spec's documented residual risk. Verify via grep assertion:
       confirm the Delete and Skip branches each state no PR is opened
-      [backend-logic]
+      [backend-logic] 59a98d4
 
 ## Phase 4: `/conductor/status` aggregates across worktrees and flags merged branches
 
