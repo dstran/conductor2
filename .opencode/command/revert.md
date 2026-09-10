@@ -15,6 +15,10 @@ whole track.
 If `conductor/index.md` is missing, offer to run `/conductor/setup` (Yes/No) and
 HALT if declined.
 
+## 0. Resolve the track's worktree
+
+Read `conductor/tracks/$ARGUMENTS/metadata.json`. If it contains a `worktreePath` field, this track has a dedicated worktree: confirm the current working directory is that worktree (`worktreePath`) before resolving any target or reconciling any git history below — the SHAs, `plan.md`, and `tracks.md` this command operates on live on that track's own branch. If `metadata.json` has no `worktreePath` field, this track was created before worktree-per-track support existed — grandfather it: proceed exactly as before, operating on the current worktree.
+
 ## 1. Target selection
 
 **Path A — a track ID (and optionally a phase/task) was given:**
