@@ -109,4 +109,4 @@ Tell the user, in a short summary: the ambiguity-category checklist categories t
 
 ## 7. Pause for approval
 
-Tell the user the generated track ID and that the next step is `/conductor/implement <track_id>`. Pause for approval before `/conductor/implement`. Do not invoke `/conductor/implement` yourself under any circumstances — this command ends here and the user must separately run `/conductor/implement`.
+Tell the user the generated track ID, the worktree path (`.worktrees/<track_id>`) they should `cd` into before running the next command, and that the next step is `/conductor/implement <track_id>` run from inside that worktree. Pause for approval before `/conductor/implement`. Do not invoke `/conductor/implement` yourself under any circumstances — this command ends here and the user must separately run `/conductor/implement`.
