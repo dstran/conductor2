@@ -98,7 +98,7 @@ that evidence is not re-derived per task.
       confirm the Delete and Skip branches each state no PR is opened
       [backend-logic] 59a98d4
 
-## Phase 4: `/conductor/status` aggregates across worktrees and flags merged branches
+## Phase 4: `/conductor/status` aggregates across worktrees and flags merged branches [checkpoint: 5fff888]
 
 - [x] Task: Rewrite `status.md` Step 0 (new, before today's Step 1) to
       enumerate `.worktrees/*` (via `git worktree list`) in addition to
