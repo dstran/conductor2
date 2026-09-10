@@ -33,7 +33,7 @@ that evidence is not re-derived per task.
 
 ## Phase 1: `/conductor/new-track` creates the worktree
 
-- [ ] Task: Add Step 2.5 to `new-track.md` — after the track-ID
+- [x] Task: Add Step 2.5 to `new-track.md` — after the track-ID
       collision check and before artifact creation — run
       `git worktree add .worktrees/<track_id> -b track/<track_id>`
       from current `HEAD`; on failure, stop and report the exact git
@@ -41,7 +41,7 @@ that evidence is not re-derived per task.
       grep assertion: confirm `new-track.md` contains a step invoking
       `git worktree add` with the `.worktrees/<track_id>` path and
       `-b track/<track_id>` branch name, plus the no-fallback stop
-      language [backend-logic]
+      language [backend-logic] beed03e
 - [ ] Task: Update `new-track.md` Steps 3–5 to operate relative to the
       new worktree path, and Step 3's `metadata.json` write to include
       `worktreePath`, `branch`, and `baseRef` (the commit SHA `HEAD`
