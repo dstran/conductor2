@@ -86,6 +86,8 @@ Do not paraphrase, summarize, or otherwise alter the copied content — `conduct
 
 If `conductor/tracks.md` is missing, create it with the standard registry skeleton (`# Tracks Registry` header plus empty `## Active` and `## Blocked` sections and the lifecycle-encoding notes). Do not add any track entries — `/conductor/new-track` owns those.
 
+This skeleton file lives in the current worktree/branch. `/conductor/new-track` creates a dedicated worktree and branch for every track by default, so once tracks begin using their own worktrees, this file's scope is that current worktree/branch only — not a single global registry shared across every track's worktree.
+
 ## 9. Handshake index (`conductor/index.md`)
 
 Write `conductor/index.md` — the single source of truth later commands read:
