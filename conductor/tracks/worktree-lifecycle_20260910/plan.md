@@ -48,11 +48,11 @@ that evidence is not re-derived per task.
       pointed to before worktree creation). Verify via grep assertion:
       confirm Step 3's `metadata.json` description names all three new
       fields [backend-logic] f4afe90
-- [ ] Task: Update `new-track.md` Step 6 (pause for approval) to tell
+- [x] Task: Update `new-track.md` Step 6 (pause for approval) to tell
       the user the worktree path alongside the track ID, so they know
       where to `cd` before running `/conductor/implement`. Verify via
       grep assertion: confirm Step 6 mentions the worktree path
-      [backend-logic]
+      [backend-logic] dee74da
 
 ## Phase 2: `/conductor/implement` and `/conductor/revert` become worktree-aware
 
