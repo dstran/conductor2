@@ -36,6 +36,12 @@ verify the fix using the same test-first/test-after loop from
 Do not wait for phase-end or track-end to act on it.
 
 ## 2. Work through the current phase
+When marking this track's very first task `[~]` (i.e. this is the
+first time `/conductor/implement` has touched this track), also set
+`metadata.json`'s `status` field to `"in-progress"`. On every
+subsequent task in this track, leave `status` as `"in-progress"` — no
+further write needed until Step 4.
+
 For each task in the current phase, in order:
    a. Check its type tag (`backend-logic`, `api-client`,
       `api-contract`, `frontend-ui`, `e2e-flow`) against the
@@ -109,7 +115,9 @@ Once every phase has its own checkpoint commit:
    - Update the tracks registry in the track's worktree (`conductor/tracks.md`) using the exact awaiting-review
       encoding defined there: keep the track entry in `## Active` as
      `[~]` and add the note `Status: implementation complete —
-     awaiting review.` directly below it.
+     awaiting review.` directly below it. Also set `metadata.json`'s
+     `status` field to `"awaiting-review"`, mirroring this same
+     transition.
    - Tell the user the track is ready for `/conductor/review $ARGUMENTS`.
 
 ## 5. Synchronize project documentation
