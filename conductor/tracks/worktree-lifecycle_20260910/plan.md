@@ -100,13 +100,13 @@ that evidence is not re-derived per task.
 
 ## Phase 4: `/conductor/status` aggregates across worktrees and flags merged branches
 
-- [ ] Task: Rewrite `status.md` Step 0 (new, before today's Step 1) to
+- [x] Task: Rewrite `status.md` Step 0 (new, before today's Step 1) to
       enumerate `.worktrees/*` (via `git worktree list`) in addition to
       the current worktree, and read each one's `conductor/tracks.md`
       and `conductor/tracks/*/metadata.json`. Verify via grep assertion:
       confirm `status.md` contains a step invoking `git worktree list`
       and reading each discovered worktree's registry/metadata
-      [backend-logic]
+      [backend-logic] d846110
 - [ ] Task: Add a new step to `status.md`: for each discovered worktree,
       compute `git log <baseRef>..<branch>` from its `metadata.json`; if
       empty (or `gh pr view --json state` reports merged), flag it as
