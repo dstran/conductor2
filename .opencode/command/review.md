@@ -133,10 +133,37 @@ Then act on the choice:
       `chore(conductor): Archive track '$ARGUMENTS'`. Tell the user the
       track was archived. This is a separate commit from the step 9
       closure commit.
+
+      **Open a PR (Archive only):** immediately after the archive
+      commit above, if the track's `metadata.json` records a `branch`
+      and `baseRef` (this track has a dedicated worktree per
+      `/conductor/new-track`), open a pull request from that branch
+      against `baseRef`:
+      - Check `gh auth status`. If `gh` is installed and authenticated,
+        run `gh pr create --base <baseRef-branch> --head <branch>
+        --title "<track description>" --body "<summary of the closure
+        report from review.md>"`.
+      - If `gh` is missing or unauthenticated, do not fail silently —
+        print the exact manual steps instead: `git push -u origin
+        <branch>`, followed by the URL/instructions to open a PR by
+        hand on the hosting platform, using the same title/body
+        content.
+      - In either case, state explicitly to the user: Conductor opens
+        the PR but never merges it — merging is always a human action,
+        gated on the human's own review of the PR, separate from this
+        command's own approval gate in step 7.
+      - If the track's `metadata.json` has no `branch`/`baseRef`
+        (grandfathered pre-worktree track), skip this PR step entirely
+        — there is no dedicated branch to open a PR from.
    b. **Delete:** ask a Yes/No question warning that this is an
       irreversible deletion. On yes, delete `conductor/tracks/$ARGUMENTS/`,
       remove the track's entry from `conductor/tracks.md`, and commit with
       the message `chore(conductor): Delete track '$ARGUMENTS'`. On no,
-      treat it as Skip.
+      treat it as Skip. **No PR is opened for Delete** — there is
+      nothing left to merge back.
    c. **Skip:** leave the `[x]` entry in `## Active` and the folder in
-      `conductor/tracks/` unchanged. No second commit.
+      `conductor/tracks/` unchanged. No second commit. **No PR is
+      opened for Skip** — the track's registry entry is still live, so
+      merging this branch now would conflict with any sibling track
+      that also still has a live entry; open a PR only after Archiving
+      or Deleting.
