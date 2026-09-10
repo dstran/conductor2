@@ -77,7 +77,7 @@ that evidence is not re-derived per task.
       tracks.md" mentions in either file outside the new worktree-aware
       phrasing [backend-logic] ee6878a
 
-## Phase 3: `/conductor/review` archives on-branch, then opens a PR
+## Phase 3: `/conductor/review` archives on-branch, then opens a PR [checkpoint: 59a98d4]
 
 - [x] Task: Extend `review.md` Step 10's Archive branch: after the
       existing move-and-commit, add a PR-opening step — check for `gh`
