@@ -225,7 +225,7 @@ assertion loop before being marked `[x]`.
       `gh pr create` line references `baseBranch` (not `baseRef`) in
       the `--base` position, and its gating condition checks for
       `baseBranch` [backend-logic] 67ebd4e
-- [ ] Task: [Review fix — LOW] `metadata.json`'s `status` field is set
+- [x] Task: [Review fix — LOW] `metadata.json`'s `status` field is set
       once at track creation (`"new"`) and never updated, going stale
       as the track progresses through implement/review/archive — a
       latent inconsistency now that other fields in the same file
@@ -246,4 +246,4 @@ assertion loop before being marked `[x]`.
         the `"in-progress"` and `"awaiting-review"` status-write steps;
         confirm `review.md` contains the `"complete"` status-write step
         after closure and the `"archived"` status-write step in the
-        Archive branch [backend-logic]
+        Archive branch [backend-logic] 79c78e4
