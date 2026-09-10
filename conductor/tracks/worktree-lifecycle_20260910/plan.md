@@ -196,3 +196,54 @@ that evidence is not re-derived per task.
       remaining line-level grep hits are qualified by adjacent-line
       prose, not real gaps — verified by manual read of each hit's
       surrounding context, not just the regex.
+
+## Phase 6: Review Fixes
+
+Per `conductor/tracks/worktree-lifecycle_20260910/review.md`'s two
+findings. Same TDD enforcement and task commit procedure as any other
+task — each fix is tagged and verified via the doctrine-text grep
+assertion loop before being marked `[x]`.
+
+- [ ] Task: [Review fix — HIGH] `review.md`'s PR-opening step passes
+      `baseRef` (defined in `new-track.md` as a commit SHA) to
+      `gh pr create --base`, which requires a branch name, not a SHA —
+      this would fail at runtime. Fix: add a new `baseBranch` field to
+      `new-track.md` Step 2.5, captured via `git rev-parse
+      --abbrev-ref HEAD` before worktree creation and written into
+      `metadata.json` alongside the existing `baseRef`. If `HEAD` is
+      detached (`git rev-parse --abbrev-ref HEAD` returns `HEAD`), stop
+      and ask the user to check out a branch first — same "stop and
+      report, don't guess" pattern as worktree-creation failure — do
+      not record a bogus `baseBranch: "HEAD"`. Update `review.md`'s PR
+      step to use `--base <baseBranch>` instead of `<baseRef-branch>`,
+      and require `baseBranch` (in addition to `branch`) for the PR
+      step's gating condition, so incomplete/grandfathered metadata
+      still correctly skips the PR step. Verify via grep assertion:
+      confirm `new-track.md` contains the `baseBranch` capture step and
+      detached-HEAD stop condition; confirm `metadata.json`'s field
+      description names `baseBranch`; confirm `review.md`'s
+      `gh pr create` line references `baseBranch` (not `baseRef`) in
+      the `--base` position, and its gating condition checks for
+      `baseBranch` [backend-logic]
+- [ ] Task: [Review fix — LOW] `metadata.json`'s `status` field is set
+      once at track creation (`"new"`) and never updated, going stale
+      as the track progresses through implement/review/archive — a
+      latent inconsistency now that other fields in the same file
+      (`branch`, `baseRef`, `worktreePath`) are actively read and
+      trusted by `status.md` and `review.md`. Fix (Option A — mirror
+      `tracks.md`'s existing state machine into `metadata.json`, same
+      transition points, no new states):
+      - `implement.md`: when a track's first task moves to `[~]` (work
+        begins), also set `metadata.json`'s `status` to `"in-progress"`;
+        when Step 4 marks the track awaiting-review in `tracks.md`, also
+        set `status` to `"awaiting-review"`.
+      - `review.md`: after the Step 9 closure commit, set `status` to
+        `"complete"`. In Step 10, if Archive is chosen, set `status` to
+        `"archived"`; if Delete is chosen, the file is deleted so no
+        status update applies; if Skip is chosen, leave `status` as
+        `"complete"`.
+      - Verify via grep assertion: confirm `implement.md` contains both
+        the `"in-progress"` and `"awaiting-review"` status-write steps;
+        confirm `review.md` contains the `"complete"` status-write step
+        after closure and the `"archived"` status-write step in the
+        Archive branch [backend-logic]
