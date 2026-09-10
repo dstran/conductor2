@@ -64,12 +64,12 @@ that evidence is not re-derived per task.
       assertion: confirm `implement.md` contains a preamble step
       checking `metadata.json` for `worktreePath` and both the
       worktree-context and grandfather branches [backend-logic] 3b2859e
-- [ ] Task: Apply the same preamble pattern to `revert.md` (its Step 1
+- [x] Task: Apply the same preamble pattern to `revert.md` (its Step 1
       target-selection step), since `/revert`'s git reconciliation must
       run against the correct worktree's history. Verify via grep
       assertion: confirm `revert.md` contains the equivalent
       `worktreePath` check before Step 1's target resolution
-      [backend-logic]
+      [backend-logic] b15c315
 - [ ] Task: Update doctrine wording in both files: replace references
       to "`conductor/tracks.md`" (implying a single global file) with
       "the tracks registry in the track's worktree". Verify via grep
