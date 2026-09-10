@@ -24,6 +24,7 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - `conductor/index.md` is the handshake artifact for the project surface.
 - `setup`, `new-track`, `implement`, and `review` read `conductor/index.md` to discover project context, workflow, and track infrastructure.
 - `conductor/tracks.md` and the linked `conductor/tracks/` directory are part of the method, not incidental paperwork.
+- `new-track` creates a dedicated git worktree and branch for every track by default (`.worktrees/<track_id>` on branch `track/<track_id>`, from current `HEAD`). `conductor/tracks.md` and `conductor/tracks/` are therefore per-worktree once a track has its own worktree — each track's registry and artifacts live only in that track's checkout until the track's branch is merged back. Tracks created before this convention existed have no recorded worktree and continue operating on whichever worktree they're run from, unchanged.
 - If the handshake or required linked artifacts are missing or stale, repair the project surface through `setup` or `new-track` rather than bypassing it.
 
 ## Planning Discipline
@@ -35,7 +36,7 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 
 ## Implement Contract
 
-- `implement` works from an existing track selected from `conductor/tracks.md`.
+- `implement` works from an existing track selected from the tracks registry in the track's worktree (`conductor/tracks.md`).
 - `implement` reads `conductor/index.md`, the selected track's `spec.md`, `plan.md`, and the linked workflow before coding.
 - `implement` must not create a brand-new track opportunistically when the user asked to execute an approved plan.
 - `implement` updates track and plan state as work progresses, then hands the track to `review` when implementation is complete.

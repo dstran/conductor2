@@ -7,7 +7,23 @@ agent: build
 
 Read `conductor/tracks.md`, then for every track listed under `## Active`
 and `## Blocked`, resolve and read that track's `plan.md` (link given in
-the registry entry). Do not edit product code.
+the registry entry). Do not edit product code. Once Step 0 runs, this
+means every registry discovered there — the current worktree's own
+`conductor/tracks.md` plus every sibling track worktree's — not only
+the current worktree's registry.
+
+## 0. Discover sibling track worktrees
+
+Run `git worktree list` to enumerate every worktree attached to this
+repository, not just the current one. For each worktree other than the
+current one, check whether it has its own `conductor/tracks.md` and
+`conductor/tracks/*/metadata.json` files (a track worktree created by
+`/conductor/new-track`'s worktree-creation step). Read each discovered
+worktree's `conductor/tracks.md` the same way Step 1 reads the current
+one, so this command's view spans every track currently in flight
+across all worktrees, not only the invoking worktree's own registry.
+Skip any worktree that has no `conductor/` directory (not a Conductor
+track worktree — e.g. an unrelated feature-branch worktree).
 
 ## 1. Per-track progress
 
@@ -33,6 +49,24 @@ For each track's `plan.md`:
 - **Archived:** if `conductor/archive/` exists, list the archived track
   directories inside it. These have been removed from the registry and
   have no live progress to report.
+
+## 2.5. Cleanup-ready worktrees
+
+For each sibling worktree discovered in Step 0 (and the current one, if
+it has recorded worktree metadata), read its track's `metadata.json`
+for `branch` and `baseRef`. For each such track:
+
+- Compute `git log <baseRef>..<branch>`. If this is empty, the branch's
+  commits are already fully contained in `baseRef` — the PR (if one
+  was opened per `/conductor/review`'s Archive step) has been merged.
+- If `gh` is available, cross-check with `gh pr view <branch> --json
+  state` — a `MERGED` state also confirms this.
+- Flag any track meeting either condition as **cleanup-ready**, and
+  print the exact commands to remove it: `git worktree remove
+  <worktreePath>`, followed by `git branch -d <branch>` and, if a
+  remote copy exists, `git push origin --delete <branch>`.
+- This is detection only — never run these commands automatically.
+  The human decides when to actually clean up a merged worktree.
 
 ## 3. Workflow doctrine staleness
 
@@ -63,7 +97,12 @@ Report, in this order:
 4. **Blockers:** every `Blocker:` note found under `## Blocked`.
 5. **Archived tracks:** the list from step 2, or "none" if
    `conductor/archive/` doesn't exist.
-6. **Workflow doctrine line** from step 3, always shown last.
+6. **Cleanup-ready worktrees:** the list flagged in step 2.5 — track,
+   worktree path, and the exact removal commands — or "none" if no
+   sibling worktree's branch is fully merged.
+7. **Workflow doctrine line** from step 3, always shown last.
 
-If `conductor/tracks.md` has no entries under `## Active` or `## Blocked`,
-report that the registry is empty and skip steps 1 and 3.
+If `conductor/tracks.md` has no entries under `## Active` or `## Blocked`
+across every discovered registry (current worktree plus every sibling
+track worktree from Step 0), report that the registry is empty and skip
+steps 1 and 3.
