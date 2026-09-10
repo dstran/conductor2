@@ -1,0 +1,249 @@
+# Plan: Worktree-native concurrent Conductor lifecycle
+
+Track ID: `worktree-lifecycle_20260910`
+
+All tasks in this track edit Conductor command doctrine — markdown
+prose in files under `.opencode/command/`, `skill/SKILL.md`,
+`AGENTS.md`. No application code is touched anywhere in this track.
+
+**Revised test-first approach (superseding the original per-task
+"scripted git simulation" framing):** a bash script cannot verify that
+an LLM agent will faithfully follow markdown prose, and it cannot
+test-first ambient git/filesystem mechanics that already work today
+regardless of what doctrine says (e.g. `git worktree add` already
+refuses to collide with an existing branch — that's git's behavior,
+not this track's to build). The only artifact each task actually
+changes is the doctrine text itself, so the genuine test-first loop per
+task is:
+
+1. Write a grep/structural assertion against the target `.md` file
+   confirming the specific new doctrine text is present (e.g. "does
+   `new-track.md` contain a step running `git worktree add
+   .worktrees/<track_id> -b track/<track_id>`?").
+2. Run it. Confirm it fails — the text genuinely isn't there yet.
+3. Make the doctrine edit.
+4. Run it again. Confirm it passes.
+5. Mark the task `[x]` per the usual task commit procedure.
+
+The underlying git-mechanics claims this track's design relies on (the
+merge-clean property when archive runs before merge-back; the conflict
+that occurs if it doesn't) are already validated empirically and
+recorded as evidence in `spec.md`'s "Key design property" section —
+that evidence is not re-derived per task.
+
+## Phase 1: `/conductor/new-track` creates the worktree [checkpoint: dee74da]
+
+- [x] Task: Add Step 2.5 to `new-track.md` — after the track-ID
+      collision check and before artifact creation — run
+      `git worktree add .worktrees/<track_id> -b track/<track_id>`
+      from current `HEAD`; on failure, stop and report the exact git
+      error verbatim, per spec's decision (no fallback). Verify via
+      grep assertion: confirm `new-track.md` contains a step invoking
+      `git worktree add` with the `.worktrees/<track_id>` path and
+      `-b track/<track_id>` branch name, plus the no-fallback stop
+      language [backend-logic] beed03e
+- [x] Task: Update `new-track.md` Steps 3–5 to operate relative to the
+      new worktree path, and Step 3's `metadata.json` write to include
+      `worktreePath`, `branch`, and `baseRef` (the commit SHA `HEAD`
+      pointed to before worktree creation). Verify via grep assertion:
+      confirm Step 3's `metadata.json` description names all three new
+      fields [backend-logic] f4afe90
+- [x] Task: Update `new-track.md` Step 6 (pause for approval) to tell
+      the user the worktree path alongside the track ID, so they know
+      where to `cd` before running `/conductor/implement`. Verify via
+      grep assertion: confirm Step 6 mentions the worktree path
+      [backend-logic] dee74da
+
+## Phase 2: `/conductor/implement` and `/conductor/revert` become worktree-aware [checkpoint: ee6878a]
+
+- [x] Task: Add a preamble step to `implement.md` (before Step 1): read
+      the target track's `metadata.json`; if `worktreePath` is present,
+      confirm the command is running inside (or switch context to)
+      that path before touching `plan.md`/`tracks.md`; if absent,
+      proceed exactly as today (grandfather clause). Verify via grep
+      assertion: confirm `implement.md` contains a preamble step
+      checking `metadata.json` for `worktreePath` and both the
+      worktree-context and grandfather branches [backend-logic] 3b2859e
+- [x] Task: Apply the same preamble pattern to `revert.md` (its Step 1
+      target-selection step), since `/revert`'s git reconciliation must
+      run against the correct worktree's history. Verify via grep
+      assertion: confirm `revert.md` contains the equivalent
+      `worktreePath` check before Step 1's target resolution
+      [backend-logic] b15c315
+- [x] Task: Update doctrine wording in both files: replace references
+      to "`conductor/tracks.md`" (implying a single global file) with
+      "the tracks registry in the track's worktree". Verify via grep
+      assertion: confirm zero remaining unqualified "conductor/
+      tracks.md" mentions in either file outside the new worktree-aware
+      phrasing [backend-logic] ee6878a
+
+## Phase 3: `/conductor/review` archives on-branch, then opens a PR [checkpoint: 59a98d4]
+
+- [x] Task: Extend `review.md` Step 10's Archive branch: after the
+      existing move-and-commit, add a PR-opening step — check for `gh`
+      on PATH and authenticated (`gh auth status`); if present, run
+      `gh pr create` against the track's recorded `baseRef` with a
+      summary of the closure report; if absent/unauthenticated, print
+      the exact manual `git push -u origin track/<track_id>` and
+      PR-creation instructions instead. Explicitly state Conductor
+      never merges the PR — that is always a human action. Verify via
+      grep assertion: confirm Step 10's Archive branch contains the
+      `gh pr create` invocation, the `baseRef` reference, the manual
+      fallback instructions, and the "never merges" statement
+      [backend-logic] 59a98d4
+- [x] Task: Add a line to `review.md` clarifying that Delete and Skip
+      (Step 10's other two branches) do not open a PR — only Archive
+      does, since Delete/Skip leave no clean merge-back state per
+      spec's documented residual risk. Verify via grep assertion:
+      confirm the Delete and Skip branches each state no PR is opened
+      [backend-logic] 59a98d4
+
+## Phase 4: `/conductor/status` aggregates across worktrees and flags merged branches [checkpoint: 5fff888]
+
+- [x] Task: Rewrite `status.md` Step 0 (new, before today's Step 1) to
+      enumerate `.worktrees/*` (via `git worktree list`) in addition to
+      the current worktree, and read each one's `conductor/tracks.md`
+      and `conductor/tracks/*/metadata.json`. Verify via grep assertion:
+      confirm `status.md` contains a step invoking `git worktree list`
+      and reading each discovered worktree's registry/metadata
+      [backend-logic] d846110
+- [x] Task: Add a new step to `status.md`: for each discovered worktree,
+      compute `git log <baseRef>..<branch>` from its `metadata.json`; if
+      empty (or `gh pr view --json state` reports merged), flag it as
+      cleanup-ready and print the exact `git worktree remove
+      .worktrees/<track_id>` plus local/remote branch-delete commands —
+      detection only, never auto-run. Verify via grep assertion: confirm
+      `status.md` contains the `git log <baseRef>..<branch>` check and
+      the cleanup-command output, with explicit "never auto-run"
+      language [backend-logic] c759061
+- [x] Task: Update `status.md` Step 3 (present the summary) to include
+      a new "Cleanup-ready worktrees" section listing any flagged in
+      the previous task. Verify via grep assertion: confirm Step 3 lists
+      this new section [backend-logic] 5fff888
+
+## Phase 5: Doctrine-wide wording sweep [checkpoint: 2d5961b]
+
+- [x] Task: Update `skill/SKILL.md`'s "Project Surface" and "Implement
+      Contract" sections to state that `conductor/tracks.md` and
+      `conductor/tracks/` are per-worktree when a track has its own
+      worktree, and that `/conductor/new-track` creates that worktree
+      by default. Verify via grep assertion: confirm both named sections
+      contain the per-worktree/worktree-creation language
+      [backend-logic] a3796a6
+- [x] Task: Update `setup.md` Step 8 (tracks registry skeleton) with a
+      one-line note that this file's scope is the current
+      worktree/branch once tracks begin using dedicated worktrees.
+      Verify via grep assertion: confirm Step 8 contains this note
+      [backend-logic] 22ef579
+- [x] Task: Update the root `AGENTS.md` compatibility-wrapper note (if
+      it references the tracks registry) to match, keeping `skill/
+      SKILL.md` as the canonical source per this repo's own doctrine
+      rule. Verify via grep assertion: confirm `AGENTS.md` has no
+      tracks-registry wording that contradicts `skill/SKILL.md`'s
+      updated per-worktree language (or confirm it makes no such
+      reference at all, in which case this task is a no-op check, not
+      an edit) [backend-logic] no-op: AGENTS.md has zero tracks-registry
+      references (confirmed via grep, exit 1) — no edit needed
+- [x] Task: [Added during implementation — flagged as a genuine
+      wrapper-drift gap, not scoped in the original plan] Update
+      `.github/copilot-instructions.md` and
+      `.github/agents/conductor.agent.md`, both of which still say
+      unqualified "conductor/tracks.md", to match `skill/SKILL.md`'s
+      updated per-worktree wording — per `AGENTS.md`'s own rule that
+      these are compatibility wrappers that must track the canonical
+      doctrine. Verify via grep assertion: confirm both files' tracks.md
+      mentions carry the same worktree qualification `skill/SKILL.md`
+      now uses [backend-logic] 916a4f3
+- [x] Task: [Added during implementation — the Phase 5 closing sweep
+      surfaced that `review.md` never received the worktree-resolution
+      preamble that `implement.md` and `revert.md` got in Phase 2, even
+      though `/review` has the identical need to operate on the correct
+      track's worktree. This is a functional gap, not wording.] Add the
+      same Step 0 preamble pattern to `review.md` (before its Step 1
+      Plan Compliance check): read the target track's `metadata.json`;
+      if `worktreePath` is present, scope every read/write/commit in
+      this command to that path; if absent, grandfather to current
+      behavior. Then qualify `review.md`'s remaining unqualified
+      `conductor/tracks.md` prose mentions the same way Phase 2 did for
+      `implement.md`/`revert.md`. Verify via grep assertion: confirm
+      `review.md` contains the Step 0 preamble with both branches, and
+      confirm zero remaining unqualified `conductor/tracks.md` prose
+      mentions (excluding the `@`-include directive) [backend-logic]
+      34fcfa3
+- [x] Task: [Added during implementation — the Phase 5 closing sweep
+      surfaced that `status.md`'s Step 1 ("Read `conductor/tracks.md`,
+      then for every track...") and Step 4's empty-registry fallback
+      still read as current-worktree-only, contradicting Step 0's
+      stated intent that the view spans every discovered worktree.
+      This is a functional gap, not wording.] Clarify Step 1 to iterate
+      every registry discovered in Step 0 (current worktree plus every
+      sibling track worktree), not just the current one; clarify Step
+      4's "no entries" fallback to mean no entries across every
+      discovered registry, not just the current one. Verify via grep
+      assertion: confirm both target lines explicitly reference "every
+      discovered" registry/worktree [backend-logic] 1d2b80d
+- [x] Task: Run a final repo-wide grep sweep confirming no command doc
+      under `.opencode/command/` still implies a single global
+      `conductor/tracks.md` shared by all tracks simultaneously (i.e.
+      no unqualified "the tracks registry" without "in the track's
+      worktree" or equivalent phrasing anywhere in the five touched
+      files). This is the phase's closing verification, run after all
+      four edits above, not a per-file edit of its own [backend-logic]
+      Sweep run three times during implementation; surfaced two genuine
+      functional gaps (missing worktree preamble in review.md; current-
+      worktree-only ambiguity in status.md Steps 1/4), both fixed as
+      separate tasks above (34fcfa3, 1d2b80d). Final pass confirms all
+      remaining line-level grep hits are qualified by adjacent-line
+      prose, not real gaps — verified by manual read of each hit's
+      surrounding context, not just the regex.
+
+## Phase 6: Review Fixes
+
+Per `conductor/tracks/worktree-lifecycle_20260910/review.md`'s two
+findings. Same TDD enforcement and task commit procedure as any other
+task — each fix is tagged and verified via the doctrine-text grep
+assertion loop before being marked `[x]`.
+
+- [x] Task: [Review fix — HIGH] `review.md`'s PR-opening step passes
+      `baseRef` (defined in `new-track.md` as a commit SHA) to
+      `gh pr create --base`, which requires a branch name, not a SHA —
+      this would fail at runtime. Fix: add a new `baseBranch` field to
+      `new-track.md` Step 2.5, captured via `git rev-parse
+      --abbrev-ref HEAD` before worktree creation and written into
+      `metadata.json` alongside the existing `baseRef`. If `HEAD` is
+      detached (`git rev-parse --abbrev-ref HEAD` returns `HEAD`), stop
+      and ask the user to check out a branch first — same "stop and
+      report, don't guess" pattern as worktree-creation failure — do
+      not record a bogus `baseBranch: "HEAD"`. Update `review.md`'s PR
+      step to use `--base <baseBranch>` instead of `<baseRef-branch>`,
+      and require `baseBranch` (in addition to `branch`) for the PR
+      step's gating condition, so incomplete/grandfathered metadata
+      still correctly skips the PR step. Verify via grep assertion:
+      confirm `new-track.md` contains the `baseBranch` capture step and
+      detached-HEAD stop condition; confirm `metadata.json`'s field
+      description names `baseBranch`; confirm `review.md`'s
+      `gh pr create` line references `baseBranch` (not `baseRef`) in
+      the `--base` position, and its gating condition checks for
+      `baseBranch` [backend-logic] 67ebd4e
+- [x] Task: [Review fix — LOW] `metadata.json`'s `status` field is set
+      once at track creation (`"new"`) and never updated, going stale
+      as the track progresses through implement/review/archive — a
+      latent inconsistency now that other fields in the same file
+      (`branch`, `baseRef`, `worktreePath`) are actively read and
+      trusted by `status.md` and `review.md`. Fix (Option A — mirror
+      `tracks.md`'s existing state machine into `metadata.json`, same
+      transition points, no new states):
+      - `implement.md`: when a track's first task moves to `[~]` (work
+        begins), also set `metadata.json`'s `status` to `"in-progress"`;
+        when Step 4 marks the track awaiting-review in `tracks.md`, also
+        set `status` to `"awaiting-review"`.
+      - `review.md`: after the Step 9 closure commit, set `status` to
+        `"complete"`. In Step 10, if Archive is chosen, set `status` to
+        `"archived"`; if Delete is chosen, the file is deleted so no
+        status update applies; if Skip is chosen, leave `status` as
+        `"complete"`.
+      - Verify via grep assertion: confirm `implement.md` contains both
+        the `"in-progress"` and `"awaiting-review"` status-write steps;
+        confirm `review.md` contains the `"complete"` status-write step
+        after closure and the `"archived"` status-write step in the
+        Archive branch [backend-logic] 79c78e4
