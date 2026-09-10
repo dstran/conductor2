@@ -1,7 +1,7 @@
 {
   "id": "worktree-lifecycle_20260910",
   "type": "feature",
-  "status": "awaiting-review",
+  "status": "complete",
   "worktreePath": ".worktrees/worktree-lifecycle_20260910",
   "branch": "track/worktree-lifecycle_20260910",
   "baseBranch": "main",
