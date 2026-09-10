@@ -10,7 +10,7 @@ When working in this repository:
 
 - Read `skill/SKILL.md` first.
 - Command docs live in `.opencode/command/`.
-- Shared lifecycle artifacts live in `conductor/`, including `conductor/workflow.md` and `conductor/tracks.md`.
+- Shared lifecycle artifacts live in `conductor/`, including `conductor/workflow.md` and the tracks registry in the track's worktree (`conductor/tracks.md`) — per-worktree once a track has its own dedicated worktree, per `skill/SKILL.md`.
 - `install.sh` installs the OpenCode package surface under `~/.opencode/conductor/` and the Gemini extension surface under `~/.gemini/extensions/conductor/`.
 - Treat `AGENTS.md` and `.github/copilot-instructions.md` as compatibility shims, not independent doctrine.
 - If a wrapper conflicts with `skill/SKILL.md`, follow `skill/SKILL.md` and repair the wrapper.

@@ -49,9 +49,42 @@ Compose the **track ID** as `<shortname>_YYYYMMDD`, where `YYYYMMDD` is today's 
 
 **Collision check:** list the existing directories under `conductor/tracks/`. If a directory with the generated track ID already exists, do not overwrite it — ask the user with a single-choice question whether to provide a unique name or resume the existing track. Only proceed once the track ID is unique or the user has chosen to resume.
 
+## 2.5. Create the track's worktree
+
+Before creating the worktree, determine the branch `HEAD` currently
+points to: `git rev-parse --abbrev-ref HEAD`. If this returns the
+literal string `HEAD` (a detached-HEAD state, not on any branch), stop
+and ask the user to check out a branch first — do not guess or record
+a bogus branch name. Otherwise, record this as `baseBranch` — the
+actual branch name (e.g. `main`), distinct from `baseRef` below (a
+commit SHA). `baseBranch` is what a later PR should target; `baseRef`
+is only used for merge-detection SHA ranges, not as a `gh pr create`
+argument.
+
+Every track gets its own isolated git worktree and branch, created from
+current `HEAD`, so parallel tracks never contend for the same working
+directory or registry file:
+
+```bash
+git worktree add .worktrees/<track_id> -b track/<track_id>
+```
+
+If this command fails — the worktree path or branch already exists,
+the directory is not a git repository, or any other git error — stop
+immediately and report the exact git error verbatim to the user. Do
+not fall back to creating the track in the current worktree, and do
+not silently overwrite or reuse an existing worktree/branch.
+
+On success, record the base commit SHA that `HEAD` pointed to
+immediately before running this command — this is `baseRef`, written
+into `metadata.json` in Step 3. All remaining steps in this command
+(Step 3 onward) run inside the new worktree at `.worktrees/<track_id>`,
+not in the directory `/conductor/new-track` was invoked from.
+
 ## 3. Create the track artifacts
 
-Under the generated track ID, create:
+Under the generated track ID, inside the worktree created in Step 2.5,
+create:
 
 - `conductor/tracks/<track_id>/spec.md`
 - `conductor/tracks/<track_id>/plan.md`
@@ -59,7 +92,7 @@ Under the generated track ID, create:
 
 Write `spec.md` using the exact content approved in Step 1's Gate A (do not re-draft it here), including its two provenance sections.
 
-`metadata.json` records the track ID, type, status (`new`), and created/updated timestamps. If Step 1's "Open questions auto-decided by agent — PLEASE DOUBLE-CHECK" section is non-empty, also record `"needsReview": true` in `metadata.json`.
+`metadata.json` records the track ID, type, status (`new`), created/updated timestamps, and the worktree fields from Step 2.5: `worktreePath` (`.worktrees/<track_id>`), `branch` (`track/<track_id>`), `baseBranch` (the branch name `HEAD` was on before worktree creation — used as the PR base branch), and `baseRef` (the base commit SHA recorded in Step 2.5 — used only for merge-detection, not as a PR base). If Step 1's "Open questions auto-decided by agent — PLEASE DOUBLE-CHECK" section is non-empty, also record `"needsReview": true` in `metadata.json`.
 
 Planning is first-class: `/conductor/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`). Write every task line as `- [ ] Task: <description> [<task-type>]` and every phase heading as `## Phase <N>: <title>` — `/conductor/implement` and `/conductor/review` complete these into `- [x] Task: <description> [<task-type>] <sha>` and `## Phase <N>: <title> [checkpoint: <sha>]` per `conductor/workflow.md`'s task commit procedure.
 
@@ -86,4 +119,4 @@ Tell the user, in a short summary: the ambiguity-category checklist categories t
 
 ## 7. Pause for approval
 
-Tell the user the generated track ID and that the next step is `/conductor/implement <track_id>`. Pause for approval before `/conductor/implement`. Do not invoke `/conductor/implement` yourself under any circumstances — this command ends here and the user must separately run `/conductor/implement`.
+Tell the user the generated track ID, the worktree path (`.worktrees/<track_id>`) they should `cd` into before running the next command, and that the next step is `/conductor/implement <track_id>` run from inside that worktree. Pause for approval before `/conductor/implement`. Do not invoke `/conductor/implement` yourself under any circumstances — this command ends here and the user must separately run `/conductor/implement`.
