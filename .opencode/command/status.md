@@ -9,6 +9,19 @@ Read `conductor/tracks.md`, then for every track listed under `## Active`
 and `## Blocked`, resolve and read that track's `plan.md` (link given in
 the registry entry). Do not edit product code.
 
+## 0. Discover sibling track worktrees
+
+Run `git worktree list` to enumerate every worktree attached to this
+repository, not just the current one. For each worktree other than the
+current one, check whether it has its own `conductor/tracks.md` and
+`conductor/tracks/*/metadata.json` files (a track worktree created by
+`/conductor/new-track`'s worktree-creation step). Read each discovered
+worktree's `conductor/tracks.md` the same way Step 1 reads the current
+one, so this command's view spans every track currently in flight
+across all worktrees, not only the invoking worktree's own registry.
+Skip any worktree that has no `conductor/` directory (not a Conductor
+track worktree — e.g. an unrelated feature-branch worktree).
+
 ## 1. Per-track progress
 
 For each track's `plan.md`:
