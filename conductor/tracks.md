@@ -33,7 +33,6 @@ Exact lifecycle encodings:
 ## Active
 
 <!-- /conductor/new-track adds new entries here and links each entry to plan.md. -->
-- [x] **Track: Worktree-native concurrent Conductor lifecycle** *Link: [tracks/worktree-lifecycle_20260910/plan.md](./tracks/worktree-lifecycle_20260910/plan.md)*
 
 ## Blocked
 
