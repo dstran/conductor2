@@ -121,7 +121,7 @@ that evidence is not re-derived per task.
       the previous task. Verify via grep assertion: confirm Step 3 lists
       this new section [backend-logic] 5fff888
 
-## Phase 5: Doctrine-wide wording sweep
+## Phase 5: Doctrine-wide wording sweep [checkpoint: 2d5961b]
 
 - [x] Task: Update `skill/SKILL.md`'s "Project Surface" and "Implement
       Contract" sections to state that `conductor/tracks.md` and
