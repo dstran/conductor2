@@ -107,7 +107,7 @@ that evidence is not re-derived per task.
       confirm `status.md` contains a step invoking `git worktree list`
       and reading each discovered worktree's registry/metadata
       [backend-logic] d846110
-- [ ] Task: Add a new step to `status.md`: for each discovered worktree,
+- [x] Task: Add a new step to `status.md`: for each discovered worktree,
       compute `git log <baseRef>..<branch>` from its `metadata.json`; if
       empty (or `gh pr view --json state` reports merged), flag it as
       cleanup-ready and print the exact `git worktree remove
@@ -115,7 +115,7 @@ that evidence is not re-derived per task.
       detection only, never auto-run. Verify via grep assertion: confirm
       `status.md` contains the `git log <baseRef>..<branch>` check and
       the cleanup-command output, with explicit "never auto-run"
-      language [backend-logic]
+      language [backend-logic] c759061
 - [ ] Task: Update `status.md` Step 3 (present the summary) to include
       a new "Cleanup-ready worktrees" section listing any flagged in
       the previous task. Verify via grep assertion: confirm Step 3 lists
