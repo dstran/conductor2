@@ -20,6 +20,12 @@ Do not create a new track during `/conductor/implement` unless the user explicit
 
 `plan.md` is organized into phases, each with its own tasks. Follow this protocol exactly.
 
+## 0. Resolve the track's worktree
+
+Read `conductor/tracks/$ARGUMENTS/metadata.json`. If it contains a `worktreePath` field, this track has a dedicated worktree: confirm the current working directory is that worktree (`worktreePath`) before touching any file below — if it is not, treat every subsequent read/write/commit in this command as scoped to that worktree path, not the invoking directory. This keeps `plan.md`, `tracks.md`, and all commits isolated to the track's own branch, so parallel `/conductor/implement` runs in sibling worktrees never contend for the same files.
+
+If `metadata.json` has no `worktreePath` field, this track was created before worktree-per-track support existed — grandfather it: proceed exactly as before, operating on the current worktree with no worktree resolution step.
+
 ## 1. In-flight corrections (applies throughout, at any point below)
 If the user sends a message while you are actively implementing a
 task — a correction, a different approach, a spotted mistake — treat
