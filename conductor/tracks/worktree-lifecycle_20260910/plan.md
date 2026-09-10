@@ -56,14 +56,14 @@ that evidence is not re-derived per task.
 
 ## Phase 2: `/conductor/implement` and `/conductor/revert` become worktree-aware
 
-- [ ] Task: Add a preamble step to `implement.md` (before Step 1): read
+- [x] Task: Add a preamble step to `implement.md` (before Step 1): read
       the target track's `metadata.json`; if `worktreePath` is present,
       confirm the command is running inside (or switch context to)
       that path before touching `plan.md`/`tracks.md`; if absent,
       proceed exactly as today (grandfather clause). Verify via grep
       assertion: confirm `implement.md` contains a preamble step
       checking `metadata.json` for `worktreePath` and both the
-      worktree-context and grandfather branches [backend-logic]
+      worktree-context and grandfather branches [backend-logic] 3b2859e
 - [ ] Task: Apply the same preamble pattern to `revert.md` (its Step 1
       target-selection step), since `/revert`'s git reconciliation must
       run against the correct worktree's history. Verify via grep
