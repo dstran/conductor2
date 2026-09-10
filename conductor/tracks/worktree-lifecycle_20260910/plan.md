@@ -70,12 +70,12 @@ that evidence is not re-derived per task.
       assertion: confirm `revert.md` contains the equivalent
       `worktreePath` check before Step 1's target resolution
       [backend-logic] b15c315
-- [ ] Task: Update doctrine wording in both files: replace references
+- [x] Task: Update doctrine wording in both files: replace references
       to "`conductor/tracks.md`" (implying a single global file) with
       "the tracks registry in the track's worktree". Verify via grep
       assertion: confirm zero remaining unqualified "conductor/
       tracks.md" mentions in either file outside the new worktree-aware
-      phrasing [backend-logic]
+      phrasing [backend-logic] ee6878a
 
 ## Phase 3: `/conductor/review` archives on-branch, then opens a PR
 
