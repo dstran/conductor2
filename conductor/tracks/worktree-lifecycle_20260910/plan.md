@@ -143,6 +143,16 @@ that evidence is not re-derived per task.
       updated per-worktree language (or confirm it makes no such
       reference at all, in which case this task is a no-op check, not
       an edit) [backend-logic]
+- [ ] Task: [Added during implementation — flagged as a genuine
+      wrapper-drift gap, not scoped in the original plan] Update
+      `.github/copilot-instructions.md` and
+      `.github/agents/conductor.agent.md`, both of which still say
+      unqualified "conductor/tracks.md", to match `skill/SKILL.md`'s
+      updated per-worktree wording — per `AGENTS.md`'s own rule that
+      these are compatibility wrappers that must track the canonical
+      doctrine. Verify via grep assertion: confirm both files' tracks.md
+      mentions carry the same worktree qualification `skill/SKILL.md`
+      now uses [backend-logic]
 - [ ] Task: Run a final repo-wide grep sweep confirming no command doc
       under `.opencode/command/` still implies a single global
       `conductor/tracks.md` shared by all tracks simultaneously (i.e.
