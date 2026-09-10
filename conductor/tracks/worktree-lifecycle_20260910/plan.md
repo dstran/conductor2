@@ -123,13 +123,13 @@ that evidence is not re-derived per task.
 
 ## Phase 5: Doctrine-wide wording sweep
 
-- [ ] Task: Update `skill/SKILL.md`'s "Project Surface" and "Implement
+- [x] Task: Update `skill/SKILL.md`'s "Project Surface" and "Implement
       Contract" sections to state that `conductor/tracks.md` and
       `conductor/tracks/` are per-worktree when a track has its own
       worktree, and that `/conductor/new-track` creates that worktree
       by default. Verify via grep assertion: confirm both named sections
       contain the per-worktree/worktree-creation language
-      [backend-logic]
+      [backend-logic] a3796a6
 - [ ] Task: Update `setup.md` Step 8 (tracks registry skeleton) with a
       one-line note that this file's scope is the current
       worktree/branch once tracks begin using dedicated worktrees.
