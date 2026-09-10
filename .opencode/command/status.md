@@ -94,7 +94,10 @@ Report, in this order:
 4. **Blockers:** every `Blocker:` note found under `## Blocked`.
 5. **Archived tracks:** the list from step 2, or "none" if
    `conductor/archive/` doesn't exist.
-6. **Workflow doctrine line** from step 3, always shown last.
+6. **Cleanup-ready worktrees:** the list flagged in step 2.5 — track,
+   worktree path, and the exact removal commands — or "none" if no
+   sibling worktree's branch is fully merged.
+7. **Workflow doctrine line** from step 3, always shown last.
 
 If `conductor/tracks.md` has no entries under `## Active` or `## Blocked`,
 report that the registry is empty and skip steps 1 and 3.
