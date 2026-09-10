@@ -154,7 +154,7 @@ that evidence is not re-derived per task.
       doctrine. Verify via grep assertion: confirm both files' tracks.md
       mentions carry the same worktree qualification `skill/SKILL.md`
       now uses [backend-logic] 916a4f3
-- [ ] Task: [Added during implementation — the Phase 5 closing sweep
+- [x] Task: [Added during implementation — the Phase 5 closing sweep
       surfaced that `review.md` never received the worktree-resolution
       preamble that `implement.md` and `revert.md` got in Phase 2, even
       though `/review` has the identical need to operate on the correct
@@ -169,6 +169,7 @@ that evidence is not re-derived per task.
       `review.md` contains the Step 0 preamble with both branches, and
       confirm zero remaining unqualified `conductor/tracks.md` prose
       mentions (excluding the `@`-include directive) [backend-logic]
+      34fcfa3
 - [ ] Task: Run a final repo-wide grep sweep confirming no command doc
       under `.opencode/command/` still implies a single global
       `conductor/tracks.md` shared by all tracks simultaneously (i.e.
