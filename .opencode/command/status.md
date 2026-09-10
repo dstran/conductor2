@@ -7,7 +7,10 @@ agent: build
 
 Read `conductor/tracks.md`, then for every track listed under `## Active`
 and `## Blocked`, resolve and read that track's `plan.md` (link given in
-the registry entry). Do not edit product code.
+the registry entry). Do not edit product code. Once Step 0 runs, this
+means every registry discovered there — the current worktree's own
+`conductor/tracks.md` plus every sibling track worktree's — not only
+the current worktree's registry.
 
 ## 0. Discover sibling track worktrees
 
@@ -99,5 +102,7 @@ Report, in this order:
    sibling worktree's branch is fully merged.
 7. **Workflow doctrine line** from step 3, always shown last.
 
-If `conductor/tracks.md` has no entries under `## Active` or `## Blocked`,
-report that the registry is empty and skip steps 1 and 3.
+If `conductor/tracks.md` has no entries under `## Active` or `## Blocked`
+across every discovered registry (current worktree plus every sibling
+track worktree from Step 0), report that the registry is empty and skip
+steps 1 and 3.
