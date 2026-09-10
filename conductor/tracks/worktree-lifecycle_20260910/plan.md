@@ -116,10 +116,10 @@ that evidence is not re-derived per task.
       `status.md` contains the `git log <baseRef>..<branch>` check and
       the cleanup-command output, with explicit "never auto-run"
       language [backend-logic] c759061
-- [ ] Task: Update `status.md` Step 3 (present the summary) to include
+- [x] Task: Update `status.md` Step 3 (present the summary) to include
       a new "Cleanup-ready worktrees" section listing any flagged in
       the previous task. Verify via grep assertion: confirm Step 3 lists
-      this new section [backend-logic]
+      this new section [backend-logic] 5fff888
 
 ## Phase 5: Doctrine-wide wording sweep
 
