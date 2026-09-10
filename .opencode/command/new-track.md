@@ -49,9 +49,32 @@ Compose the **track ID** as `<shortname>_YYYYMMDD`, where `YYYYMMDD` is today's 
 
 **Collision check:** list the existing directories under `conductor/tracks/`. If a directory with the generated track ID already exists, do not overwrite it — ask the user with a single-choice question whether to provide a unique name or resume the existing track. Only proceed once the track ID is unique or the user has chosen to resume.
 
+## 2.5. Create the track's worktree
+
+Every track gets its own isolated git worktree and branch, created from
+current `HEAD`, so parallel tracks never contend for the same working
+directory or registry file:
+
+```bash
+git worktree add .worktrees/<track_id> -b track/<track_id>
+```
+
+If this command fails — the worktree path or branch already exists,
+the directory is not a git repository, or any other git error — stop
+immediately and report the exact git error verbatim to the user. Do
+not fall back to creating the track in the current worktree, and do
+not silently overwrite or reuse an existing worktree/branch.
+
+On success, record the base commit SHA that `HEAD` pointed to
+immediately before running this command — this is `baseRef`, written
+into `metadata.json` in Step 3. All remaining steps in this command
+(Step 3 onward) run inside the new worktree at `.worktrees/<track_id>`,
+not in the directory `/conductor/new-track` was invoked from.
+
 ## 3. Create the track artifacts
 
-Under the generated track ID, create:
+Under the generated track ID, inside the worktree created in Step 2.5,
+create:
 
 - `conductor/tracks/<track_id>/spec.md`
 - `conductor/tracks/<track_id>/plan.md`
