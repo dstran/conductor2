@@ -1,0 +1,11 @@
+{
+  "id": "worktree-lifecycle_20260910",
+  "type": "feature",
+  "status": "new",
+  "worktreePath": ".worktrees/worktree-lifecycle_20260910",
+  "branch": "track/worktree-lifecycle_20260910",
+  "baseRef": "93f8a4bcaa17bf4b2ed68a2a6c55d8489a669795",
+  "needsReview": false,
+  "created": "2026-09-10T00:00:00Z",
+  "updated": "2026-09-10T00:00:00Z"
+}
