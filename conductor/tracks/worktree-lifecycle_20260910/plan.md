@@ -54,7 +54,7 @@ that evidence is not re-derived per task.
       grep assertion: confirm Step 6 mentions the worktree path
       [backend-logic] dee74da
 
-## Phase 2: `/conductor/implement` and `/conductor/revert` become worktree-aware
+## Phase 2: `/conductor/implement` and `/conductor/revert` become worktree-aware [checkpoint: ee6878a]
 
 - [x] Task: Add a preamble step to `implement.md` (before Step 1): read
       the target track's `metadata.json`; if `worktreePath` is present,
