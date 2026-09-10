@@ -47,6 +47,24 @@ For each track's `plan.md`:
   directories inside it. These have been removed from the registry and
   have no live progress to report.
 
+## 2.5. Cleanup-ready worktrees
+
+For each sibling worktree discovered in Step 0 (and the current one, if
+it has recorded worktree metadata), read its track's `metadata.json`
+for `branch` and `baseRef`. For each such track:
+
+- Compute `git log <baseRef>..<branch>`. If this is empty, the branch's
+  commits are already fully contained in `baseRef` — the PR (if one
+  was opened per `/conductor/review`'s Archive step) has been merged.
+- If `gh` is available, cross-check with `gh pr view <branch> --json
+  state` — a `MERGED` state also confirms this.
+- Flag any track meeting either condition as **cleanup-ready**, and
+  print the exact commands to remove it: `git worktree remove
+  <worktreePath>`, followed by `git branch -d <branch>` and, if a
+  remote copy exists, `git push origin --delete <branch>`.
+- This is detection only — never run these commands automatically.
+  The human decides when to actually clean up a merged worktree.
+
 ## 3. Workflow doctrine staleness
 
 Compare the last line of `conductor/workflow.md` against the last line
