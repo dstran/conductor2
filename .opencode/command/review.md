@@ -110,7 +110,9 @@ If the user gives feedback instead of approving:
 1. Re-run the full test suite one final time.
 2. Mark the track complete in the tracks registry in the track's worktree (`conductor/tracks.md`): remove the
    awaiting-review note and change the track entry to `[x]`. The entry
-   stays in `## Active` — there is no separate completed section.
+   stays in `## Active` — there is no separate completed section. Also
+   set `metadata.json`'s `status` field to `"complete"`, mirroring this
+   same transition.
 3. Stage and commit the review-loop fixes (if any) plus the
    registry `[x]` marking with a short, clear summary
    message following `conductor/workflow.md`'s commit strategy
@@ -130,7 +132,9 @@ now-completed track:
    - **Skip:** leave the track in place.
 
 Then act on the choice:
-   a. **Archive:** ensure `conductor/archive/` exists, then move
+   a. **Archive:** ensure `conductor/archive/` exists, then set
+      `metadata.json`'s `status` field to `"archived"` before moving
+      it (so the archived copy carries the final status), then move
       `conductor/tracks/$ARGUMENTS/` to `conductor/archive/$ARGUMENTS/`.
       Remove the track's entry from the tracks registry in the track's worktree (`conductor/tracks.md`). Stage the move
       and the registry edit and commit with the message
