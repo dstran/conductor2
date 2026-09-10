@@ -170,6 +170,18 @@ that evidence is not re-derived per task.
       confirm zero remaining unqualified `conductor/tracks.md` prose
       mentions (excluding the `@`-include directive) [backend-logic]
       34fcfa3
+- [ ] Task: [Added during implementation — the Phase 5 closing sweep
+      surfaced that `status.md`'s Step 1 ("Read `conductor/tracks.md`,
+      then for every track...") and Step 4's empty-registry fallback
+      still read as current-worktree-only, contradicting Step 0's
+      stated intent that the view spans every discovered worktree.
+      This is a functional gap, not wording.] Clarify Step 1 to iterate
+      every registry discovered in Step 0 (current worktree plus every
+      sibling track worktree), not just the current one; clarify Step
+      4's "no entries" fallback to mean no entries across every
+      discovered registry, not just the current one. Verify via grep
+      assertion: confirm both target lines explicitly reference "every
+      discovered" registry/worktree [backend-logic]
 - [ ] Task: Run a final repo-wide grep sweep confirming no command doc
       under `.opencode/command/` still implies a single global
       `conductor/tracks.md` shared by all tracks simultaneously (i.e.
