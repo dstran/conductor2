@@ -204,7 +204,7 @@ findings. Same TDD enforcement and task commit procedure as any other
 task — each fix is tagged and verified via the doctrine-text grep
 assertion loop before being marked `[x]`.
 
-- [ ] Task: [Review fix — HIGH] `review.md`'s PR-opening step passes
+- [x] Task: [Review fix — HIGH] `review.md`'s PR-opening step passes
       `baseRef` (defined in `new-track.md` as a commit SHA) to
       `gh pr create --base`, which requires a branch name, not a SHA —
       this would fail at runtime. Fix: add a new `baseBranch` field to
@@ -224,7 +224,7 @@ assertion loop before being marked `[x]`.
       description names `baseBranch`; confirm `review.md`'s
       `gh pr create` line references `baseBranch` (not `baseRef`) in
       the `--base` position, and its gating condition checks for
-      `baseBranch` [backend-logic]
+      `baseBranch` [backend-logic] 67ebd4e
 - [ ] Task: [Review fix — LOW] `metadata.json`'s `status` field is set
       once at track creation (`"new"`) and never updated, going stale
       as the track progresses through implement/review/archive — a
