@@ -140,11 +140,11 @@ Then act on the choice:
 
       **Open a PR (Archive only):** immediately after the archive
       commit above, if the track's `metadata.json` records a `branch`
-      and `baseRef` (this track has a dedicated worktree per
+      and `baseBranch` (this track has a dedicated worktree per
       `/conductor/new-track`), open a pull request from that branch
-      against `baseRef`:
+      against `baseBranch`:
       - Check `gh auth status`. If `gh` is installed and authenticated,
-        run `gh pr create --base <baseRef-branch> --head <branch>
+        run `gh pr create --base <baseBranch> --head <branch>
         --title "<track description>" --body "<summary of the closure
         report from review.md>"`.
       - If `gh` is missing or unauthenticated, do not fail silently —
@@ -156,9 +156,11 @@ Then act on the choice:
         the PR but never merges it — merging is always a human action,
         gated on the human's own review of the PR, separate from this
         command's own approval gate in step 7.
-      - If the track's `metadata.json` has no `branch`/`baseRef`
-        (grandfathered pre-worktree track), skip this PR step entirely
-        — there is no dedicated branch to open a PR from.
+      - If the track's `metadata.json` has no `branch`/`baseBranch`
+        (grandfathered pre-worktree track, or an older worktree track
+        created before `baseBranch` existed), skip this PR step
+        entirely — there is no dedicated base branch to open a PR
+        against.
    b. **Delete:** ask a Yes/No question warning that this is an
       irreversible deletion. On yes, delete `conductor/tracks/$ARGUMENTS/`,
       remove the track's entry from the tracks registry in the track's worktree (`conductor/tracks.md`), and commit with
