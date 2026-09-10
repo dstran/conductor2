@@ -135,14 +135,15 @@ that evidence is not re-derived per task.
       worktree/branch once tracks begin using dedicated worktrees.
       Verify via grep assertion: confirm Step 8 contains this note
       [backend-logic] 22ef579
-- [ ] Task: Update the root `AGENTS.md` compatibility-wrapper note (if
+- [x] Task: Update the root `AGENTS.md` compatibility-wrapper note (if
       it references the tracks registry) to match, keeping `skill/
       SKILL.md` as the canonical source per this repo's own doctrine
       rule. Verify via grep assertion: confirm `AGENTS.md` has no
       tracks-registry wording that contradicts `skill/SKILL.md`'s
       updated per-worktree language (or confirm it makes no such
       reference at all, in which case this task is a no-op check, not
-      an edit) [backend-logic]
+      an edit) [backend-logic] no-op: AGENTS.md has zero tracks-registry
+      references (confirmed via grep, exit 1) — no edit needed
 - [ ] Task: [Added during implementation — flagged as a genuine
       wrapper-drift gap, not scoped in the original plan] Update
       `.github/copilot-instructions.md` and
