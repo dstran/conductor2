@@ -11,7 +11,7 @@ fail-then-pass verification (the already-drafted edit is reverted,
 confirmed absent, then reapplied and confirmed present — not assumed
 passing because it was drafted earlier in the conversation).
 
-## Phase 1: Tighten the fresh-read requirement
+## Phase 1: Tighten the fresh-read requirement [checkpoint: 313fe19]
 
 - [x] Task: Update `.opencode/command/implement.md` Step 3.c to
       require an actual read/grep tool call against `plan.md`'s
