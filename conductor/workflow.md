@@ -86,9 +86,15 @@ Every phase heading in `plan.md` is either tagged `[manual-checkpoint]`
 or left untagged. `/conductor/new-track` sets this tag at plan-generation time
 based on its tagging heuristic (see `new-track.md`); the user may add or
 remove the tag by hand at any point before `/conductor/implement` reaches that
-phase's checkpoint step. `/conductor/implement` reads the heading fresh each time
-it reaches this step — it has no memory of a tag that was later removed,
-and it never adds the tag itself.
+phase's checkpoint step — including before `/conductor/implement` is even
+invoked. `/conductor/implement` reads the heading fresh each time
+it reaches this step, via an actual read/grep tool call against
+`plan.md`'s current on-disk content — never from context already loaded
+earlier in the same run, and never inferred from `new-track.md`'s tagging
+heuristic (e.g. "this phase has an e2e-flow task, so it must be tagged").
+The literal tag text on the heading line is the only source of truth. It
+has no memory of a tag that was removed before this run started or
+during it, and it never adds the tag itself.
 
 - **Tagged `[manual-checkpoint]`:** `/conductor/implement` pauses at the end of the
   phase, presents a summary, asks "does this meet expectations?", and
