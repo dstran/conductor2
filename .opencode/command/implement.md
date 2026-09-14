@@ -73,8 +73,18 @@ Do not silently continue to the next phase. Instead:
       (not necessarily the full suite — that's `/conductor/review`'s job at
       track end).
    c. Read the phase heading in `plan.md` fresh (do not reuse an earlier
-      read) to check for a `[manual-checkpoint]` tag — the user may have
-      added or removed it since this phase started.
+      read, and do not rely on context already loaded from this
+      command's `@conductor/tracks/$ARGUMENTS/plan.md` mention at the
+      top) to check for a `[manual-checkpoint]` tag — the user may have
+      added or removed it since this phase started, including before
+      this run of `/conductor/implement` began. Use an actual
+      read/grep tool call against `plan.md`'s current on-disk content
+      at this exact point — the literal heading text is the only
+      source of truth. Do not infer whether this phase "should" be
+      tagged from `new-track.md`'s tagging heuristic (e2e-flow tasks,
+      or frontend-ui paired with api-client/api-contract) or from any
+      other reasoning about the phase's task types — only the literal
+      tag text on the heading line counts.
    d. **If tagged `[manual-checkpoint]`:** write out explicit manual
       verification steps (exact commands to run and what result
       confirms success). Present a short phase summary to the user:
