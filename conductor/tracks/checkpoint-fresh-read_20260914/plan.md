@@ -13,7 +13,7 @@ passing because it was drafted earlier in the conversation).
 
 ## Phase 1: Tighten the fresh-read requirement
 
-- [ ] Task: Update `.opencode/command/implement.md` Step 3.c to
+- [x] Task: Update `.opencode/command/implement.md` Step 3.c to
       require an actual read/grep tool call against `plan.md`'s
       current on-disk content at the checkpoint-trigger moment;
       forbid relying on context already loaded via the command's
@@ -22,7 +22,7 @@ passing because it was drafted earlier in the conversation).
       task types. Verify via grep assertion: confirm Step 3.c contains
       "read/grep tool call", a reference to not relying on the `@`
       mention, and a reference to not inferring from the tagging
-      heuristic [backend-logic]
+      heuristic [backend-logic] 05302c0
 - [ ] Task: Apply the identical tightening to `conductor/workflow.md`'s
       Phase Checkpoint Procedure (the authoritative doctrine
       `implement.md` defers to) and to `conductor/assets/
