@@ -23,7 +23,7 @@ passing because it was drafted earlier in the conversation).
       "read/grep tool call", a reference to not relying on the `@`
       mention, and a reference to not inferring from the tagging
       heuristic [backend-logic] 05302c0
-- [ ] Task: Apply the identical tightening to `conductor/workflow.md`'s
+- [x] Task: Apply the identical tightening to `conductor/workflow.md`'s
       Phase Checkpoint Procedure (the authoritative doctrine
       `implement.md` defers to) and to `conductor/assets/
       workflow-template.md` (the packaged template `/conductor/update`
@@ -33,4 +33,4 @@ passing because it was drafted earlier in the conversation).
       is even invoked. Verify via grep assertion: confirm both files
       contain the same "read/grep tool call" and "before ... is even
       invoked" language, and that the two files remain byte-identical
-      to each other in this section [backend-logic]
+      to each other in this section [backend-logic] 313fe19
