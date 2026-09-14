@@ -1,0 +1,12 @@
+{
+  "id": "checkpoint-fresh-read_20260914",
+  "type": "bug",
+  "status": "new",
+  "worktreePath": ".worktrees/checkpoint-fresh-read_20260914",
+  "branch": "track/checkpoint-fresh-read_20260914",
+  "baseBranch": "main",
+  "baseRef": "6a2b1775fe0efbd66bca3a715cf940fb8028b2b8",
+  "needsReview": false,
+  "created": "2026-09-14T00:00:00Z",
+  "updated": "2026-09-14T00:00:00Z"
+}

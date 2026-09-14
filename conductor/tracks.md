@@ -33,6 +33,7 @@ Exact lifecycle encodings:
 ## Active
 
 <!-- /conductor/new-track adds new entries here and links each entry to plan.md. -->
+- [ ] **Track: Fix stale manual-checkpoint tag read in /conductor/implement** *Link: [tracks/checkpoint-fresh-read_20260914/plan.md](./tracks/checkpoint-fresh-read_20260914/plan.md)*
 
 ## Blocked
 
