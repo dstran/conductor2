@@ -1,7 +1,7 @@
 {
   "id": "checkpoint-fresh-read_20260914",
   "type": "bug",
-  "status": "complete",
+  "status": "archived",
   "worktreePath": ".worktrees/checkpoint-fresh-read_20260914",
   "branch": "track/checkpoint-fresh-read_20260914",
   "baseBranch": "main",
