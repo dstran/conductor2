@@ -182,4 +182,4 @@ Then act on the choice:
        is created for Skip** — the track's registry entry is still live, so
         merging this branch now would conflict with any sibling track
         that also still has a live entry; open a review request only after
-        Archiving or Deleting.
+        Archiving.
