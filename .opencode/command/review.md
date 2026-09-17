@@ -160,8 +160,10 @@ Then act on the choice:
          and selects a provider only for exact `github.com` or
          `gitlab.com` host matches. For every other host, missing or
          unauthenticated provider CLI, or command failure, it emits its
-         explicit manual fallback output, which must be reported to the
-         user.
+         stable manual fallback output with the detected host when available,
+         the required `git push -u origin <branch>` command, and instructions
+         to open the pull request or merge request manually. Report that
+         complete output to the user.
        - If the track's `metadata.json` has no `branch`/`baseBranch`
          (grandfathered pre-worktree track, or an older worktree track
          created before `baseBranch` existed), skip review request

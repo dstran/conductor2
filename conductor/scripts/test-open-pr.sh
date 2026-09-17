@@ -25,6 +25,7 @@ EOF
 cat >"$fake_bin/gh" <<'EOF'
 #!/bin/sh
 if [ "$1" = auth ] && [ "$2" = status ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/gh-auth"
     exit "${GH_AUTH_STATUS:-0}"
 fi
 if [ "$1" = pr ] && [ "$2" = create ]; then
@@ -37,6 +38,7 @@ EOF
 cat >"$fake_bin/glab" <<'EOF'
 #!/bin/sh
 if [ "$1" = auth ] && [ "$2" = status ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/glab-auth"
     exit "${GLAB_AUTH_STATUS:-0}"
 fi
 if [ "$1" = mr ] && [ "$2" = create ]; then
@@ -76,6 +78,18 @@ assert_log() {
     cmp -s "$expected" "$log_dir/$provider" || fail "unexpected $provider arguments"
 }
 
+assert_named_log() {
+    log_name=$1
+    shift
+    expected=$work_dir/expected
+    : >"$expected"
+    for argument do
+        printf '%s\n' "$argument" >>"$expected"
+    done
+    [ -f "$log_dir/$log_name" ] || fail "expected $log_name to be called"
+    cmp -s "$expected" "$log_dir/$log_name" || fail "unexpected $log_name arguments"
+}
+
 run_dispatcher() {
     set +e
     output=$(
@@ -87,7 +101,7 @@ run_dispatcher() {
         GLAB_AUTH_STATUS=${GLAB_AUTH_STATUS:-0} \
         GLAB_CREATE_STATUS=${GLAB_CREATE_STATUS:-0} \
         PATH=$fake_bin:$PATH \
-        sh "$dispatcher" track/demo main Demo "$body_file" 2>&1
+        sh "$dispatcher" track/demo main Demo "${DISPATCHER_BODY_FILE:-$body_file}" 2>&1
     )
     run_status=$?
     set -e
@@ -105,6 +119,11 @@ run_case() {
     run_dispatcher
     [ "$run_status" -eq "$expected_status" ] || fail "$name returned $run_status"
     assert_log "$provider" "$@"
+    if [ "$provider" = gh ]; then
+        assert_named_log gh-auth auth status --hostname github.com
+    else
+        assert_named_log glab-auth auth status
+    fi
     other=gh
     [ "$provider" = gh ] && other=glab
     [ ! -e "$log_dir/$other" ] || fail "$name called unselected provider"
@@ -124,8 +143,40 @@ run_fallback() {
     assert_contains "$output" "$reason"
     assert_contains "$output" 'track/demo'
     assert_contains "$output" 'git push -u origin track/demo'
+    case $remote in
+        *github.com*)
+            assert_contains "$output" 'Open a pull request manually on github.com from track/demo into main.'
+            ;;
+        *gitlab.com*)
+            assert_contains "$output" 'Open a merge request manually on gitlab.com from track/demo into main.'
+            ;;
+        *)
+            assert_contains "$output" 'Open a pull request or merge request manually on forge.example from track/demo into main.'
+            ;;
+    esac
     [ ! -e "$log_dir/gh" ] || fail "fallback called gh"
     [ ! -e "$log_dir/glab" ] || fail "fallback called glab"
+}
+
+run_body_failure() {
+    remote=$1
+    invalid_body=$2
+    rm -f "$log_dir/gh" "$log_dir/glab" "$log_dir/gh-auth" "$log_dir/glab-auth"
+    REMOTE_URL=$remote GH_AUTH_STATUS=0 GH_CREATE_STATUS=0 GLAB_AUTH_STATUS=0 GLAB_CREATE_STATUS=0
+    DISPATCHER_BODY_FILE=$invalid_body
+    export REMOTE_URL GH_AUTH_STATUS GH_CREATE_STATUS GLAB_AUTH_STATUS GLAB_CREATE_STATUS DISPATCHER_BODY_FILE
+    run_dispatcher
+    [ "$run_status" -eq 1 ] || fail "body failure returned $run_status"
+    assert_contains "$output" 'Unable to create review request for GitHub on github.com.'
+    assert_contains "$output" 'git push -u origin track/demo'
+    assert_contains "$output" 'Open a pull request manually on github.com from track/demo into main.'
+    [ ! -e "$log_dir/gh-auth" ] || fail "body failure checked auth"
+    if [ -n "${body_fallback_output:-}" ]; then
+        [ "$output" = "$body_fallback_output" ] || fail "body failure fallback output changed"
+    else
+        body_fallback_output=$output
+    fi
+    unset DISPATCHER_BODY_FILE
 }
 
 run_provider_failure() {
@@ -226,6 +277,9 @@ run_case gitlab_https 0 \
 run_fallback 'https://forge.example/owner/repo.git' 'forge.example'
 run_fallback 'https://github.com/owner/repo.git' 'git push -u origin track/demo'
 run_provider_failure github 'https://github.com/owner/repo.git'
+run_body_failure 'https://github.com/owner/repo.git' "$work_dir/missing review.md"
+mkdir "$work_dir/unreadable review.md"
+run_body_failure 'https://github.com/owner/repo.git' "$work_dir/unreadable review.md"
 
 cat >"$fake_bin/gh" <<'EOF'
 #!/bin/sh
