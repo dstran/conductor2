@@ -165,6 +165,52 @@ run_auth_failure() {
     [ ! -e "$log_dir/gh" ] || fail "auth failure created a request"
 }
 
+run_glab_missing_cli() {
+    remote=$1
+    rm -f "$fake_bin/glab" "$log_dir/gh" "$log_dir/glab"
+    REMOTE_URL=$remote GH_AUTH_STATUS=0 GH_CREATE_STATUS=0 GLAB_AUTH_STATUS=0 GLAB_CREATE_STATUS=0
+    export REMOTE_URL GH_AUTH_STATUS GH_CREATE_STATUS GLAB_AUTH_STATUS GLAB_CREATE_STATUS
+    run_dispatcher
+    [ "$run_status" -eq 1 ] || fail "missing glab returned $run_status"
+    assert_contains "$output" 'gitlab.com'
+    assert_contains "$output" 'git push -u origin track/demo'
+
+    cat >"$fake_bin/glab" <<'EOF'
+#!/bin/sh
+if [ "$1" = auth ] && [ "$2" = status ]; then exit "${GLAB_AUTH_STATUS:-0}"; fi
+if [ "$1" = mr ] && [ "$2" = create ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/glab"
+    exit "${GLAB_CREATE_STATUS:-0}"
+fi
+exit 1
+EOF
+    chmod +x "$fake_bin/glab"
+}
+
+run_glab_auth_failure() {
+    remote=$1
+    rm -f "$log_dir/gh" "$log_dir/glab"
+    REMOTE_URL=$remote GH_AUTH_STATUS=0 GH_CREATE_STATUS=0 GLAB_AUTH_STATUS=4 GLAB_CREATE_STATUS=0
+    export REMOTE_URL GH_AUTH_STATUS GH_CREATE_STATUS GLAB_AUTH_STATUS GLAB_CREATE_STATUS
+    run_dispatcher
+    [ "$run_status" -eq 1 ] || fail "glab auth failure returned $run_status"
+    assert_contains "$output" 'gitlab.com'
+    assert_contains "$output" 'git push -u origin track/demo'
+    [ ! -e "$log_dir/glab" ] || fail "glab auth failure created a request"
+}
+
+run_glab_provider_failure() {
+    remote=$1
+    rm -f "$log_dir/gh" "$log_dir/glab"
+    REMOTE_URL=$remote GH_AUTH_STATUS=0 GH_CREATE_STATUS=0 GLAB_AUTH_STATUS=0 GLAB_CREATE_STATUS=9
+    export REMOTE_URL GH_AUTH_STATUS GH_CREATE_STATUS GLAB_AUTH_STATUS GLAB_CREATE_STATUS
+    run_dispatcher
+    [ "$run_status" -eq 1 ] || fail "glab provider failure returned $run_status"
+    assert_contains "$output" 'gitlab.com'
+    assert_contains "$output" 'git push -u origin track/demo'
+    [ -f "$log_dir/glab" ] || fail "glab was not called before fallback"
+}
+
 run_case github_ssh 0 \
     'git@github.com:owner/repo.git' gh \
     pr create --base main --head track/demo --title Demo --body-file "$body_file"
@@ -193,5 +239,8 @@ EOF
 chmod +x "$fake_bin/gh"
 run_missing_cli 'https://github.com/owner/repo.git'
 run_auth_failure 'https://github.com/owner/repo.git'
+run_glab_missing_cli 'https://gitlab.com/owner/repo.git'
+run_glab_auth_failure 'https://gitlab.com/owner/repo.git'
+run_glab_provider_failure 'https://gitlab.com/owner/repo.git'
 
 printf 'PASS: open-pr dispatcher tests\n'
