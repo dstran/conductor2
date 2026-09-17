@@ -142,38 +142,44 @@ Then act on the choice:
       track was archived. This is a separate commit from the step 9
       closure commit.
 
-      **Open a PR (Archive only):** immediately after the archive
-      commit above, if the track's `metadata.json` records a `branch`
-      and `baseBranch` (this track has a dedicated worktree per
-      `/conductor/new-track`), open a pull request from that branch
-      against `baseBranch`:
-      - Check `gh auth status`. If `gh` is installed and authenticated,
-        run `gh pr create --base <baseBranch> --head <branch>
-        --title "<track description>" --body "<summary of the closure
-        report from review.md>"`.
-      - If `gh` is missing or unauthenticated, do not fail silently —
-        print the exact manual steps instead: `git push -u origin
-        <branch>`, followed by the URL/instructions to open a PR by
-        hand on the hosting platform, using the same title/body
-        content.
-      - In either case, state explicitly to the user: Conductor opens
-        the PR but never merges it — merging is always a human action,
-        gated on the human's own review of the PR, separate from this
-        command's own approval gate in step 7.
-      - If the track's `metadata.json` has no `branch`/`baseBranch`
-        (grandfathered pre-worktree track, or an older worktree track
-        created before `baseBranch` existed), skip this PR step
-        entirely — there is no dedicated base branch to open a PR
-        against.
+       **Open a review request (Archive only):** review request creation
+       occurs only after Archive. Before moving the track, if its
+       `metadata.json` records both `branch` and `baseBranch` (this track
+       has a dedicated worktree per `/conductor/new-track`), create a
+       temporary body file with `mktemp` and copy
+       `conductor/tracks/$ARGUMENTS/review.md` into it. Keep that file until
+       immediately after the archive commit, then invoke the repository
+       dispatcher with the recorded values and track description:
+       `sh conductor/scripts/open-pr.sh <branch> <baseBranch> "<track
+       description>" <temporary-body-file>`. Remove the temporary body
+       file after the invocation, including when the dispatcher fails.
+       Report the dispatcher's complete output and whether it succeeded or
+       emitted fallback instructions; do not replace or suppress its
+       output.
+       - The dispatcher detects the `origin` remote in SSH or HTTPS form
+         and selects a provider only for exact `github.com` or
+         `gitlab.com` host matches. For every other host, missing or
+         unauthenticated provider CLI, or command failure, it emits its
+         explicit manual fallback output, which must be reported to the
+         user.
+       - If the track's `metadata.json` has no `branch`/`baseBranch`
+         (grandfathered pre-worktree track, or an older worktree track
+         created before `baseBranch` existed), skip review request
+         creation entirely — there is no dedicated base branch to open a
+         request against.
+       - Conductor creates the review request but never merges it —
+         merging is always a human action, gated on the human's own review
+         of the request, separate from this command's own approval gate in
+         step 7.
    b. **Delete:** ask a Yes/No question warning that this is an
-      irreversible deletion. On yes, delete `conductor/tracks/$ARGUMENTS/`,
-      remove the track's entry from the tracks registry in the track's worktree (`conductor/tracks.md`), and commit with
-      the message `chore(conductor): Delete track '$ARGUMENTS'`. On no,
-      treat it as Skip. **No PR is opened for Delete** — there is
-      nothing left to merge back.
-   c. **Skip:** leave the `[x]` entry in `## Active` and the folder in
-      `conductor/tracks/` unchanged. No second commit. **No PR is
-      opened for Skip** — the track's registry entry is still live, so
-      merging this branch now would conflict with any sibling track
-      that also still has a live entry; open a PR only after Archiving
-      or Deleting.
+       irreversible deletion. On yes, delete `conductor/tracks/$ARGUMENTS/`,
+       remove the track's entry from the tracks registry in the track's worktree (`conductor/tracks.md`), and commit with
+       the message `chore(conductor): Delete track '$ARGUMENTS'`. On no,
+       treat it as Skip. **No review request is created for Delete** — there is
+       nothing left to merge back.
+    c. **Skip:** leave the `[x]` entry in `## Active` and the folder in
+       `conductor/tracks/` unchanged. No second commit. **No review request
+       is created for Skip** — the track's registry entry is still live, so
+        merging this branch now would conflict with any sibling track
+        that also still has a live entry; open a review request only after
+        Archiving or Deleting.
