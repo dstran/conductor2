@@ -2,7 +2,8 @@
 
 **Goal:** Make `/conductor/setup` able to initialize an Android project — Java or
 Kotlin, classic XML layouts or Jetpack Compose — by adding four bundled code
-style guides, an Android recommendation rule, and Gradle brownfield detection.
+style guides, an Android recommendation rule, Gradle brownfield detection, and
+recorded verification commands.
 
 **Status:** Design approved; ready for implementation planning.
 
@@ -13,7 +14,7 @@ This repository ships nine code style guides at
 `html-css`, `javascript`, `python`, `typescript`. None covers Java, Kotlin,
 Android XML layouts, or Jetpack Compose.
 
-Two concrete gaps block Android setup:
+Four concrete gaps block Android setup:
 
 1. **No Android style guides.** A user confirming an Android stack in step 6 of
    `.opencode/command/setup.md` has nothing to copy but `general.md`. Setup is
@@ -25,6 +26,20 @@ Two concrete gaps block Android setup:
    and non-`app/` module names is classified Greenfield. Setup then asks "What
    do you want to build?" about a codebase that already exists and skips the
    read-only audit entirely.
+3. **No test or build command is ever recorded.** `review.md:52` instructs
+   running "the entire test suite for the project" and
+   `workflow-template.md:53` requires a passing unit test before any
+   `backend-logic` or `api-client` task is marked complete, but setup never
+   writes down how to run tests. For npm projects an agent guesses `npm test`
+   and is usually right; Android has no comparable default and the options are
+   not interchangeable. This is the highest-impact gap in this spec: a wrong
+   test command breaks every task in `implement` and every track in `review`.
+4. **Module layout is never captured.** Android projects are commonly
+   multi-module (`:app`, `:core:data`, `:feature:login`). Every task lands in a
+   specific module and tests are typically run per-module
+   (`./gradlew :feature:login:test`). `settings.gradle.kts` lists the modules
+   explicitly, so this is cheap to record and is the single most useful fact for
+   planning Android tracks.
 
 The Conductor workflow itself is language-agnostic and needs no change.
 `skill/SKILL.md` contains no language, build-system, or test-runner references,
@@ -39,6 +54,8 @@ In scope:
   recommendation, Java/Kotlin co-selection guard, UI-toolkit question
 - `.opencode/command/setup.md`: Gradle brownfield indicators, Gradle stack
   inference, Gradle scan exclusions
+- `.opencode/command/setup.md`: record verification commands (test, build, lint)
+  and module layout in `tech-stack.md`
 
 Out of scope:
 
@@ -47,6 +64,17 @@ Out of scope:
 - Android-specific `new-track`, `implement`, or `review` logic
 - `skill/SKILL.md` doctrine changes
 - `README.md` (does not enumerate guides)
+- **Greenfield Android scaffolding.** Setup does not generate a Gradle wrapper,
+  `settings.gradle.kts`, modules, or a manifest. `skill/SKILL.md:17` scopes
+  setup to "Conductor project context and handshake artifacts," and pinning
+  AGP/Kotlin/SDK versions inside a prompt would rot immediately. A greenfield
+  Android project therefore still has no code after setup; the user is expected
+  to create it (Android Studio or `gradle init`) or let the first track own
+  scaffolding as an explicit phase. Documented here as a known limitation.
+- **`.gitignore` generation on `git init`.** Greenfield setup (`setup.md:36`)
+  runs `git init` without a `.gitignore`, so a later Android build produces
+  `build/`, `.gradle/`, `.idea/`, and machine-specific `local.properties`. Real
+  but not blocking, and not Android-specific enough to solve here.
 
 ## Architecture
 
@@ -236,6 +264,53 @@ The scan skips `node_modules`, `dist`, and `build`. `build` already covers
 Gradle output; add `.gradle`, `.cxx`, and `app/build`. These directories are
 large and the scan is specified as efficient.
 
+### Edit F — record verification commands (step 5, `tech-stack.md`)
+
+Closes gap 3. After the stack is confirmed, setup records a **Verification
+Commands** section in `conductor/tech-stack.md` holding the project's test,
+build, and lint commands. Brownfield: infer from the build files and ask for
+confirmation. Greenfield: derive from the chosen stack and confirm.
+
+This is not Android-specific — every stack benefits — but Android is where the
+absence actively breaks, because the options are not interchangeable:
+
+| Command | Scope |
+| --- | --- |
+| `./gradlew test` | JVM unit tests, all variants |
+| `./gradlew testDebugUnitTest` | JVM unit tests, debug variant only |
+| `./gradlew connectedAndroidTest` | instrumented tests; **requires a device or emulator** |
+| `./gradlew check` | tests plus lint |
+
+`connectedAndroidTest` fails with no device attached, so an agent that guesses
+it reports failures that are not code defects. The recorded section must
+therefore distinguish the **unit test command** (runnable in any environment,
+used per-task) from the **instrumented test command** (needs a device, run at
+track level), and note that instrumented tests require a device.
+
+That distinction maps onto the existing workflow template without changing it.
+Compose UI tests and Espresso tests are instrumented, which is exactly
+`workflow-template.md`'s `e2e-flow` category — "validated once, at the end of
+the track during `/conductor/review`" (`workflow-template.md:55`), never
+test-first (`:22`). The template already encodes the right behavior; it just
+cannot know which Android command belongs to which category unless setup writes
+it down.
+
+`review.md:52` ("run the entire test suite") and `workflow-template.md:53`
+(passing unit test per task) then have a concrete command to use instead of a
+guess. Neither file changes.
+
+### Edit G — record module layout (step 5, `tech-stack.md`)
+
+Closes gap 4. For multi-module projects, setup records the module list in
+`tech-stack.md`, read from `settings.gradle[.kts]` `include(...)` entries on
+brownfield. Capture each module's Gradle path (`:core:data`) and its role where
+inferable (app, library, feature).
+
+This gives `/conductor/new-track` the vocabulary to place tasks in specific
+modules and to scope per-module test commands (`./gradlew :feature:login:test`)
+rather than always running the whole suite. Non-modular projects record nothing
+and are unaffected.
+
 ## Verification
 
 | ID | Check |
@@ -246,8 +321,9 @@ large and the scan is specified as efficient.
 | V4 | Boundary grep: no Android/Compose terms in `kotlin.md` or `java.md`; no language-syntax rules in `android.md`; no XML/View rules in `compose.md` |
 | V5 | The 13 names in `setup.md` match `ls conductor/assets/code_styleguides/` exactly |
 | V6 | Edit C reviewed by eye as a literal filename list |
+| V7 | A sandbox Gradle project exercising Edits F/G: confirm the recorded `tech-stack.md` separates unit from instrumented test commands and lists modules from `settings.gradle.kts` |
 
-There is no runtime code, so there are no unit tests. Prompt edits (A–E) cannot
+There is no runtime code, so there are no unit tests. Prompt edits (A–G) cannot
 be executed in isolation; V6 compensates by keeping the highest-risk edit
 mechanical.
 
@@ -261,3 +337,6 @@ mechanical.
 | Upstream style guides drift | Pre-existing for all nine current guides. `*Source:*` footers enable recheck. |
 | Line budgets force omitting real rules | Intended. These files are summaries, not specifications. |
 | Bundle table drifts from the guide list | Four rows, colocated with the list they reference. |
+| Edit F is a general Conductor improvement inside an Android spec | Accepted deliberately. It is a precondition for Android `implement`/`review` working at all, and scoping it Android-only would be worse. |
+| Greenfield Android still has no code after setup | Known limitation, documented in Scope. Mitigated by setup stating it plainly and pointing at Android Studio, `gradle init`, or a scaffolding first phase. |
+| Recorded commands go stale when build config changes | Same class as the style-guide drift risk. `/conductor/review` surfaces failures, and `tech-stack.md` is user-editable. |
