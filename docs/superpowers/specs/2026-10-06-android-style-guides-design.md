@@ -56,12 +56,17 @@ In scope:
   inference, Gradle scan exclusions
 - `.opencode/command/setup.md`: record verification commands (test, build, lint)
   and module layout in `tech-stack.md`
+- `conductor/assets/workflow-template.md`: two general task-type enforcement
+  gaps that Android exposes, plus the missing version marker
 
 Out of scope:
 
 - Other language gaps (`swift`, `rust`, `ruby`)
 - Gradle build-file generation, dependency management, AGP version handling
-- Android-specific `new-track`, `implement`, or `review` logic
+- Android-specific `new-track`, `implement`, or `review` logic. See
+  "Why command logic stays platform-neutral" below — this exclusion is load
+  bearing, and the two real taxonomy gaps Android exposes are closed in shared
+  doctrine instead (Edit H).
 - `skill/SKILL.md` doctrine changes
 - `README.md` (does not enumerate guides)
 - **Greenfield Android scaffolding.** Setup does not generate a Gradle wrapper,
@@ -311,6 +316,87 @@ modules and to scope per-module test commands (`./gradlew :feature:login:test`)
 rather than always running the whole suite. Non-modular projects record nothing
 and are unaffected.
 
+## Why command logic stays platform-neutral
+
+`new-track`, `implement`, and `review` get no Android branches. Two reasons.
+
+**Doctrine.** `skill/SKILL.md` contains no language, build-system, or
+test-runner reference, and `skill/SKILL.md:72` states that command docs "do not
+define a competing methodology," with any local difference kept "explicit and
+narrow." Branching on platform in these commands would invite iOS, Rails, and
+Unity branches by the same precedent.
+
+**Every gap found is closable by recording a fact or fixing shared doctrine,**
+not by branching. Edits F and G record facts. Edit H fixes a shared table. No
+Android conditional is required anywhere.
+
+### Where platform guidance can actually be read
+
+This constrains placement more tightly than it first appears:
+
+| File | Read by |
+| --- | --- |
+| `conductor/workflow.md` | `new-track.md:97`, `implement.md:7`, `review.md:6` |
+| `conductor/index.md` | `new-track.md:8`, `implement.md:5`, `review.md:7` |
+| `conductor/tech-stack.md` | **not read by `new-track.md`** (`grep -c` = 0) |
+| `conductor/code_styleguides/` | `review.md:42`, for style checking only |
+
+`new-track` is the component that assigns task-type tags. It never reads
+`tech-stack.md` and never reads the style guides. Therefore a task-type mapping
+placed in either file would be invisible to the tagger. Only `workflow.md`
+reaches all three commands, which is why Edit H goes there.
+
+### Edit H — close two general enforcement gaps (`workflow-template.md`)
+
+Android exposes two holes in the enforcement table (`workflow-template.md:14-22`).
+Neither is Android-specific; Android merely makes them common.
+
+**Pure presentation-layer logic is demoted to test-after.** An Android ViewModel
+tagged `frontend-ui` gets "test-after, test-first optional"
+(`workflow-template.md:20`), yet it is pure JVM code with a knowable contract and
+no device requirement — precisely the table's own stated rationale for strict
+test-first. The same shape appears as React hooks, Vue composables, WPF
+ViewModels, and Redux reducers. Amend the table so presentation-layer logic that
+is pure and device-free is enforced test-first, leaving `frontend-ui` for
+genuine view/styling work.
+
+**Data-layer components needing external infrastructure cannot satisfy per-task
+enforcement.** A Room DAO tagged `backend-logic` must have "at least one passing
+unit test before the task is marked complete" (`workflow-template.md:53`), but
+its canonical test is instrumented and needs a device. The same shape appears as
+Postgres integration tests and Testcontainers suites. Amend the table so such
+tasks enforce test-first on their unit-testable portion per-task, with
+infrastructure-dependent tests deferred to track level — consistent with how
+`e2e-flow` is already handled at `workflow-template.md:55`.
+
+The existing `[needs classification]` hatch (`:24`) means neither gap is
+breaking today. It is nonetheless worth fixing, because it fires on two of the
+most common Android task types, so the user re-answers the same two questions
+every track.
+
+Framing matters: this is a general taxonomy fix motivated by Android, not an
+Android feature. Written as a platform-neutral rule, it keeps the exclusion
+above intact.
+
+### Edit I — add the missing version marker (`workflow-template.md`)
+
+Pre-existing bug, unrelated to Android, and a prerequisite for Edit H.
+
+`setup.md:83` states the copied workflow includes "its trailing version marker,"
+and `update.md:29` expects `<!-- conductor-workflow-version: <sha> -->` as the
+last line. **The template has no such line** (`grep -c` = 0), and neither does
+`conductor/workflow.md`. Per `update.md:30-37`, a missing template marker makes
+the SHA `unknown` and a missing target marker "always counts as stale," so
+`/conductor/update` reports stale unconditionally and its diff gate is
+meaningless.
+
+This must be fixed before Edit H, or the taxonomy change cannot be detected as
+an update by the mechanism designed to propagate it.
+
+Consequence to accept: once the template carries a marker and its content
+changes, existing projects correctly report stale until they run
+`/conductor/update`. That is the designed mechanism working as intended.
+
 ## Verification
 
 | ID | Check |
@@ -322,8 +408,10 @@ and are unaffected.
 | V5 | The 13 names in `setup.md` match `ls conductor/assets/code_styleguides/` exactly |
 | V6 | Edit C reviewed by eye as a literal filename list |
 | V7 | A sandbox Gradle project exercising Edits F/G: confirm the recorded `tech-stack.md` separates unit from instrumented test commands and lists modules from `settings.gradle.kts` |
+| V8 | `workflow-template.md` last line matches `<!-- conductor-workflow-version: <sha> -->`; `/conductor/update` reports up-to-date for a freshly set-up project instead of unconditionally stale |
+| V9 | Edit H's amended enforcement table contains no Android, Gradle, or platform-specific terms |
 
-There is no runtime code, so there are no unit tests. Prompt edits (A–G) cannot
+There is no runtime code, so there are no unit tests. Prompt edits (A–I) cannot
 be executed in isolation; V6 compensates by keeping the highest-risk edit
 mechanical.
 
@@ -340,3 +428,6 @@ mechanical.
 | Edit F is a general Conductor improvement inside an Android spec | Accepted deliberately. It is a precondition for Android `implement`/`review` working at all, and scoping it Android-only would be worse. |
 | Greenfield Android still has no code after setup | Known limitation, documented in Scope. Mitigated by setup stating it plainly and pointing at Android Studio, `gradle init`, or a scaffolding first phase. |
 | Recorded commands go stale when build config changes | Same class as the style-guide drift risk. `/conductor/review` surfaces failures, and `tech-stack.md` is user-editable. |
+| Edit H changes shared doctrine every project copies byte-for-byte | Accepted. Edit I makes the change detectable by `/conductor/update`, which is the mechanism designed for exactly this. Existing projects report stale until updated. |
+| Edit H could be read as doctrine creep under an Android spec | Mitigated by V9: the amended table must contain no platform-specific terms. It is a general fix with an Android motivating example. |
+| Edit I changes `/conductor/update` behavior for all existing projects | They currently always report stale, so the change strictly improves the signal. |
