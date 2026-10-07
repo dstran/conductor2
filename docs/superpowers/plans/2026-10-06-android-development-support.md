@@ -494,11 +494,19 @@ Run:
 echo "--- compose leakage (expect 0) ---"
 grep -icE '@composable|recomposition|remember\(|modifier' conductor/assets/code_styleguides/android.md
 echo "--- language-syntax leakage (expect 0) ---"
-grep -icE 'lowerCamelCase|UpperCamelCase|lateinit|!!|suspend fun|@Override' conductor/assets/code_styleguides/android.md
+grep -icE '\blateinit\b|!!|suspend fun|@Override' conductor/assets/code_styleguides/android.md
 echo "--- architectural section present (expect 1) ---"
 grep -c '^## 6. Architectural Guidance' conductor/assets/code_styleguides/android.md
 ```
 Expected: `PASS`, `0`, `0`, `1`.
+
+Note: the language-syntax check targets terms that are unambiguously
+Kotlin/Java *code* syntax (`lateinit`, `!!`, `suspend fun`, `@Override`). It
+deliberately does not match "UpperCamelCase" or "lowerCamelCase" as bare
+words, because `android.md` legitimately uses "UpperCamelCase" to describe
+Android *resource and style naming* (e.g. `Theme.App.Button`) — a casing
+pattern name shared across many contexts, not a leaked Kotlin/Java
+identifier-naming rule.
 
 - [ ] **Step 4: Commit**
 
@@ -1048,7 +1056,7 @@ grep -icE '\b(compose|@composable|activity|gradle|findviewbyid)\b|xml layout|and
 # terms, not the word "android" itself, so that citation does not trip it.
 echo "--- android.md must not contain Compose or language-syntax rules (expect 0 0) ---"
 grep -icE '@composable|recomposition|modifier' conductor/assets/code_styleguides/android.md
-grep -icE 'lowerCamelCase|UpperCamelCase|lateinit|@Override' conductor/assets/code_styleguides/android.md
+grep -icE '\blateinit\b|@Override' conductor/assets/code_styleguides/android.md
 echo "--- compose.md must not contain XML/View rules (expect 0) ---"
 grep -icE 'findViewById|ConstraintLayout|LinearLayout|@\+id|match_parent|android:' conductor/assets/code_styleguides/compose.md
 ```
