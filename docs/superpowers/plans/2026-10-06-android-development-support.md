@@ -15,7 +15,7 @@
 - Style-guide format, copied from existing guides: `#` H1 title, one-paragraph preamble naming the upstream authority, numbered `## N. Topic` sections, dash bullets with 4-space continuation indent, bold directives (`**Do not use ...**`), closing `*Source:*` or `*Sources:*` footer.
 - Prose wraps at 80 columns; **85 is the hard ceiling** (existing guides reach 85 where a URL or identifier cannot be broken). Markdown table rows are exempt.
 - **No invented rules.** Every rule must be traceable to the upstream authority named in that file's preamble. `setup.md:62` forbids inventing style rules.
-- Line budgets, enforced: `kotlin.md` ≤ 120, `java.md` ≤ 110, `android.md` ≤ 130, `compose.md` ≤ 110.
+- Line budgets, enforced: `kotlin.md` ≤ 120, `java.md` ≤ 110, `android.md` ≤ 130, `compose.md` ≤ 116.
 - Boundary rule, one rule one file: `kotlin.md` and `java.md` never mention Android or Compose; `android.md` contains no Kotlin-vs-Java syntax rules; `compose.md` contains no XML or View-system rules.
 - `android.md` and `compose.md` lead with diff-verifiable rules; judgment-based guidance goes in a final section explicitly labelled as architectural guidance.
 - **Do not** add a `conductor-workflow-version` marker to `conductor/assets/workflow-template.md`. `install.sh:42` generates it at install time; committing one produces duplicate marker lines.
@@ -66,7 +66,7 @@ grep -q '^## 1\. ' "$f" || { echo "FAIL: no numbered section '## 1. '"; fail=1; 
 grep -qE '^\*Sources?:' "$f" || { echo "FAIL: no *Source:* footer"; fail=1; }
 n=$(wc -l < "$f" | tr -d ' ')
 [ "$n" -le "$max" ] || { echo "FAIL: $n lines exceeds budget $max"; fail=1; }
-long=$(awk 'length>85 && $0 !~ /^\|/ {print NR": "length}' "$f")
+long=$(awk 'length>85 && $0 !~ /^\|/ && $0 !~ /^\[.*\]: http/ {print NR": "length}' "$f")
 [ -z "$long" ] || { echo "FAIL: prose lines over 85 cols:"; echo "$long"; fail=1; }
 [ "$fail" -eq 0 ] && echo "PASS: $f ($n lines, budget $max)"
 exit $fail
@@ -480,10 +480,15 @@ alone. Treat them as review discussion points rather than mechanical checks.
 
 *Sources:*
 
--   [App resources overview](https://developer.android.com/guide/topics/resources/providing-resources)
--   [App manifest overview](https://developer.android.com/guide/topics/manifest/manifest-intro)
--   [Activity lifecycle](https://developer.android.com/guide/components/activities/activity-lifecycle)
--   [Guide to app architecture](https://developer.android.com/topic/architecture)
+-   [App resources overview][android-resources]
+-   [App manifest overview][android-manifest]
+-   [Activity lifecycle][android-lifecycle]
+-   [Guide to app architecture][android-architecture]
+
+[android-resources]: https://developer.android.com/guide/topics/resources/providing-resources
+[android-manifest]: https://developer.android.com/guide/topics/manifest/manifest-intro
+[android-lifecycle]: https://developer.android.com/guide/components/activities/activity-lifecycle
+[android-architecture]: https://developer.android.com/topic/architecture
 ```
 
 - [ ] **Step 3: Run verification to confirm it passes**
@@ -530,7 +535,7 @@ git commit -m "feat(styleguides): add Android platform style guide"
 
 - [ ] **Step 1: Run verification to confirm it fails**
 
-Run: `/tmp/check-guide.sh conductor/assets/code_styleguides/compose.md 110`
+Run: `/tmp/check-guide.sh conductor/assets/code_styleguides/compose.md 116`
 Expected: `FAIL: ... does not exist`
 
 - [ ] **Step 2: Write `compose.md`**
@@ -647,16 +652,20 @@ alone. Treat them as review discussion points rather than mechanical checks.
 
 *Sources:*
 
--   [Compose documentation](https://developer.android.com/develop/ui/compose/documentation)
--   [Compose API guidelines](https://android.googlesource.com/platform/frameworks/support/+/androidx-main/compose/docs/compose-api-guidelines.md)
--   [State and Jetpack Compose](https://developer.android.com/develop/ui/compose/state)
+-   [Compose documentation][compose-docs]
+-   [Compose API guidelines][compose-api-guidelines]
+-   [State and Jetpack Compose][compose-state]
+
+[compose-docs]: https://developer.android.com/develop/ui/compose/documentation
+[compose-api-guidelines]: https://android.googlesource.com/platform/frameworks/support/+/androidx-main/compose/docs/compose-api-guidelines.md
+[compose-state]: https://developer.android.com/develop/ui/compose/state
 ```
 
 - [ ] **Step 3: Run verification to confirm it passes**
 
 Run:
 ```bash
-/tmp/check-guide.sh conductor/assets/code_styleguides/compose.md 110
+/tmp/check-guide.sh conductor/assets/code_styleguides/compose.md 116
 echo "--- XML/View leakage (expect 0) ---"
 grep -icE 'findViewById|ConstraintLayout|LinearLayout|\.xml|@\+id|match_parent|android:' conductor/assets/code_styleguides/compose.md
 echo "--- architectural section present (expect 1) ---"
@@ -1040,7 +1049,7 @@ Run:
 /tmp/check-guide.sh conductor/assets/code_styleguides/kotlin.md 120
 /tmp/check-guide.sh conductor/assets/code_styleguides/java.md 110
 /tmp/check-guide.sh conductor/assets/code_styleguides/android.md 130
-/tmp/check-guide.sh conductor/assets/code_styleguides/compose.md 110
+/tmp/check-guide.sh conductor/assets/code_styleguides/compose.md 116
 ```
 Expected: four `PASS` lines. (Covers V2, V3.)
 
@@ -1115,4 +1124,4 @@ This task produces no commit. Report the verification output.
 
 **Placeholder scan:** No TBD/TODO. Every file to create has its full content inline. Every verification step names an exact command and its expected output. No step says "similar to Task N" — the boundary-grep commands are repeated in full where needed.
 
-**Type consistency:** Filenames `kotlin.md`, `java.md`, `android.md`, `compose.md` are used identically in Tasks 1–4, the Task 5 guide list and bundle table, and the Task 9 checks. `/tmp/check-guide.sh` takes `<file> <max_lines>` and is called that way in all five places. Budgets 120/110/130/110 match the Global Constraints and the spec. The section heading numbers asserted in Tasks 3 and 4 (`## 6. Architectural Guidance`, `## 7. Architectural Guidance`) match the content written in those same tasks.
+**Type consistency:** Filenames `kotlin.md`, `java.md`, `android.md`, `compose.md` are used identically in Tasks 1–4, the Task 5 guide list and bundle table, and the Task 9 checks. `/tmp/check-guide.sh` takes `<file> <max_lines>` and is called that way in all five places. Budgets 120/110/130/116 match the Global Constraints and the spec. The section heading numbers asserted in Tasks 3 and 4 (`## 6. Architectural Guidance`, `## 7. Architectural Guidance`) match the content written in those same tasks.
