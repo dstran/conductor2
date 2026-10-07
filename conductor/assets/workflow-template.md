@@ -21,6 +21,7 @@ phase before those fixes are implemented.
 | `frontend-ui` — presentation logic that is pure and runs without a UI host (state holders, reducers, view models, formatters) | **Strict test-first** | Contract is knowable up front and the code runs in a plain test process; the same reasoning as `backend-logic` |
 | `frontend-ui` — component logic bound to a rendered component (handlers, computed values read from the view) | **Test-after** (test-first optional) | Logic is testable but often clarified while building |
 | `frontend-ui` — styling/layout only | **No test required** | No behavioral signal; overhead with no payoff |
+| `host-integration` — code whose only behavior is invoking a host framework or platform API, where a unit test could assert nothing but mocks of that host | **No unit test required for the glue itself. Any logic beyond wiring must be extracted into a unit testable in-process, and that unit is strict test-first** | A test that stubs the host and then asserts the stub verifies nothing. Extracting the logic yields a real contract to test instead of a tautology |
 | `e2e-flow` | **Test-after only — never test-first** | Depends on rendered UI/selectors that don't exist yet |
 
 If a task doesn't cleanly fit one of these, the agent should flag it
