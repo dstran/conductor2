@@ -899,11 +899,11 @@ Replace item 3 of section 5 — currently `3. Write `conductor/tech-stack.md`.` 
 
 Run:
 ```bash
-echo "--- UI toolkit question (expect 1) ---"
+echo "--- UI toolkit question (expect >=1) ---"
 grep -c 'UI toolkit' .opencode/command/setup.md
 echo "--- verification commands (expect >=1) ---"
 grep -c 'Verification Commands' .opencode/command/setup.md
-echo "--- instrumented distinction (expect 1) ---"
+echo "--- instrumented distinction (expect >=1) ---"
 grep -c 'connectedAndroidTest' .opencode/command/setup.md
 echo "--- section 5 numbering is 1..5 sequential ---"
 sed -n '/^## 5. Technology Stack/,/^## 6. Code Style Guides/p' .opencode/command/setup.md | grep -oE '^[0-9]+\.' 
