@@ -171,10 +171,10 @@ load more style text than any other stack. Budgets are therefore binding:
 | `kotlin.md` | <= 120 |
 | `java.md` | <= 110 |
 | `android.md` | <= 130 |
-| `compose.md` | <= 110 |
+| `compose.md` | <= 116 |
 
 Worst-case Android bundle: `general` 29 + `kotlin` 120 + `android` 130 +
-`compose` 110 = 389 lines, comparable to a `cpp` + `dart` project today.
+`compose` 116 = 395 lines, comparable to a `cpp` + `dart` project today.
 
 ### Checkable rules before architectural guidance
 
