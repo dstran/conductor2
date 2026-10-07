@@ -53,9 +53,26 @@ For Gradle projects, also read `build.gradle[.kts]`, `settings.gradle[.kts]`, an
 ## 5. Technology Stack (`conductor/tech-stack.md`)
 
 1. **Greenfield:** ask a single-choice question: **Interactive** (hand-pick components) or **Autogenerate** (recommend a standard stack for the goal). If Interactive, ask multiple-choice questions in turn for Language(s), Backend Framework(s), Frontend Framework(s), and Database.
+   If the stack targets Android, also ask a single-choice **UI toolkit** question: **Jetpack Compose** `(Recommended)` — the current Android UI toolkit; **XML layouts (Views)** — the classic toolkit; or **Both** — a project migrating between them.
    **Brownfield:** state the stack you inferred and ask a Yes/No question to confirm; if wrong, ask an open question for the correct stack.
+   For an Android project, state the UI toolkit inferred from the build files (see step 2's Gradle inference) and confirm it rather than asking blind.
 2. Present the drafted stack; ask **Approve** / **Manual Edit** / **Refine**. Loop until Approved.
-3. Write `conductor/tech-stack.md`.
+3. Determine the project's **verification commands**, which `/conductor/implement` and `/conductor/review` need in order to run tests at all. Brownfield: infer them from the build files and ask a Yes/No question to confirm. Greenfield: derive them from the confirmed stack and confirm. Record at minimum a unit-test command, a build command, and a lint command where one exists.
+
+   Where a stack separates tests that run anywhere from tests that need external infrastructure, record both separately and label which is which. On Android the distinction is load-bearing, because the commands are not interchangeable:
+
+   | Command | Scope |
+   | --- | --- |
+   | `./gradlew testDebugUnitTest` | JVM unit tests, debug variant — runs anywhere |
+   | `./gradlew test` | JVM unit tests, all variants — runs anywhere |
+   | `./gradlew connectedAndroidTest` | instrumented tests — **requires a connected device or emulator** |
+   | `./gradlew lint` | Android Lint |
+
+   `connectedAndroidTest` fails outright with no device attached, so recording it as *the* test command makes every task appear to fail for reasons unrelated to the code. Record the unit-test command as the per-task command, and note the instrumented command as track-level only. This matches `conductor/workflow.md`, which already defers device-dependent and end-to-end verification to the review pass rather than enforcing it per task.
+
+4. For a multi-module project, record the **module list** — each module's path (e.g. `:app`, `:core:data`, `:feature:login`) and its role (application, library, feature) where inferable. On Gradle projects read these from the `include(...)` entries in `settings.gradle[.kts]`. This lets `/conductor/new-track` place tasks in specific modules and scope test commands to one module (`./gradlew :feature:login:testDebugUnitTest`) instead of always running the whole suite. Single-module projects record nothing here.
+
+5. Write `conductor/tech-stack.md`, including a **Verification Commands** section and, where applicable, a **Modules** section.
 
 ## 6. Code Style Guides (`conductor/code_styleguides/`)
 
