@@ -100,6 +100,9 @@ guide.
 
 The rules below require design judgment and cannot be verified from a diff
 alone. Treat them as review discussion points rather than mechanical checks.
+They also assume an application that owns its own `Activity` and navigation.
+Code running inside a host application — a plugin, SDK, or embedded library —
+follows the host's architecture; these rules apply only to the parts it owns.
 
 -   **Separate UI, domain, and data layers.** UI observes state; it does not
     perform I/O directly.
