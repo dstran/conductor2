@@ -191,9 +191,15 @@ official Kotlin coding conventions.
 Run:
 ```bash
 /tmp/check-guide.sh conductor/assets/code_styleguides/kotlin.md 120
-grep -icE 'android|compose|activity|gradle|@composable' conductor/assets/code_styleguides/kotlin.md
+grep -icE '\b(compose|@composable|activity|gradle|findviewbyid)\b|xml layout|android\.content|androidx\.' conductor/assets/code_styleguides/kotlin.md
 ```
 Expected: `PASS: ... (N lines, budget 120)` and the grep count is `0`.
+
+Note: this check targets Android *platform/API* terms (Compose, Activity,
+Context, Gradle, XML layouts), not the word "android" itself. The file's
+`*Sources:*` footer legitimately names "Android Kotlin style guide" as one of
+its two upstream authorities — that citation is required, not a boundary
+violation, and must not be removed.
 
 If the grep is non-zero, remove the offending lines — the boundary rule is not negotiable.
 
@@ -321,9 +327,11 @@ This document summarizes key rules from the Google Java Style Guide.
 Run:
 ```bash
 /tmp/check-guide.sh conductor/assets/code_styleguides/java.md 110
-grep -icE 'android|compose|activity|gradle' conductor/assets/code_styleguides/java.md
+grep -icE '\b(compose|@composable|activity|gradle|findviewbyid)\b|xml layout|android\.content|androidx\.' conductor/assets/code_styleguides/java.md
 ```
-Expected: `PASS: ...` and grep count `0`.
+Expected: `PASS: ...` and grep count `0`. (This file's own citation is purely
+"Google Java Style Guide," so it does not need the citation exemption Task 1
+required, but the same platform/API term list is used for consistency.)
 
 - [ ] **Step 4: Commit**
 
@@ -1033,8 +1041,11 @@ Expected: four `PASS` lines. (Covers V2, V3.)
 Run:
 ```bash
 echo "--- kotlin/java must not mention the platform (expect 0 0) ---"
-grep -icE 'android|compose|activity|gradle' conductor/assets/code_styleguides/kotlin.md
-grep -icE 'android|compose|activity|gradle' conductor/assets/code_styleguides/java.md
+grep -icE '\b(compose|@composable|activity|gradle|findviewbyid)\b|xml layout|android\.content|androidx\.' conductor/assets/code_styleguides/kotlin.md
+grep -icE '\b(compose|@composable|activity|gradle|findviewbyid)\b|xml layout|android\.content|androidx\.' conductor/assets/code_styleguides/java.md
+# Note: kotlin.md's *Sources:* footer legitimately names "Android Kotlin
+# style guide" as an upstream authority. This check targets platform/API
+# terms, not the word "android" itself, so that citation does not trip it.
 echo "--- android.md must not contain Compose or language-syntax rules (expect 0 0) ---"
 grep -icE '@composable|recomposition|modifier' conductor/assets/code_styleguides/android.md
 grep -icE 'lowerCamelCase|UpperCamelCase|lateinit|@Override' conductor/assets/code_styleguides/android.md
