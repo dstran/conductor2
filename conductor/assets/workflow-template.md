@@ -14,10 +14,12 @@ phase before those fixes are implemented.
 | Task type | Enforcement | Rationale |
 |---|---|---|
 | `backend-logic` (services, business logic, utility functions) | **Strict test-first** | Contract is knowable up front; test-first improves interface design |
+| `backend-logic` — requires external infrastructure to test (a real database, device, container, or network service) | **Test-first on the parts testable in-process; infrastructure-dependent tests deferred to the track-level pass** | The contract is still knowable, but demanding infrastructure per task blocks tasks for environmental reasons rather than code defects |
 | `api-client` (calls to an external or internal API, e.g. an Angular service) | **Strict test-first** | Request/response shape is known before the call is written |
 | `api-contract` — interface already specified in `plan.md` | **Test-first** | Same reasoning as above |
 | `api-contract` — interface still exploratory | **Test-after** (still required) | Forcing test-first here produces guesses that get rewritten |
-| `frontend-ui` — component logic (state, handlers, computed values) | **Test-after** (test-first optional) | Logic is testable but often clarified while building |
+| `frontend-ui` — presentation logic that is pure and runs without a UI host (state holders, reducers, view models, formatters) | **Strict test-first** | Contract is knowable up front and the code runs in a plain test process; the same reasoning as `backend-logic` |
+| `frontend-ui` — component logic bound to a rendered component (handlers, computed values read from the view) | **Test-after** (test-first optional) | Logic is testable but often clarified while building |
 | `frontend-ui` — styling/layout only | **No test required** | No behavioral signal; overhead with no payoff |
 | `e2e-flow` | **Test-after only — never test-first** | Depends on rendered UI/selectors that don't exist yet |
 
@@ -51,7 +53,11 @@ For tasks enforced as test-after (still required):
 ## Coverage expectations
 
 - Every `backend-logic` and `api-client` task must have at least one
-  passing unit test before the task is marked complete.
+  passing unit test before the task is marked complete. The one exception
+  is a `backend-logic` task marked as requiring external infrastructure:
+  its in-process tests must pass per task, and its
+  infrastructure-dependent tests are validated at track level alongside
+  `e2e-flow`.
 - `e2e-flow` tasks are validated once, at the end of the track during
   `/conductor/review` — not per-task.
 - No task is marked `[x]` on the strength of an assumption that a

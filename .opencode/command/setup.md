@@ -28,10 +28,12 @@ Check which Conductor artifacts already exist:
 
 Determine whether this is a Brownfield (existing) or Greenfield (new) project.
 
-- **Brownfield indicators:** dependency manifests (`package.json`, `go.mod`, `requirements.txt`, `pom.xml`, `Cargo.toml`), source directories (`src/`, `app/`, `lib/`, `bin/`) with code, or a `.git` directory. If `.git` exists, run `git status --porcelain`; ignore changes under `conductor/`. If other uncommitted changes exist, warn: "You have uncommitted changes — consider committing or stashing before proceeding," then continue and classify as Brownfield.
+- **Brownfield indicators:** dependency manifests (`package.json`, `go.mod`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts`), an `AndroidManifest.xml` anywhere in the tree, source directories (`src/`, `app/`, `lib/`, `bin/`) with code, or a `.git` directory. If `.git` exists, run `git status --porcelain`; ignore changes under `conductor/`. If other uncommitted changes exist, warn: "You have uncommitted changes — consider committing or stashing before proceeding," then continue and classify as Brownfield.
 - **Greenfield:** none of the above (ignoring `conductor/`, a clean `.git`, and `README.md`).
 
-**If Brownfield:** ask permission for a read-only scan. On approval, analyze efficiently: use `git ls-files`, respect `.gitignore`, skip `node_modules`/`dist`/`build`, and read `README.md` plus manifests to infer the tech stack and architecture. Hold the findings in context.
+**If Brownfield:** ask permission for a read-only scan. On approval, analyze efficiently: use `git ls-files`, respect `.gitignore`, skip `node_modules`/`dist`/`build`/`.gradle`/`.cxx`, and read `README.md` plus manifests to infer the tech stack and architecture. Hold the findings in context.
+
+For Gradle projects, also read `build.gradle[.kts]`, `settings.gradle[.kts]`, and `gradle/libs.versions.toml` to infer the language, `compileSdk`/`minSdk`, and whether Compose is enabled — a `buildFeatures { compose true }` block, an `androidx.compose` BOM dependency, or the `org.jetbrains.kotlin.plugin.compose` plugin each answer the UI-toolkit question directly. Read the `include(...)` entries in `settings.gradle[.kts]` to list the project's modules. Hold all of this in context; steps 5 and 6 record it.
 
 **If Greenfield:** if there is no `.git`, run `git init`. Then ask an open question: "What do you want to build?" Hold the answer as the Initial Concept.
 
@@ -51,15 +53,51 @@ Determine whether this is a Brownfield (existing) or Greenfield (new) project.
 ## 5. Technology Stack (`conductor/tech-stack.md`)
 
 1. **Greenfield:** ask a single-choice question: **Interactive** (hand-pick components) or **Autogenerate** (recommend a standard stack for the goal). If Interactive, ask multiple-choice questions in turn for Language(s), Backend Framework(s), Frontend Framework(s), and Database.
+   If the stack targets Android, also ask a single-choice **UI toolkit** question: **Jetpack Compose** `(Recommended)` — the current Android UI toolkit; **XML layouts (Views)** — the classic toolkit; or **Both** — a project migrating between them.
    **Brownfield:** state the stack you inferred and ask a Yes/No question to confirm; if wrong, ask an open question for the correct stack.
+   For an Android project, state the UI toolkit inferred from the build files (see step 2's Gradle inference) and confirm it rather than asking blind.
 2. Present the drafted stack; ask **Approve** / **Manual Edit** / **Refine**. Loop until Approved.
-3. Write `conductor/tech-stack.md`.
+3. Determine the project's **verification commands**, which `/conductor/implement` and `/conductor/review` need in order to run tests at all. Brownfield: infer them from the build files and ask a Yes/No question to confirm. Greenfield: derive them from the confirmed stack and confirm. Record at minimum a unit-test command, a build command, and a lint command where one exists.
+
+   Where a stack separates tests that run anywhere from tests that need external infrastructure, record both separately and label which is which. On Android the distinction is load-bearing, because the commands are not interchangeable:
+
+   | Command | Scope |
+   | --- | --- |
+   | `./gradlew testDebugUnitTest` | JVM unit tests, debug variant — runs anywhere |
+   | `./gradlew test` | JVM unit tests, all variants — runs anywhere |
+   | `./gradlew connectedAndroidTest` | instrumented tests — **requires a connected device or emulator** |
+   | `./gradlew lint` | Android Lint |
+
+   `connectedAndroidTest` fails outright with no device attached, so recording it as *the* test command makes every task appear to fail for reasons unrelated to the code. Record the unit-test command as the per-task command, and note the instrumented command as track-level only. This matches `conductor/workflow.md`, which already defers device-dependent and end-to-end verification to the review pass rather than enforcing it per task.
+
+4. For a multi-module project, record the **module list** — each module's path (e.g. `:app`, `:core:data`, `:feature:login`) and its role (application, library, feature) where inferable. On Gradle projects read these from the `include(...)` entries in `settings.gradle[.kts]`. This lets `/conductor/new-track` place tasks in specific modules and scope test commands to one module (`./gradlew :feature:login:testDebugUnitTest`) instead of always running the whole suite. Single-module projects record nothing here.
+
+5. Write `conductor/tech-stack.md`, including a **Verification Commands** section and, where applicable, a **Modules** section.
 
 ## 6. Code Style Guides (`conductor/code_styleguides/`)
 
-The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `javascript`, `python`, `typescript`.
+The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `android`, `compose`, `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `java`, `javascript`, `kotlin`, `python`, `typescript`.
 
 1. Recommend the guides that match the confirmed tech stack (always include `general`). Do NOT invent style rules — only copy from the bundled assets.
+
+   **Android stacks.** Recommend the whole set at once rather than making the
+   user assemble it, keyed on the language and UI toolkit confirmed in step 5:
+
+   | Confirmed stack | Recommend |
+   | --- | --- |
+   | Android + Kotlin + Compose | `general`, `kotlin`, `android`, `compose` |
+   | Android + Kotlin + XML layouts | `general`, `kotlin`, `android` |
+   | Android + Java + XML layouts | `general`, `java`, `android` |
+   | Android + both languages | `general`, `kotlin`, `java`, `android` (add `compose` if in use) |
+
+   Jetpack Compose is Kotlin-only, so Java + Compose is not a valid
+   combination. If the user selects it, say so and ask whether the project is
+   migrating to Kotlin rather than recommending a set.
+
+   Never recommend `java` and `kotlin` together unless the user confirmed the
+   project genuinely contains both. Their accessor, override, and callback
+   conventions conflict, so a mixed set gives `/conductor/review` contradictory
+   rules to check against.
 2. Ask a multiple-choice question to confirm which guides to copy (Brownfield: confirm the matches and ask if more are needed; Greenfield: present the recommended set and allow hand-picking).
 3. Copy each selected guide into `conductor/code_styleguides/`, e.g.:
 
