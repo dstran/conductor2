@@ -57,7 +57,7 @@ In scope:
 - `.opencode/command/setup.md`: record verification commands (test, build, lint)
   and module layout in `tech-stack.md`
 - `conductor/assets/workflow-template.md`: two general task-type enforcement
-  gaps that Android exposes, plus the missing version marker
+  gaps that Android exposes (Edit H)
 
 Out of scope:
 
@@ -378,24 +378,36 @@ Framing matters: this is a general taxonomy fix motivated by Android, not an
 Android feature. Written as a platform-neutral rule, it keeps the exclusion
 above intact.
 
-### Edit I — add the missing version marker (`workflow-template.md`)
+### Edit I — withdrawn (no marker bug exists)
 
-Pre-existing bug, unrelated to Android, and a prerequisite for Edit H.
+This spec previously claimed `workflow-template.md` was missing its
+`conductor-workflow-version` marker and that `/conductor/update` therefore
+reported stale unconditionally. **That claim was wrong and is withdrawn.**
 
-`setup.md:83` states the copied workflow includes "its trailing version marker,"
-and `update.md:29` expects `<!-- conductor-workflow-version: <sha> -->` as the
-last line. **The template has no such line** (`grep -c` = 0), and neither does
-`conductor/workflow.md`. Per `update.md:30-37`, a missing template marker makes
-the SHA `unknown` and a missing target marker "always counts as stale," so
-`/conductor/update` reports stale unconditionally and its diff gate is
-meaningless.
+The marker is generated at install time, not committed. `install.sh:41-42`
+copies the template and then appends the marker derived from the repository SHA:
 
-This must be fixed before Edit H, or the taxonomy change cannot be detected as
-an update by the mechanism designed to propagate it.
+```bash
+cp "$ROOT/conductor/assets/workflow-template.md" "$command_dir/assets/workflow-template.md"
+echo "<!-- conductor-workflow-version: $sha -->" >> "$command_dir/assets/workflow-template.md"
+```
 
-Consequence to accept: once the template carries a marker and its content
-changes, existing projects correctly report stale until they run
-`/conductor/update`. That is the designed mechanism working as intended.
+The installed artifact confirms it, carrying a real marker while the source
+template correctly has none. `setup.md:80` copies from the *installed* path, so
+projects receive the marker. The original `grep -c` returned 0 against the
+source template, which is the expected result; the error was concluding a bug
+from it without checking the installed artifact.
+
+Committing a marker to the source template would be actively harmful:
+`install.sh:42` appends unconditionally, producing two marker lines, and
+`update.md:27` reads only the last line — leaving a stale hardcoded SHA
+shadowed by the generated one.
+
+Consequence for Edit H: no prerequisite work is needed. Changing the template's
+content changes the repository SHA, so the next `install.sh` run stamps a new
+marker and `/conductor/update` detects the change through the mechanism already
+designed for it. Projects set up before a change correctly report stale per
+`update.md:37`.
 
 ## Verification
 
@@ -408,10 +420,10 @@ changes, existing projects correctly report stale until they run
 | V5 | The 13 names in `setup.md` match `ls conductor/assets/code_styleguides/` exactly |
 | V6 | Edit C reviewed by eye as a literal filename list |
 | V7 | A sandbox Gradle project exercising Edits F/G: confirm the recorded `tech-stack.md` separates unit from instrumented test commands and lists modules from `settings.gradle.kts` |
-| V8 | `workflow-template.md` last line matches `<!-- conductor-workflow-version: <sha> -->`; `/conductor/update` reports up-to-date for a freshly set-up project instead of unconditionally stale |
+| V8 | After `install.sh`, the installed template's last line matches `<!-- conductor-workflow-version: <sha> -->` exactly once, and the source template still has none |
 | V9 | Edit H's amended enforcement table contains no Android, Gradle, or platform-specific terms |
 
-There is no runtime code, so there are no unit tests. Prompt edits (A–I) cannot
+There is no runtime code, so there are no unit tests. Prompt edits (A–H) cannot
 be executed in isolation; V6 compensates by keeping the highest-risk edit
 mechanical.
 
@@ -428,6 +440,5 @@ mechanical.
 | Edit F is a general Conductor improvement inside an Android spec | Accepted deliberately. It is a precondition for Android `implement`/`review` working at all, and scoping it Android-only would be worse. |
 | Greenfield Android still has no code after setup | Known limitation, documented in Scope. Mitigated by setup stating it plainly and pointing at Android Studio, `gradle init`, or a scaffolding first phase. |
 | Recorded commands go stale when build config changes | Same class as the style-guide drift risk. `/conductor/review` surfaces failures, and `tech-stack.md` is user-editable. |
-| Edit H changes shared doctrine every project copies byte-for-byte | Accepted. Edit I makes the change detectable by `/conductor/update`, which is the mechanism designed for exactly this. Existing projects report stale until updated. |
+| Edit H changes shared doctrine every project copies byte-for-byte | Accepted. The install-time marker makes the change detectable by `/conductor/update`, which is the mechanism designed for exactly this. Existing projects report stale until updated. |
 | Edit H could be read as doctrine creep under an Android spec | Mitigated by V9: the amended table must contain no platform-specific terms. It is a general fix with an Android motivating example. |
-| Edit I changes `/conductor/update` behavior for all existing projects | They currently always report stale, so the change strictly improves the signal. |
