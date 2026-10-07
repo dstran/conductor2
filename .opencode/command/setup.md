@@ -57,9 +57,28 @@ Determine whether this is a Brownfield (existing) or Greenfield (new) project.
 
 ## 6. Code Style Guides (`conductor/code_styleguides/`)
 
-The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `javascript`, `python`, `typescript`.
+The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `android`, `compose`, `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `java`, `javascript`, `kotlin`, `python`, `typescript`.
 
 1. Recommend the guides that match the confirmed tech stack (always include `general`). Do NOT invent style rules — only copy from the bundled assets.
+
+   **Android stacks.** Recommend the whole set at once rather than making the
+   user assemble it, keyed on the language and UI toolkit confirmed in step 5:
+
+   | Confirmed stack | Recommend |
+   | --- | --- |
+   | Android + Kotlin + Compose | `general`, `kotlin`, `android`, `compose` |
+   | Android + Kotlin + XML layouts | `general`, `kotlin`, `android` |
+   | Android + Java + XML layouts | `general`, `java`, `android` |
+   | Android + both languages | `general`, `kotlin`, `java`, `android` (add `compose` if in use) |
+
+   Jetpack Compose is Kotlin-only, so Java + Compose is not a valid
+   combination. If the user selects it, say so and ask whether the project is
+   migrating to Kotlin rather than recommending a set.
+
+   Never recommend `java` and `kotlin` together unless the user confirmed the
+   project genuinely contains both. Their accessor, override, and callback
+   conventions conflict, so a mixed set gives `/conductor/review` contradictory
+   rules to check against.
 2. Ask a multiple-choice question to confirm which guides to copy (Brownfield: confirm the matches and ask if more are needed; Greenfield: present the recommended set and allow hand-picking).
 3. Copy each selected guide into `conductor/code_styleguides/`, e.g.:
 
