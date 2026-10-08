@@ -158,8 +158,45 @@ Then act on the choice:
         the four dispatcher arguments:
         ```sh
         metadataFile="conductor/tracks/$ARGUMENTS/metadata.json"
-        branch=$(jq -r '.branch' "$metadataFile")
-        baseBranch=$(jq -r '.baseBranch' "$metadataFile")
+        extractMetadataField() {
+          field=$1
+          value=$(
+            awk -v field="$field" '
+              BEGIN { key = "\"" field "\"" }
+              {
+                line = $0
+                sub(/^[[:space:]]*/, "", line)
+                sub(/[[:space:]]*$/, "", line)
+                if (line ~ ("^" key "[[:space:]]*:")) {
+                  count++
+                  candidate = line
+                  sub(("^" key "[[:space:]]*:[[:space:]]*"), "", candidate)
+                  if (candidate !~ /^"[^"\\][^"\\]*"[[:space:]]*,?[[:space:]]*$/) {
+                    invalid = 1
+                  } else {
+                    sub(/^"/, "", candidate)
+                    sub(/"[[:space:]]*,?[[:space:]]*$/, "", candidate)
+                    value = candidate
+                  }
+                }
+              }
+              END {
+                if (count != 1 || invalid || value == "") exit 1
+                print value
+              }
+            ' "$metadataFile"
+          ) || {
+            echo "Invalid metadata field '$field' in $metadataFile: expected exactly one non-empty JSON string value." >&2
+            return 1
+          }
+          printf '%s\n' "$value"
+        }
+        if ! branch=$(extractMetadataField branch); then
+          exit 1
+        fi
+        if ! baseBranch=$(extractMetadataField baseBranch); then
+          exit 1
+        fi
         trackDescription="$ARGUMENTS"
         temporaryBodyFile=$(mktemp)
         cp "conductor/tracks/$ARGUMENTS/review.md" "$temporaryBodyFile"
