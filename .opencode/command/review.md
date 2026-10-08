@@ -150,9 +150,294 @@ Then act on the choice:
        `conductor/tracks/$ARGUMENTS/review.md` into it. Keep that file until
        immediately after the archive commit, then invoke the repository
        dispatcher with the recorded values and track description:
-       `sh conductor/scripts/open-pr.sh <branch> <baseBranch> "<track
-       description>" <temporary-body-file>`. Remove the temporary body
-       file after the invocation, including when the dispatcher fails.
+        Resolve the dispatcher in this order: first use the project-local
+        `conductor/scripts/open-pr.sh`; if it is absent, use the installed
+        asset at `~/.config/opencode/command/conductor/assets/scripts/open-pr.sh`.
+        Use the recorded `branch` and `baseBranch` metadata values, the track
+        description for `$ARGUMENTS`, and the temporary review-body file as
+        the four dispatcher arguments:
+        ```sh
+        metadataFile="conductor/tracks/$ARGUMENTS/metadata.json"
+        extractMetadataField() {
+          field=$1
+          value=$(
+            awk -v field="$field" '
+              function isWhitespace(character) {
+                return character == " " || character == "\t" || \
+                  character == "\r" || character == "\n"
+              }
+              function currentCharacter() {
+                return substr(document, position, 1)
+              }
+              function skipWhitespace() {
+                while (position <= documentLength && \
+                  isWhitespace(currentCharacter())) {
+                  position++
+                }
+              }
+              function parseString(    character, escape, hex) {
+                if (currentCharacter() != "\"") {
+                  return 0
+                }
+                position++
+                parsedString = ""
+                while (position <= documentLength) {
+                  character = currentCharacter()
+                  if (character == "\"") {
+                    position++
+                    return 1
+                  }
+                  if (character == "\\") {
+                    position++
+                    if (position > documentLength) {
+                      return 0
+                    }
+                    escape = currentCharacter()
+                    if (escape == "\"" || escape == "\\" || \
+                      escape == "/" || escape == "b" || \
+                      escape == "f" || escape == "n" || \
+                      escape == "r" || escape == "t") {
+                      if (escape == "\"") {
+                        parsedString = parsedString "\""
+                      } else if (escape == "\\") {
+                        parsedString = parsedString "\\"
+                      } else if (escape == "/") {
+                        parsedString = parsedString "/"
+                      } else if (escape == "b") {
+                        parsedString = parsedString "\b"
+                      } else if (escape == "f") {
+                        parsedString = parsedString "\f"
+                      } else if (escape == "n") {
+                        parsedString = parsedString "\n"
+                      } else if (escape == "r") {
+                        parsedString = parsedString "\r"
+                      } else {
+                        parsedString = parsedString "\t"
+                      }
+                      position++
+                    } else if (escape == "u") {
+                      hex = substr(document, position + 1, 4)
+                      if (length(hex) != 4 || \
+                        hex !~ /^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]$/) {
+                        return 0
+                      }
+                      unicodeEscape = 1
+                      parsedString = parsedString "u" hex
+                      position += 5
+                    } else {
+                      return 0
+                    }
+                  } else {
+                    if (character ~ /[[:cntrl:]]/) {
+                      return 0
+                    }
+                    parsedString = parsedString character
+                    position++
+                  }
+                }
+                return 0
+              }
+              function parseLiteral(literal) {
+                if (substr(document, position, length(literal)) != literal) {
+                  return 0
+                }
+                position += length(literal)
+                return 1
+              }
+              function parseNumber(    character) {
+                if (currentCharacter() == "-") {
+                  position++
+                }
+                if (currentCharacter() == "0") {
+                  position++
+                } else if (currentCharacter() ~ /^[1-9]$/) {
+                  while (currentCharacter() ~ /^[0-9]$/) {
+                    position++
+                  }
+                } else {
+                  return 0
+                }
+                if (currentCharacter() == ".") {
+                  position++
+                  if (currentCharacter() !~ /^[0-9]$/) {
+                    return 0
+                  }
+                  while (currentCharacter() ~ /^[0-9]$/) {
+                    position++
+                  }
+                }
+                character = currentCharacter()
+                if (character == "e" || character == "E") {
+                  position++
+                  character = currentCharacter()
+                  if (character == "+" || character == "-") {
+                    position++
+                  }
+                  if (currentCharacter() !~ /^[0-9]$/) {
+                    return 0
+                  }
+                  while (currentCharacter() ~ /^[0-9]$/) {
+                    position++
+                  }
+                }
+                return 1
+              }
+              function parsePrimitive() {
+                if (currentCharacter() == "t") {
+                  return parseLiteral("true")
+                }
+                if (currentCharacter() == "f") {
+                  return parseLiteral("false")
+                }
+                if (currentCharacter() == "n") {
+                  return parseLiteral("null")
+                }
+                if (currentCharacter() == "-" || \
+                  currentCharacter() ~ /^[0-9]$/) {
+                  return parseNumber()
+                }
+                return 0
+              }
+              function parseObject(    key, value, valueType, character) {
+                skipWhitespace()
+                if (currentCharacter() != "{") {
+                  return 0
+                }
+                position++
+                skipWhitespace()
+                if (currentCharacter() == "}") {
+                  position++
+                  skipWhitespace()
+                  return position > documentLength
+                }
+                while (position <= documentLength) {
+                  unicodeEscape = 0
+                  if (currentCharacter() != "\"" || !parseString()) {
+                    return 0
+                  }
+                  if (unicodeEscape) {
+                    return 0
+                  }
+                  key = parsedString
+                  skipWhitespace()
+                  if (currentCharacter() != ":") {
+                    return 0
+                  }
+                  position++
+                  skipWhitespace()
+                  unicodeEscape = 0
+                  if (currentCharacter() == "\"") {
+                    if (!parseString()) {
+                      return 0
+                    }
+                    valueType = "string"
+                    value = parsedString
+                  } else {
+                    if (!parsePrimitive()) {
+                      return 0
+                    }
+                    valueType = "primitive"
+                    value = ""
+                  }
+                  if (key in seen) {
+                    return 0
+                  }
+                  seen[key] = 1
+                  if (key == field) {
+                    targetCount++
+                    if (valueType != "string" || value == "" || \
+                      unicodeEscape) {
+                      targetInvalid = 1
+                    }
+                    targetValue = value
+                  }
+                  skipWhitespace()
+                  character = currentCharacter()
+                  if (character == ",") {
+                    position++
+                    skipWhitespace()
+                    if (currentCharacter() == "}") {
+                      return 0
+                    }
+                    continue
+                  }
+                  if (character == "}") {
+                    position++
+                    skipWhitespace()
+                    return position > documentLength
+                  }
+                  return 0
+                }
+                return 0
+              }
+              {
+                document = document $0 "\n"
+              }
+              END {
+                documentLength = length(document)
+                position = 1
+                if (!parseObject() || targetCount != 1 || targetInvalid || \
+                  targetValue == "") {
+                  exit 1
+                }
+                print targetValue
+              }
+            ' "$metadataFile"
+          ) || {
+            echo "Invalid metadata field '$field' in $metadataFile: expected exactly one non-empty JSON string value." >&2
+            return 1
+          }
+          printf '%s\n' "$value"
+        }
+        if ! branch=$(extractMetadataField branch); then
+          exit 1
+        fi
+        if ! baseBranch=$(extractMetadataField baseBranch); then
+          exit 1
+        fi
+        trackDescription="$ARGUMENTS"
+        temporaryBodyFile=
+        if temporaryBodyFile=$(mktemp); then
+          :
+        else
+          if [ -n "$temporaryBodyFile" ]; then
+            rm -f "$temporaryBodyFile"
+          fi
+          echo "Unable to create a temporary review body file." >&2
+          exit 1
+        fi
+        if cp "conductor/tracks/$ARGUMENTS/review.md" "$temporaryBodyFile"; then
+          :
+        else
+          rm -f "$temporaryBodyFile"
+          echo "Unable to copy the review body to $temporaryBodyFile." >&2
+          exit 1
+        fi
+
+        dispatcher=conductor/scripts/open-pr.sh
+        if [ ! -f "$dispatcher" ]; then
+          dispatcher="$HOME/.config/opencode/command/conductor/assets/scripts/open-pr.sh"
+        fi
+        if [ ! -f "$dispatcher" ]; then
+          echo "Conductor review dispatcher is missing; rerun the Conductor installer." >&2
+          rm -f "$temporaryBodyFile"
+          exit 1
+        fi
+
+        if sh "$dispatcher" "$branch" "$baseBranch" "$trackDescription" \
+          "$temporaryBodyFile"; then
+          dispatcherStatus=0
+        else
+          dispatcherStatus=$?
+        fi
+        rm -f "$temporaryBodyFile"
+        if [ "$dispatcherStatus" -ne 0 ]; then
+          exit "$dispatcherStatus"
+        fi
+        ```
+        The invocation's output remains unredirected so its complete output is
+        preserved for reporting. Remove the temporary body file after the
+        invocation regardless of whether the dispatcher succeeds or fails.
        Report the dispatcher's complete output and whether it succeeded or
        emitted fallback instructions; do not replace or suppress its
        output.
