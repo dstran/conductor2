@@ -163,6 +163,7 @@ Then act on the choice:
         fi
         if [ ! -f "$dispatcher" ]; then
           echo "Conductor review dispatcher is missing; rerun the Conductor installer." >&2
+          rm -f "$temporaryBodyFile"
           exit 1
         fi
         sh "$dispatcher" "$branch" "$baseBranch" "$trackDescription" \
