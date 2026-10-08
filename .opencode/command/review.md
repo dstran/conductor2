@@ -162,27 +162,225 @@ Then act on the choice:
           field=$1
           value=$(
             awk -v field="$field" '
-              BEGIN { key = "\"" field "\"" }
-              {
-                line = $0
-                sub(/^[[:space:]]*/, "", line)
-                sub(/[[:space:]]*$/, "", line)
-                if (line ~ ("^" key "[[:space:]]*:")) {
-                  count++
-                  candidate = line
-                  sub(("^" key "[[:space:]]*:[[:space:]]*"), "", candidate)
-                  if (candidate !~ /^"[^"\\][^"\\]*"[[:space:]]*,?[[:space:]]*$/) {
-                    invalid = 1
-                  } else {
-                    sub(/^"/, "", candidate)
-                    sub(/"[[:space:]]*,?[[:space:]]*$/, "", candidate)
-                    value = candidate
-                  }
+              function isWhitespace(character) {
+                return character == " " || character == "\t" || \
+                  character == "\r" || character == "\n"
+              }
+              function currentCharacter() {
+                return substr(document, position, 1)
+              }
+              function skipWhitespace() {
+                while (position <= documentLength && \
+                  isWhitespace(currentCharacter())) {
+                  position++
                 }
               }
+              function parseString(    character, escape, hex) {
+                if (currentCharacter() != "\"") {
+                  return 0
+                }
+                position++
+                parsedString = ""
+                while (position <= documentLength) {
+                  character = currentCharacter()
+                  if (character == "\"") {
+                    position++
+                    return 1
+                  }
+                  if (character == "\\") {
+                    position++
+                    if (position > documentLength) {
+                      return 0
+                    }
+                    escape = currentCharacter()
+                    if (escape == "\"" || escape == "\\" || \
+                      escape == "/" || escape == "b" || \
+                      escape == "f" || escape == "n" || \
+                      escape == "r" || escape == "t") {
+                      if (escape == "\"") {
+                        parsedString = parsedString "\""
+                      } else if (escape == "\\") {
+                        parsedString = parsedString "\\"
+                      } else if (escape == "/") {
+                        parsedString = parsedString "/"
+                      } else if (escape == "b") {
+                        parsedString = parsedString "\b"
+                      } else if (escape == "f") {
+                        parsedString = parsedString "\f"
+                      } else if (escape == "n") {
+                        parsedString = parsedString "\n"
+                      } else if (escape == "r") {
+                        parsedString = parsedString "\r"
+                      } else {
+                        parsedString = parsedString "\t"
+                      }
+                      position++
+                    } else if (escape == "u") {
+                      hex = substr(document, position + 1, 4)
+                      if (length(hex) != 4 || \
+                        hex !~ /^[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]$/) {
+                        return 0
+                      }
+                      unicodeEscape = 1
+                      parsedString = parsedString "u" hex
+                      position += 5
+                    } else {
+                      return 0
+                    }
+                  } else {
+                    if (character ~ /[[:cntrl:]]/) {
+                      return 0
+                    }
+                    parsedString = parsedString character
+                    position++
+                  }
+                }
+                return 0
+              }
+              function parseLiteral(literal) {
+                if (substr(document, position, length(literal)) != literal) {
+                  return 0
+                }
+                position += length(literal)
+                return 1
+              }
+              function parseNumber(    character) {
+                if (currentCharacter() == "-") {
+                  position++
+                }
+                if (currentCharacter() == "0") {
+                  position++
+                } else if (currentCharacter() ~ /^[1-9]$/) {
+                  while (currentCharacter() ~ /^[0-9]$/) {
+                    position++
+                  }
+                } else {
+                  return 0
+                }
+                if (currentCharacter() == ".") {
+                  position++
+                  if (currentCharacter() !~ /^[0-9]$/) {
+                    return 0
+                  }
+                  while (currentCharacter() ~ /^[0-9]$/) {
+                    position++
+                  }
+                }
+                character = currentCharacter()
+                if (character == "e" || character == "E") {
+                  position++
+                  character = currentCharacter()
+                  if (character == "+" || character == "-") {
+                    position++
+                  }
+                  if (currentCharacter() !~ /^[0-9]$/) {
+                    return 0
+                  }
+                  while (currentCharacter() ~ /^[0-9]$/) {
+                    position++
+                  }
+                }
+                return 1
+              }
+              function parsePrimitive() {
+                if (currentCharacter() == "t") {
+                  return parseLiteral("true")
+                }
+                if (currentCharacter() == "f") {
+                  return parseLiteral("false")
+                }
+                if (currentCharacter() == "n") {
+                  return parseLiteral("null")
+                }
+                if (currentCharacter() == "-" || \
+                  currentCharacter() ~ /^[0-9]$/) {
+                  return parseNumber()
+                }
+                return 0
+              }
+              function parseObject(    key, value, valueType, character) {
+                skipWhitespace()
+                if (currentCharacter() != "{") {
+                  return 0
+                }
+                position++
+                skipWhitespace()
+                if (currentCharacter() == "}") {
+                  position++
+                  skipWhitespace()
+                  return position > documentLength
+                }
+                while (position <= documentLength) {
+                  unicodeEscape = 0
+                  if (currentCharacter() != "\"" || !parseString()) {
+                    return 0
+                  }
+                  if (unicodeEscape) {
+                    return 0
+                  }
+                  key = parsedString
+                  skipWhitespace()
+                  if (currentCharacter() != ":") {
+                    return 0
+                  }
+                  position++
+                  skipWhitespace()
+                  unicodeEscape = 0
+                  if (currentCharacter() == "\"") {
+                    if (!parseString()) {
+                      return 0
+                    }
+                    valueType = "string"
+                    value = parsedString
+                  } else {
+                    if (!parsePrimitive()) {
+                      return 0
+                    }
+                    valueType = "primitive"
+                    value = ""
+                  }
+                  if (key in seen) {
+                    return 0
+                  }
+                  seen[key] = 1
+                  if (key == field) {
+                    targetCount++
+                    if (valueType != "string" || value == "" || \
+                      unicodeEscape) {
+                      targetInvalid = 1
+                    }
+                    targetValue = value
+                  }
+                  skipWhitespace()
+                  character = currentCharacter()
+                  if (character == ",") {
+                    position++
+                    skipWhitespace()
+                    if (currentCharacter() == "}") {
+                      return 0
+                    }
+                    continue
+                  }
+                  if (character == "}") {
+                    position++
+                    skipWhitespace()
+                    return position > documentLength
+                  }
+                  return 0
+                }
+                return 0
+              }
+              {
+                document = document $0 "\n"
+              }
               END {
-                if (count != 1 || invalid || value == "") exit 1
-                print value
+                documentLength = length(document)
+                position = 1
+                if (!parseObject() || targetCount != 1 || targetInvalid || \
+                  targetValue == "") {
+                  exit 1
+                }
+                print targetValue
               }
             ' "$metadataFile"
           ) || {
@@ -198,8 +396,23 @@ Then act on the choice:
           exit 1
         fi
         trackDescription="$ARGUMENTS"
-        temporaryBodyFile=$(mktemp)
-        cp "conductor/tracks/$ARGUMENTS/review.md" "$temporaryBodyFile"
+        temporaryBodyFile=
+        if temporaryBodyFile=$(mktemp); then
+          :
+        else
+          if [ -n "$temporaryBodyFile" ]; then
+            rm -f "$temporaryBodyFile"
+          fi
+          echo "Unable to create a temporary review body file." >&2
+          exit 1
+        fi
+        if cp "conductor/tracks/$ARGUMENTS/review.md" "$temporaryBodyFile"; then
+          :
+        else
+          rm -f "$temporaryBodyFile"
+          echo "Unable to copy the review body to $temporaryBodyFile." >&2
+          exit 1
+        fi
 
         dispatcher=conductor/scripts/open-pr.sh
         if [ ! -f "$dispatcher" ]; then
