@@ -108,7 +108,26 @@ The bundled guides live at `~/.config/opencode/command/conductor/assets/code_sty
 
 4. Ask a Yes/No question whether to add custom rules. If yes, ask an open question for the rules and append them to the relevant copied guide(s).
 
-## 7. Workflow (`conductor/workflow.md`)
+## 7. Review dispatcher (`conductor/scripts/open-pr.sh`)
+
+The installed review-request dispatcher lives at
+`~/.config/opencode/command/conductor/assets/scripts/open-pr.sh`. It is needed
+by `/conductor/review` only when a track has both `branch` and `baseBranch`
+metadata and reaches Archive cleanup.
+
+If `conductor/scripts/open-pr.sh` is missing, verify that the installed asset
+exists. If it is missing too, tell the user to rerun the Conductor installer
+and halt setup. Otherwise create the project directory and copy the asset:
+
+```bash
+mkdir -p conductor/scripts
+cp ~/.config/opencode/command/conductor/assets/scripts/open-pr.sh \
+  conductor/scripts/open-pr.sh
+```
+
+If `conductor/scripts/open-pr.sh` already exists, leave it unchanged.
+
+## 8. Workflow (`conductor/workflow.md`)
 
 The bundled workflow template lives at `~/.config/opencode/command/conductor/assets/workflow-template.md`.
 
@@ -120,13 +139,13 @@ cp ~/.config/opencode/command/conductor/assets/workflow-template.md conductor/wo
 
 Do not paraphrase, summarize, or otherwise alter the copied content — `conductor/workflow.md` is a byte-for-byte copy of the installed template, including its trailing version marker (see `/conductor/update`, which relies on that marker being present and unmodified).
 
-## 8. Tracks registry (`conductor/tracks.md`)
+## 9. Tracks registry (`conductor/tracks.md`)
 
 If `conductor/tracks.md` is missing, create it with the standard registry skeleton (`# Tracks Registry` header plus empty `## Active` and `## Blocked` sections and the lifecycle-encoding notes). Do not add any track entries — `/conductor/new-track` owns those.
 
 This skeleton file lives in the current worktree/branch. `/conductor/new-track` creates a dedicated worktree and branch for every track by default, so once tracks begin using their own worktrees, this file's scope is that current worktree/branch only — not a single global registry shared across every track's worktree.
 
-## 9. Handshake index (`conductor/index.md`)
+## 10. Handshake index (`conductor/index.md`)
 
 Write `conductor/index.md` — the single source of truth later commands read:
 
@@ -152,10 +171,10 @@ Write `conductor/index.md` — the single source of truth later commands read:
 
 Integrity check: verify every linked file and directory above exists on disk. If any is missing, create or repair it before continuing.
 
-## 10. Commit setup
+## 11. Commit setup
 
 Stage the `conductor/` directory and commit with the message `conductor(setup): Initialize project context and standards`.
 
-## 11. Completion
+## 12. Completion
 
 Present a short summary of the initialized scaffolding, then ask a Yes/No question offering to plan the first track now with `/conductor/new-track`.
