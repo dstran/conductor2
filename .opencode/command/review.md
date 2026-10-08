@@ -157,6 +157,13 @@ Then act on the choice:
         description for `$ARGUMENTS`, and the temporary review-body file as
         the four dispatcher arguments:
         ```sh
+        metadataFile="conductor/tracks/$ARGUMENTS/metadata.json"
+        branch=$(jq -r '.branch' "$metadataFile")
+        baseBranch=$(jq -r '.baseBranch' "$metadataFile")
+        trackDescription="$ARGUMENTS"
+        temporaryBodyFile=$(mktemp)
+        cp "conductor/tracks/$ARGUMENTS/review.md" "$temporaryBodyFile"
+
         dispatcher=conductor/scripts/open-pr.sh
         if [ ! -f "$dispatcher" ]; then
           dispatcher="$HOME/.config/opencode/command/conductor/assets/scripts/open-pr.sh"
@@ -166,11 +173,21 @@ Then act on the choice:
           rm -f "$temporaryBodyFile"
           exit 1
         fi
-        sh "$dispatcher" "$branch" "$baseBranch" "$trackDescription" \
-          "$temporaryBodyFile"
+
+        if sh "$dispatcher" "$branch" "$baseBranch" "$trackDescription" \
+          "$temporaryBodyFile"; then
+          dispatcherStatus=0
+        else
+          dispatcherStatus=$?
+        fi
+        rm -f "$temporaryBodyFile"
+        if [ "$dispatcherStatus" -ne 0 ]; then
+          exit "$dispatcherStatus"
+        fi
         ```
-        Remove the temporary body file after the invocation, including when
-        the dispatcher fails.
+        The invocation's output remains unredirected so its complete output is
+        preserved for reporting. Remove the temporary body file after the
+        invocation regardless of whether the dispatcher succeeds or fails.
        Report the dispatcher's complete output and whether it succeeded or
        emitted fallback instructions; do not replace or suppress its
        output.
