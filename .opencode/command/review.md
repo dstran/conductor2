@@ -150,9 +150,26 @@ Then act on the choice:
        `conductor/tracks/$ARGUMENTS/review.md` into it. Keep that file until
        immediately after the archive commit, then invoke the repository
        dispatcher with the recorded values and track description:
-       `sh conductor/scripts/open-pr.sh <branch> <baseBranch> "<track
-       description>" <temporary-body-file>`. Remove the temporary body
-       file after the invocation, including when the dispatcher fails.
+        Resolve the dispatcher in this order: first use the project-local
+        `conductor/scripts/open-pr.sh`; if it is absent, use the installed
+        asset at `~/.config/opencode/command/conductor/assets/scripts/open-pr.sh`.
+        Use the recorded `branch` and `baseBranch` metadata values, the track
+        description for `$ARGUMENTS`, and the temporary review-body file as
+        the four dispatcher arguments:
+        ```sh
+        dispatcher=conductor/scripts/open-pr.sh
+        if [ ! -f "$dispatcher" ]; then
+          dispatcher="$HOME/.config/opencode/command/conductor/assets/scripts/open-pr.sh"
+        fi
+        if [ ! -f "$dispatcher" ]; then
+          echo "Conductor review dispatcher is missing; rerun the Conductor installer." >&2
+          exit 1
+        fi
+        sh "$dispatcher" "$branch" "$baseBranch" "$trackDescription" \
+          "$temporaryBodyFile"
+        ```
+        Remove the temporary body file after the invocation, including when
+        the dispatcher fails.
        Report the dispatcher's complete output and whether it succeeded or
        emitted fallback instructions; do not replace or suppress its
        output.
