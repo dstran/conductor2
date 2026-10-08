@@ -127,7 +127,8 @@ bash -n install.sh
 SANDBOX="${TMPDIR:-/tmp}/conductor-dispatcher-install"
 rm -rf "$SANDBOX"
 mkdir -p "$SANDBOX/run" "$SANDBOX/home"
-( cd "$SANDBOX/run" && HOME="$SANDBOX/home" bash "$PWD/install.sh" )
+INSTALLER="$PWD/install.sh"
+( cd "$SANDBOX/run" && HOME="$SANDBOX/home" bash "$INSTALLER" )
 
 INSTALLED="$SANDBOX/home/.config/opencode/command/conductor/assets/scripts"
 test -f "$INSTALLED/open-pr.sh"
