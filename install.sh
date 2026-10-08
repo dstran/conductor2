@@ -30,14 +30,16 @@ install_opencode_surface() {
   local skill_dir="$config/skills/conductor"
   local command_dir="$config/command/conductor"
   local styleguides_dir="$command_dir/assets/code_styleguides"
+  local scripts_dir="$command_dir/assets/scripts"
   local sha
   sha="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
   rm -rf "$skill_dir" "$command_dir"
-  mkdir -p "$skill_dir" "$command_dir" "$styleguides_dir"
+  mkdir -p "$skill_dir" "$command_dir" "$styleguides_dir" "$scripts_dir"
   cp "$ROOT/skill/SKILL.md" "$skill_dir/SKILL.md"
   cp "$ROOT"/.opencode/command/*.md "$command_dir/"
   cp "$ROOT"/conductor/assets/code_styleguides/*.md "$styleguides_dir/"
+  cp "$ROOT/conductor/scripts/open-pr.sh" "$scripts_dir/open-pr.sh"
   cp "$ROOT/conductor/assets/workflow-template.md" "$command_dir/assets/workflow-template.md"
   echo "<!-- conductor-workflow-version: $sha -->" >> "$command_dir/assets/workflow-template.md"
   echo "  $skill_dir"
