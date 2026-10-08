@@ -391,7 +391,8 @@ errors.
 SANDBOX="${TMPDIR:-/tmp}/conductor-dispatcher-final"
 rm -rf "$SANDBOX"
 mkdir -p "$SANDBOX/run" "$SANDBOX/home"
-( cd "$SANDBOX/run" && HOME="$SANDBOX/home" bash "$PWD/install.sh" )
+INSTALLER="$PWD/install.sh"
+( cd "$SANDBOX/run" && HOME="$SANDBOX/home" bash "$INSTALLER" )
 
 INSTALLED="$SANDBOX/home/.config/opencode/command/conductor"
 test -f "$INSTALLED/assets/scripts/open-pr.sh"
