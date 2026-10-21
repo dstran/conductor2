@@ -20,13 +20,14 @@ Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not 
 Otherwise, run the following loop before generating a track ID or creating any artifact:
 
 1. **Draft understanding.** From the seed, identify the purpose, constraints, and success criteria as currently understood.
-2. **Find and classify decision forks.** Do three things internally (do not narrate this mechanism to the user — only its results):
+2. **Find, classify, and order decision forks.** Do three things internally (do not narrate this mechanism to the user — only its results):
    - **Mental `/conductor/implement` dry-run:** walk the draft spec as if implementing it, task by task. Every point where you would have to guess, or where `/conductor/implement` would have to stop and ask the user, is a decision fork.
    - **Ambiguity-category checklist:** confirm each of the following is resolved or explicitly not applicable: data shapes/models, external or internal API contracts, error handling and failure paths, edge cases and boundaries, acceptance/success criteria, tech and library choices, out-of-scope boundaries, test expectations. Any unresolved category is a decision fork.
    - **Fact-versus-decision classification:** classify every unresolved item as `FACT`, `DECISION`, or `MIXED`.
      - `FACT`: investigate it through the repository, available tools, or primary documentation. Do not ask the user to provide information the agent can verify.
      - `DECISION`: ask the user because the answer depends on preference, scope, risk tolerance, or a trade-off.
      - `MIXED`: resolve the factual prerequisite first, then present the remaining choice to the user.
+   - **Design tree and frontier:** model the unresolved items as a design tree. Each fork is a node; record what each fork depends on. The **frontier** is the set of unresolved forks whose prerequisites are settled. Work only on frontier items: resolve frontier `FACT` items, resolve the factual part of frontier `MIXED` items, and ask about one frontier `DECISION` at a time. Recompute the frontier after every fact lookup or user answer. Do not ask a decision whose prerequisites remain unresolved.
    - If both the dry-run and the checklist come back clean, and all factual prerequisites have been resolved, there are no more forks — go to step 4.
 3. **Resolve forks, one question at a time.** For each fork:
    - Before asking a question, resolve any factual prerequisite yourself. If sources disagree or the fact cannot be established, explain the uncertainty and present the remaining risk as a user-owned decision. Never turn an unverified fact into an assumed implementation choice.
