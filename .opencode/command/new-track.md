@@ -20,11 +20,19 @@ Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not 
 Otherwise, run the following loop before generating a track ID or creating any artifact:
 
 1. **Draft understanding.** From the seed, identify the purpose, constraints, and success criteria as currently understood.
-2. **Find decision forks.** Do two things internally (do not narrate this mechanism to the user — only its results):
+   - **Domain-language and scenario pass:** identify domain-significant terms that may have multiple meanings. Compare each with existing project terminology and inspect relevant code or documentation. Use concrete scenarios to distinguish meanings. Ask the user only when the distinction affects behavior or scope; otherwise choose a precise term and use it consistently in the draft. Do not create a glossary for every track; record ordinary clarifications in the draft spec and promote terminology to durable project documentation only when it matters across tracks.
+2. **Find, classify, and order decision forks.** Do three things internally (do not narrate this mechanism to the user — only its results):
    - **Mental `/conductor/implement` dry-run:** walk the draft spec as if implementing it, task by task. Every point where you would have to guess, or where `/conductor/implement` would have to stop and ask the user, is a decision fork.
    - **Ambiguity-category checklist:** confirm each of the following is resolved or explicitly not applicable: data shapes/models, external or internal API contracts, error handling and failure paths, edge cases and boundaries, acceptance/success criteria, tech and library choices, out-of-scope boundaries, test expectations. Any unresolved category is a decision fork.
-   - If both the dry-run and the checklist come back clean, there are no more forks — go to step 4.
+   - **Fact-versus-decision classification:** classify every unresolved item as `FACT`, `DECISION`, or `MIXED`.
+     - `FACT`: investigate it through the repository, available tools, or primary documentation. Research only when a FACT or MIXED fork depends on external documentation or another verifiable prerequisite; do not ask the user to provide information the agent can verify. For material external findings, use primary sources where available and record the source with concise findings in the draft spec.
+     - `DECISION`: ask the user because the answer depends on preference, scope, risk tolerance, or a trade-off.
+     - `MIXED`: resolve the factual prerequisite first using primary sources where available, then present the remaining choice to the user and record material sources in the draft spec with concise findings.
+     - If sources conflict or are unavailable, explain the uncertainty and present the remaining risk as a user-owned decision rather than silently selecting an implementation assumption. Research informs the decision; it does not silently make it. Small lookups do not require a separate research report; a concise source note in the draft is sufficient, while substantial research may be linked as a separate report.
+   - **Design tree and frontier:** model the unresolved items as a design tree. Each fork is a node; record what each fork depends on. The **frontier** is the set of unresolved forks whose prerequisites are settled. Work only on frontier items: resolve frontier `FACT` items, resolve the factual part of frontier `MIXED` items, and ask about one frontier `DECISION` at a time. Recompute the frontier after every fact lookup or user answer. Do not ask a decision whose prerequisites remain unresolved.
+   - If both the dry-run and the checklist come back clean, and all factual prerequisites have been resolved, there are no more forks — go to step 4.
 3. **Resolve forks, one question at a time.** For each fork:
+   - Before asking a question, resolve any factual prerequisite yourself. If sources disagree or the fact cannot be established, explain the uncertainty and present the remaining risk as a user-owned decision. Never turn an unverified fact into an assumed implementation choice.
    - If there is more than one viable option, present the options with trade-offs and your recommendation, then ask.
    - If there is exactly one sane option, state it — do not offer it as a choice.
    - The user may respond in one of four ways:
