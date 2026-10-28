@@ -113,11 +113,80 @@ If the user gives feedback instead of approving:
    stays in `## Active` — there is no separate completed section. Also
    set `metadata.json`'s `status` field to `"complete"`, mirroring this
    same transition.
-3. Stage and commit the review-loop fixes (if any) plus the
+3. Synchronize project documentation. Do this after the review-loop fixes
+   are in place and ask the user nothing; the result is its own commit that
+   shows up in the PR.
+
+   Resolve "the track's changed files" as the files changed by this
+   track's own commits — the task SHAs recorded in `plan.md` plus any
+   review-fix commits — never the diff from `baseRef`, which includes
+   earlier tracks on a shared branch.
+
+   a. `product.md`: update only for a material change to the product
+      description (new capability, changed scope).
+   b. `tech-stack.md`: update only if the track introduces, removes, or
+      changes a technology, library, or architectural choice.
+   c. If `product.md` or `tech-stack.md` does not exist, skip that file and
+      tell the user to run `/conductor/setup` to create it. Never create a
+      minimal version: `/conductor/setup`'s interview records details with
+      the user's approval.
+   d. `product-guidelines.md` is excluded from unattended updates. If
+      `spec.md` describes a branding, voice, tone, or UX-philosophy change,
+      mention it to the user but do not edit the file.
+   e. Update the architecture documents as described in "Architecture
+      documents" below.
+   f. If anything changed, stage only the documentation files (not the
+      registry edit from step 2) and commit:
+      `docs(conductor): Synchronize docs for track '<track_id>'`. If nothing
+      changed, make no commit and say so.
+
+   ### Architecture documents
+
+   Keep `conductor/architecture/` current so a new developer can read it
+   in a fixed order:
+
+   - `README.md`: purpose, a "read in this order" list, and one Mermaid
+     `flowchart` of at most about 12 components with their dependency
+     edges. Each node links to its page under `components/`.
+   - `components/<name>.md`, one per component, with these headings:
+     Purpose; Responsibilities; Key interfaces; Depends on / Used by; Code
+     paths; Gotchas. Aim for about one screen each.
+
+   How to update:
+
+   - **No `conductor/architecture/` yet:** run one full audit of the
+     repository to create the set, and say "initial architecture audit" in
+     the commit message body. Also append this to `conductor/index.md` if
+     it lacks an Architecture section, leaving the rest of the file
+     untouched:
+
+     ```markdown
+     ## Architecture
+
+     - [Architecture Overview](./architecture/README.md)
+     ```
+
+   - **Directory exists:** map this track's changed files to components and
+     rewrite only those pages. Touch the overview diagram only when a
+     component or dependency edge was added, removed, or changed. A new
+     top-level module gets a new component page and a diagram node.
+   - Create the architecture documents whether or not `product.md` or
+     `tech-stack.md` exist.
+
+   Guards against drift:
+
+   - Every code path cited must exist in the checkout (`test -e <path>`).
+   - Validate each Mermaid block with `mmdc` when it is installed; otherwise
+     do a structural check and say it was not rendered.
+   - Keep the overview under the node cap; put extra detail in sub-diagrams
+     on component pages instead.
+   - Keep facts in the component pages. The README only orients and links;
+     do not duplicate content between files.
+4. Stage and commit the review-loop fixes (if any) plus the
    registry `[x]` marking with a short, clear summary
    message following `conductor/workflow.md`'s commit strategy
    (e.g. `conductor(track): <track_id> <title>`).
-4. Attach the full verification report as a **git note** on that
+5. Attach the full verification report as a **git note** on that
    commit — not in the commit message body:
    `git notes add -m "$(cat conductor/tracks/$ARGUMENTS/review.md)" <commit-sha>`
    This keeps the commit message short while preserving a full,
