@@ -18,3 +18,7 @@ Some files are created by `setup` or `new-track` and may not exist until those c
 
 - [Tracks Registry](./tracks.md)
 - [Tracks Directory](./tracks/)
+
+## Architecture
+
+- [Architecture Overview](./architecture/README.md)

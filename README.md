@@ -77,6 +77,8 @@ commands. Run them in your own project's directory:
 - `/conductor/new-track` — plan a new track (spec + phased plan + registry entry).
 - `/conductor/implement` — implement an approved track phase-by-phase.
 - `/conductor/review` — review a completed track before closing it.
+- `/conductor/cleanup` — remove a merged track's worktree and local branch
+  after confirming the pull request was merged.
 - `/conductor/status` — summarize active, blocked, and archived tracks.
 - `/conductor/revert` — revert a track, phase, or task.
 - `/conductor/update` — sync `conductor/workflow.md` with the currently

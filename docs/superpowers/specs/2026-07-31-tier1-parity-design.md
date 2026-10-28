@@ -103,6 +103,11 @@ commit for full-track reverts.
 
 ### 3. G1: doc-sync step in `/implement`
 
+> **Superseded (2026-10-28):** doc sync now runs in `/review` §9 without
+> prompts, and `product-guidelines.md` is excluded. See
+> `2026-10-28-pr-lifecycle-and-living-docs-design.md`. The text below is the
+> original design.
+
 New step 4 in `implement.md`, inserted after all phases are checkpointed
 (current step 4 "Track complete") and before the existing awaiting-review
 handoff (renumbers to step 5):
@@ -241,8 +246,8 @@ mechanically (`git log --oneline`, `grep` on the resulting `plan.md`,
 |---|---|---|
 | `/new-track` (G12) | fresh `conductor/` from `/setup`, no tracks | `git log --oneline` contains a commit matching `chore(conductor): initialize track '<id>'` |
 | `/implement` (G6 SHA format) | one approved track, 1 phase / 2 tasks | each `[x]` task line matches `- \[x\] Task: .* \[<sha>\]` and `<sha>` resolves via `git cat-file -e`; the phase heading contains `[checkpoint: <sha>]` for a real commit |
-| `/implement` (G1 doc-sync, positive) | track whose `spec.md` clearly changes the tech stack | `tech-stack.md` is modified; `git log` contains `docs(conductor): Synchronize docs for track '<id>'` |
-| `/implement` (G1 doc-sync, negative control) | track with no product/tech-stack/guidelines impact | `product.md`, `tech-stack.md`, `product-guidelines.md` are byte-identical to before the run; no `docs(conductor):` commit exists |
+| `/implement` (G1 doc-sync, positive; superseded: now `/review`) | track whose `spec.md` clearly changes the tech stack | `tech-stack.md` is modified; `git log` contains `docs(conductor): Synchronize docs for track '<id>'` |
+| `/implement` (G1 doc-sync, negative control; superseded: now `/review`) | track with no product/tech-stack/guidelines impact | `product.md`, `tech-stack.md`, `product-guidelines.md` are byte-identical to before the run; no `docs(conductor):` commit exists |
 | `/status` (G4) | `plan.md` with a known, hand-crafted mix of `[x]`/`[~]`/`[ ]` (e.g. 2 of 5 tasks done) | reported completion is exactly `2/5 (40%)`; reported next-pending task matches the fixture's first `[ ]` line |
 | `/revert` (G5, Safe strategy) | a track produced by a real `/implement` run (so task/phase/plan-update commits and SHAs are genuine) | after revert: target task/phase line is back to `[ ]` with no SHA/`[checkpoint]` annotation; `git log` shows new revert commits; `git diff <pre-task-sha> HEAD -- <touched files>` is empty |
 | `/revert` (G5, ghost-commit path) | fixture where a recorded SHA has been rebased away | run halts with the ghost-commit Yes/No prompt rather than silently failing or fabricating a SHA |

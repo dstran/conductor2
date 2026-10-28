@@ -129,36 +129,10 @@ Once every phase has its own checkpoint commit:
      `status` field to `"awaiting-review"`, mirroring this same
      transition.
    - Tell the user the track is ready for `/conductor/review $ARGUMENTS`.
+   - Project documentation (`product.md`, `tech-stack.md`, architecture) is
+     synchronized by `/conductor/review`, not here.
 
-## 5. Synchronize project documentation
-
-Once every phase has its own checkpoint commit and `plan.md` has been
-updated per step 4, check whether this track's changes should be
-reflected in the project's own context files:
-
-   a. Read the track's `spec.md`.
-   b. For `product.md`: does this track materially change the product
-      description itself (new capability, changed scope)? If yes,
-      present a proposed diff and ask a Yes/No question; apply the edit
-      only on explicit yes. If no material change, state that briefly
-      and move on — do not ask a question.
-   c. For `tech-stack.md`: does this track introduce, remove, or change
-      a technology, library, or architectural choice? If yes, present a
-      proposed diff and ask a Yes/No question; apply only on explicit
-      yes. If no material change, state that briefly and move on.
-   d. For `product-guidelines.md`: only consider this file if `spec.md`
-      explicitly describes a branding, voice, tone, or UX-philosophy
-      change. If so, present the diff with an explicit warning that this
-      file defines the product's core identity, then ask a Yes/No
-      question; apply only on explicit yes. If `spec.md` says nothing
-      about branding/voice/tone, skip this file entirely — do not even
-      mention it.
-   e. If any of `product.md`, `tech-stack.md`, or `product-guidelines.md`
-      were changed, stage them together and commit:
-      `docs(conductor): Synchronize docs for track '<track_id>'`. If
-      nothing changed, make no commit and say so.
-
-## 6. If you stop early due to a blocker
+## 5. If you stop early due to a blocker
 Leave completed tasks `[x]`, phases with completed checkpoints as
 checkpointed, and the blocked task as `[~]` with a note explaining
 why — so the user can resume with the same command after resolving

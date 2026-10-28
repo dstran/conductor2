@@ -18,6 +18,7 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - `new-track` creates and approves a track specification and implementation plan before coding starts.
 - `implement` executes an approved track plan and updates registry state as work advances.
 - `review` verifies the completed track and closes it only after explicit approval.
+- `cleanup` is an optional final step: after a track's pull request is merged, it removes the local worktree and branch once merge proof holds and the user confirms.
 
 ## Project Surface
 
