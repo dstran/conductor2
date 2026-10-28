@@ -19,6 +19,10 @@ if [ "$#" -eq 3 ] && [ "$1" = remote ] && [ "$2" = get-url ] && [ "$3" = origin 
     printf '%s\n' "$REMOTE_URL"
     exit 0
 fi
+if [ "$1" = push ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/git-push"
+    exit "${GIT_PUSH_STATUS:-0}"
+fi
 exit 1
 EOF
 
@@ -32,6 +36,14 @@ if [ "$1" = pr ] && [ "$2" = create ]; then
     printf '%s\n' "$@" >"$FAKE_LOG_DIR/gh"
     exit "${GH_CREATE_STATUS:-0}"
 fi
+if [ "$1" = pr ] && [ "$2" = view ]; then
+    printf '%s\n' "${GH_VIEW_OUTPUT:-}"
+    exit "${GH_VIEW_STATUS:-1}"
+fi
+if [ "$1" = pr ] && [ "$2" = comment ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/gh-comment"
+    exit "${GH_COMMENT_STATUS:-0}"
+fi
 exit 1
 EOF
 
@@ -44,6 +56,14 @@ fi
 if [ "$1" = mr ] && [ "$2" = create ]; then
     printf '%s\n' "$@" >"$FAKE_LOG_DIR/glab"
     exit "${GLAB_CREATE_STATUS:-0}"
+fi
+if [ "$1" = mr ] && [ "$2" = list ]; then
+    printf '%s\n' "${GLAB_LIST_OUTPUT:-}"
+    exit "${GLAB_LIST_STATUS:-0}"
+fi
+if [ "$1" = mr ] && [ "$2" = note ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/glab-comment"
+    exit "${GLAB_COMMENT_STATUS:-0}"
 fi
 exit 1
 EOF
@@ -100,6 +120,13 @@ run_dispatcher() {
         GH_CREATE_STATUS=${GH_CREATE_STATUS:-0} \
         GLAB_AUTH_STATUS=${GLAB_AUTH_STATUS:-0} \
         GLAB_CREATE_STATUS=${GLAB_CREATE_STATUS:-0} \
+        GH_VIEW_OUTPUT=${GH_VIEW_OUTPUT:-} \
+        GH_VIEW_STATUS=${GH_VIEW_STATUS:-1} \
+        GH_COMMENT_STATUS=${GH_COMMENT_STATUS:-0} \
+        GLAB_LIST_OUTPUT=${GLAB_LIST_OUTPUT:-} \
+        GLAB_LIST_STATUS=${GLAB_LIST_STATUS:-0} \
+        GLAB_COMMENT_STATUS=${GLAB_COMMENT_STATUS:-0} \
+        GIT_PUSH_STATUS=${GIT_PUSH_STATUS:-0} \
         PATH=$fake_bin:$PATH \
         sh "$dispatcher" track/demo main Demo "${DISPATCHER_BODY_FILE:-$body_file}" 2>&1
     )
@@ -296,5 +323,105 @@ run_auth_failure 'https://github.com/owner/repo.git'
 run_glab_missing_cli 'https://gitlab.com/owner/repo.git'
 run_glab_auth_failure 'https://gitlab.com/owner/repo.git'
 run_glab_provider_failure 'https://gitlab.com/owner/repo.git'
+
+run_existing() {
+    remote=$1
+    shift
+    rm -f "$log_dir/gh" "$log_dir/glab" "$log_dir/git-push" "$log_dir/gh-comment" "$log_dir/glab-comment"
+    REMOTE_URL=$remote GH_AUTH_STATUS=0 GH_CREATE_STATUS=0 GLAB_AUTH_STATUS=0 GLAB_CREATE_STATUS=0
+    export REMOTE_URL GH_AUTH_STATUS GH_CREATE_STATUS GLAB_AUTH_STATUS GLAB_CREATE_STATUS
+    for assignment do
+        export "$assignment"
+    done
+    run_dispatcher
+    for assignment do
+        unset "${assignment%%=*}"
+    done
+}
+
+cat >"$fake_bin/gh" <<'EOF'
+#!/bin/sh
+if [ "$1" = auth ] && [ "$2" = status ]; then exit "${GH_AUTH_STATUS:-0}"; fi
+if [ "$1" = pr ] && [ "$2" = create ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/gh"
+    exit "${GH_CREATE_STATUS:-0}"
+fi
+if [ "$1" = pr ] && [ "$2" = view ]; then
+    printf '%s\n' "${GH_VIEW_OUTPUT:-}"
+    exit "${GH_VIEW_STATUS:-1}"
+fi
+if [ "$1" = pr ] && [ "$2" = comment ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/gh-comment"
+    exit "${GH_COMMENT_STATUS:-0}"
+fi
+exit 1
+EOF
+chmod +x "$fake_bin/gh"
+
+GH_REMOTE='https://github.com/owner/repo.git'
+GL_REMOTE='https://gitlab.com/owner/repo.git'
+
+run_existing "$GH_REMOTE" \
+    'GH_VIEW_OUTPUT=OPEN https://github.com/o/r/pull/7' GH_VIEW_STATUS=0
+[ "$run_status" -eq 0 ] || fail "gh open pr returned $run_status"
+assert_named_log git-push push origin track/demo
+assert_named_log gh-comment pr comment track/demo --body-file "$body_file"
+[ ! -e "$log_dir/gh" ] || fail "gh open pr created a second request"
+assert_contains "$output" 'https://github.com/o/r/pull/7'
+
+run_existing "$GH_REMOTE" \
+    'GH_VIEW_OUTPUT=MERGED https://github.com/o/r/pull/7' GH_VIEW_STATUS=0
+[ "$run_status" -eq 0 ] || fail "gh merged pr returned $run_status"
+[ -f "$log_dir/gh" ] || fail "gh merged pr did not create a request"
+[ ! -e "$log_dir/git-push" ] || fail "gh merged pr pushed"
+
+run_existing "$GH_REMOTE" GH_VIEW_STATUS=1
+[ "$run_status" -eq 0 ] || fail "gh view failure returned $run_status"
+[ -f "$log_dir/gh" ] || fail "gh view failure did not create a request"
+[ ! -e "$log_dir/git-push" ] || fail "gh view failure pushed"
+
+run_existing "$GH_REMOTE" \
+    'GH_VIEW_OUTPUT=OPEN https://github.com/o/r/pull/7' GH_VIEW_STATUS=0 GIT_PUSH_STATUS=1
+[ "$run_status" -eq 1 ] || fail "gh push failure returned $run_status"
+assert_contains "$output" 'git push -u origin track/demo'
+[ ! -e "$log_dir/gh-comment" ] || fail "gh push failure commented"
+
+run_existing "$GH_REMOTE" \
+    'GH_VIEW_OUTPUT=OPEN https://github.com/o/r/pull/7' GH_VIEW_STATUS=0 GH_COMMENT_STATUS=1
+[ "$run_status" -eq 0 ] || fail "gh comment failure returned $run_status"
+assert_contains "$output" 'gh pr comment'
+assert_named_log git-push push origin track/demo
+
+cat >"$fake_bin/glab" <<'EOF'
+#!/bin/sh
+if [ "$1" = auth ] && [ "$2" = status ]; then exit "${GLAB_AUTH_STATUS:-0}"; fi
+if [ "$1" = mr ] && [ "$2" = create ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/glab"
+    exit "${GLAB_CREATE_STATUS:-0}"
+fi
+if [ "$1" = mr ] && [ "$2" = list ]; then
+    printf '%s\n' "${GLAB_LIST_OUTPUT:-}"
+    exit "${GLAB_LIST_STATUS:-0}"
+fi
+if [ "$1" = mr ] && [ "$2" = note ]; then
+    printf '%s\n' "$@" >"$FAKE_LOG_DIR/glab-comment"
+    exit "${GLAB_COMMENT_STATUS:-0}"
+fi
+exit 1
+EOF
+chmod +x "$fake_bin/glab"
+
+run_existing "$GL_REMOTE" \
+    'GLAB_LIST_OUTPUT=https://gitlab.com/o/r/-/merge_requests/3'
+[ "$run_status" -eq 0 ] || fail "glab open mr returned $run_status"
+assert_named_log git-push push origin track/demo
+assert_named_log glab-comment mr note create track/demo -m review
+[ ! -e "$log_dir/glab" ] || fail "glab open mr created a second request"
+assert_contains "$output" 'https://gitlab.com/o/r/-/merge_requests/3'
+
+run_existing "$GL_REMOTE" GLAB_LIST_OUTPUT=
+[ "$run_status" -eq 0 ] || fail "glab no open mr returned $run_status"
+[ -f "$log_dir/glab" ] || fail "glab no open mr did not create a request"
+[ ! -e "$log_dir/git-push" ] || fail "glab no open mr pushed"
 
 printf 'PASS: open-pr dispatcher tests\n'
