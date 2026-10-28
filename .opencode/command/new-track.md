@@ -11,6 +11,8 @@ If `conductor/index.md` is missing, stale, or does not point to the expected wor
 
 If `conductor/tracks.md` is missing, stop and route back to `/conductor/setup` rather than recreating setup-owned handshake state during `/conductor/new-track`.
 
+Before starting, run the read-only merge-proof checks from `/conductor/cleanup` (its Step 3) on the other `track/*` worktrees from `git worktree list`. For each one that passes all four checks, print one line: ``Branch `<branch>` is merged. Run `/conductor/cleanup` to remove it.`` Do not remove anything here, and do not block track creation on this.
+
 ## 1. Track brainstorming
 
 Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not the track's shortname. If `$ARGUMENTS` is empty, ask the user for a brief description of what they want to build before continuing. Infer and confirm the track type (feature, bug, chore, refactor, MVP) before continuing — independently of whether the rest of this step's brainstorming loop runs or is skipped.

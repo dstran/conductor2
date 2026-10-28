@@ -54,19 +54,19 @@ For each track's `plan.md`:
 
 For each sibling worktree discovered in Step 0 (and the current one, if
 it has recorded worktree metadata), read its track's `metadata.json`
-for `branch` and `baseRef`. For each such track:
+for `branch` and `baseBranch`. Apply the same read-only merge proof that
+`/conductor/cleanup` uses (its Step 3: PR state `MERGED` with a head SHA
+equal to the local branch tip, a clean worktree, no commits beyond the
+merged head, and no live track in that worktree's `conductor/tracks.md`).
+This is the proof that also covers squash merges, so do not use
+`git log <baseRef>..<branch>`.
 
-- Compute `git log <baseRef>..<branch>`. If this is empty, the branch's
-  commits are already fully contained in `baseRef` — the PR (if one
-  was opened per `/conductor/review`'s Archive step) has been merged.
-- If `gh` is available, cross-check with `gh pr view <branch> --json
-  state` — a `MERGED` state also confirms this.
-- Flag any track meeting either condition as **cleanup-ready**, and
-  print the exact commands to remove it: `git worktree remove
-  <worktreePath>`, followed by `git branch -d <branch>` and, if a
-  remote copy exists, `git push origin --delete <branch>`.
-- This is detection only — never run these commands automatically.
-  The human decides when to actually clean up a merged worktree.
+- Flag a track that passes all four checks as **cleanup-ready** and print
+  one line for it: ``Branch `<branch>` is merged. Run `/conductor/cleanup`
+  to remove it.``
+- This is detection only — never remove anything from `/conductor/status`.
+  Removal happens only through `/conductor/cleanup`, which asks for
+  confirmation.
 
 ## 3. Workflow doctrine staleness
 
@@ -98,8 +98,8 @@ Report, in this order:
 5. **Archived tracks:** the list from step 2, or "none" if
    `conductor/archive/` doesn't exist.
 6. **Cleanup-ready worktrees:** the list flagged in step 2.5 — track,
-   worktree path, and the exact removal commands — or "none" if no
-   sibling worktree's branch is fully merged.
+   worktree path, and the `/conductor/cleanup` hint — or "none" if no
+   sibling worktree's branch passes the merge proof.
 7. **Workflow doctrine line** from step 3, always shown last.
 
 If `conductor/tracks.md` has no entries under `## Active` or `## Blocked`
