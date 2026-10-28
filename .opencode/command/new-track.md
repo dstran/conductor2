@@ -59,6 +59,55 @@ Compose the **track ID** as `<shortname>_YYYYMMDD`, where `YYYYMMDD` is today's 
 
 ## 2.5. Create the track's worktree
 
+### Detect an existing track worktree (reuse mode)
+
+A refinement track (for example, fixing review feedback on an open PR) lives
+on the PR's existing branch. Never create a worktree inside a worktree.
+
+The current directory is a track worktree when all of these hold:
+
+- it is a linked worktree: `git rev-parse --absolute-git-dir` differs from
+  `git rev-parse --path-format=absolute --git-common-dir` (they are equal in
+  the main checkout);
+- the current branch matches `track/*`;
+- `conductor/` exists in this checkout.
+
+If it is not a track worktree, skip this subsection and continue below
+unchanged.
+
+If it is, check the branch's PR state first:
+
+- GitHub: `gh pr view <branch> --json state --jq .state`.
+- GitLab (best effort): `glab mr list --source-branch <branch> --all -F json --jq '.[0].state'`.
+
+If the state is `MERGED`, `merged`, or `CLOSED`/`closed`, do not reuse the
+worktree. Stop, explain that this branch's PR is finished, and point to
+`/conductor/cleanup` or to running `/conductor/new-track` from the main
+checkout. If there is no PR yet or the provider CLI is unavailable, continue.
+
+Never reuse silently. Ask a single-choice question: **Refine this branch's PR
+here**, or **Stop — I'll start a separate track from the main checkout**. Only
+an explicit "refine here" enters **reuse mode**. If more than one earlier
+track exists in this worktree (active under `conductor/tracks/` or archived
+under `conductor/archive/`), also ask which one is being refined.
+
+In reuse mode:
+
+- Do not run `git worktree add` and do not create a branch.
+- `worktreePath` is the current worktree and `branch` is the current branch.
+- `baseBranch` and `baseRef` are copied from an existing track's
+  `metadata.json` in this worktree (an active track first, otherwise the
+  newest `conductor/archive/*/metadata.json`). Do not read them from `HEAD`,
+  which is the track branch itself. If none can be found, stop and ask.
+- Record `"refines": "<track_id>"` in `metadata.json` for the track chosen
+  above, when there is one.
+- Steps 3 onward run in the current directory.
+
+Reuse mode is entered only through this detection and the user's explicit
+answer, never as a fallback after a failed `git worktree add`.
+
+### Create a new worktree (outside reuse mode)
+
 Before creating the worktree, determine the branch `HEAD` currently
 points to: `git rev-parse --abbrev-ref HEAD`. If this returns the
 literal string `HEAD` (a detached-HEAD state, not on any branch), stop
@@ -81,7 +130,8 @@ If this command fails — the worktree path or branch already exists,
 the directory is not a git repository, or any other git error — stop
 immediately and report the exact git error verbatim to the user. Do
 not fall back to creating the track in the current worktree, and do
-not silently overwrite or reuse an existing worktree/branch.
+not silently overwrite or reuse an existing worktree/branch (the reuse
+mode above is the only sanctioned reuse, and requires the user's answer).
 
 On success, record the base commit SHA that `HEAD` pointed to
 immediately before running this command — this is `baseRef`, written
@@ -100,7 +150,7 @@ create:
 
 Write `spec.md` using the exact content approved in Step 1's Gate A (do not re-draft it here), including its two provenance sections.
 
-`metadata.json` records the track ID, type, status (`new`), created/updated timestamps, and the worktree fields from Step 2.5: `worktreePath` (`.worktrees/<track_id>`), `branch` (`track/<track_id>`), `baseBranch` (the branch name `HEAD` was on before worktree creation — used as the PR base branch), and `baseRef` (the base commit SHA recorded in Step 2.5 — used only for merge-detection, not as a PR base). If Step 1's "Open questions auto-decided by agent — PLEASE DOUBLE-CHECK" section is non-empty, also record `"needsReview": true` in `metadata.json`.
+`metadata.json` records the track ID, type, status (`new`), created/updated timestamps, and the worktree fields from Step 2.5: `worktreePath` (`.worktrees/<track_id>`), `branch` (`track/<track_id>`), `baseBranch` (the branch name `HEAD` was on before worktree creation — used as the PR base branch), and `baseRef` (the base commit SHA recorded in Step 2.5 — used only for merge-detection, not as a PR base). In reuse mode, `worktreePath` is the current worktree rather than `.worktrees/<track_id>`, `baseBranch`/`baseRef` are inherited as described in Step 2.5, and `refines` names the track being refined when one was chosen. If Step 1's "Open questions auto-decided by agent — PLEASE DOUBLE-CHECK" section is non-empty, also record `"needsReview": true` in `metadata.json`.
 
 Planning is first-class: `/conductor/new-track` must produce an approved `spec.md` and `plan.md` before implementation begins. Require task-type tags on every plan task for workflow enforcement (see `conductor/workflow.md`). Write every task line as `- [ ] Task: <description> [<task-type>]` and every phase heading as `## Phase <N>: <title>` — `/conductor/implement` and `/conductor/review` complete these into `- [x] Task: <description> [<task-type>] <sha>` and `## Phase <N>: <title> [checkpoint: <sha>]` per `conductor/workflow.md`'s task commit procedure.
 
@@ -127,4 +177,4 @@ Tell the user, in a short summary: the ambiguity-category checklist categories t
 
 ## 7. Pause for approval
 
-Tell the user the generated track ID, the worktree path (`.worktrees/<track_id>`) they should `cd` into before running the next command, and that the next step is `/conductor/implement <track_id>` run from inside that worktree. Pause for approval before `/conductor/implement`. Do not invoke `/conductor/implement` yourself under any circumstances — this command ends here and the user must separately run `/conductor/implement`.
+Tell the user the generated track ID, the worktree path (`.worktrees/<track_id>`) they should `cd` into before running the next command (in reuse mode they are already in the right worktree, so no `cd` is needed), and that the next step is `/conductor/implement <track_id>` run from inside that worktree. Pause for approval before `/conductor/implement`. Do not invoke `/conductor/implement` yourself under any circumstances — this command ends here and the user must separately run `/conductor/implement`.
