@@ -148,7 +148,8 @@ Then act on the choice:
        has a dedicated worktree per `/conductor/new-track`), create a
        temporary body file with `mktemp` and copy
        `conductor/tracks/$ARGUMENTS/review.md` into it. Keep that file until
-       immediately after the archive commit, then invoke the repository
+       immediately after the archive commit, then (only if the shared PR
+       branch guard below passes) invoke the repository
        dispatcher with the recorded values and track description:
         Resolve the dispatcher in this order: first use the project-local
         `conductor/scripts/open-pr.sh`; if it is absent, use the installed
@@ -449,6 +450,17 @@ Then act on the choice:
          the required `git push -u origin <branch>` command, and instructions
          to open the pull request or merge request manually. Report that
          complete output to the user.
+       - **Shared PR branch guard.** A branch can carry several tracks
+         (refinement tracks reuse the PR's worktree). After the archive
+         commit and before invoking the dispatcher, read
+         `conductor/tracks.md`. If any other entry remains under
+         `## Active` (`[ ]`, `[~]`, or `[x]`) or `## Blocked`, do not
+         invoke the dispatcher: list those other live tracks, tell the user
+         to finish or archive them first, and keep the archive commit.
+         Push only when this track is the last live one.
+       - If the branch already has an open request, the dispatcher pushes to
+         it instead of creating another and posts this track's `review.md`
+         as a comment on it. Tell the user when that happened.
        - If the track's `metadata.json` has no `branch`/`baseBranch`
          (grandfathered pre-worktree track, or an older worktree track
          created before `baseBranch` existed), skip review request
