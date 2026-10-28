@@ -5,17 +5,22 @@ agent: build
 
 `/conductor/cleanup` is an optional step after the Conductor lifecycle: `/conductor/setup -> /conductor/new-track -> /conductor/implement -> /conductor/review -> /conductor/cleanup`.
 
-Treat `$ARGUMENTS` as an optional branch name (`track/<track_id>`) or track ID. Cleanup is keyed on the **branch**, because several tracks can share one PR branch.
+Treat the command's optional argument as a branch name (`track/<track_id>`) or
+track ID. Cleanup is keyed on the **branch**, because several tracks can share
+one PR branch.
+
+When a branch or track ID is supplied, OpenCode appends it to this prompt; use
+that trailing value as the filter. With no argument, consider every candidate.
 
 Nothing is removed unless every merge-proof check below passes **and** the user answers yes.
 
 ## 1. Where to run
 
-Run from the main checkout, never from inside a worktree being removed. Determine this with `git rev-parse --absolute-git-dir` and `git rev-parse --path-format=absolute --git-common-dir`: if they differ, the current directory is a linked worktree. In that case stop and print the command to run from the main checkout (`cd <main checkout> && /conductor/cleanup $ARGUMENTS`).
+Run from the main checkout, never from inside a worktree being removed. Determine this with `git rev-parse --absolute-git-dir` and `git rev-parse --path-format=absolute --git-common-dir`: if they differ, the current directory is a linked worktree. In that case stop and print the command to run from the main checkout (`cd <main checkout> && /conductor/cleanup`), appending the same branch or track ID if one was supplied.
 
 ## 2. Choose the candidates
 
-Run `git worktree list --porcelain`. Candidates are worktrees whose branch matches `track/*`. If `$ARGUMENTS` is given, keep only the candidate whose branch or track ID matches it; if none matches, say so and stop. If there are no candidates, say so and stop.
+Run `git worktree list --porcelain`. Candidates are worktrees whose branch matches `track/*`. If an argument was supplied, keep only the candidate whose branch or track ID matches it; if none matches, say so and stop. If there are no candidates, say so and stop.
 
 ## 3. Merge proof (all four must hold, per candidate)
 
