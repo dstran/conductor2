@@ -167,9 +167,15 @@ Write `conductor/index.md` — the single source of truth later commands read:
 
 - [Tracks Registry](./tracks.md)
 - [Tracks Directory](./tracks/)
+
+## Architecture
+
+- [Architecture Overview](./architecture/README.md)
 ```
 
-Integrity check: verify every linked file and directory above exists on disk. If any is missing, create or repair it before continuing.
+`conductor/architecture/` is created by `/conductor/review` the first time a track is approved, so the link may not resolve until then.
+
+Integrity check: verify every linked file and directory above exists on disk, except the Architecture link, which `/conductor/review` creates. If any other link is missing, create or repair it before continuing.
 
 ## 11. Commit setup
 
