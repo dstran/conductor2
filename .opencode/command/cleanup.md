@@ -20,7 +20,12 @@ Run from the main checkout, never from inside a worktree being removed. Determin
 
 ## 2. Choose the candidates
 
-Run `git worktree list --porcelain`. Candidates are worktrees whose branch matches `track/*`. If an argument was supplied, keep only the candidate whose branch or track ID matches it; if none matches, say so and stop. If there are no candidates, say so and stop.
+Run `git worktree list --porcelain`. Candidates are linked worktrees other
+than the main checkout that contain both `conductor/index.md` and
+`conductor/tracks.md`. Do not require a `track/*` branch name: legacy
+Conductor worktrees may use feature or fix branches. If an argument was
+supplied, keep only the candidate whose branch or track ID matches it; if none
+matches, say so and stop. If there are no candidates, say so and stop.
 
 ## 3. Merge proof (all four must hold, per candidate)
 
