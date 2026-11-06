@@ -282,6 +282,49 @@ EOF
     assert_absent "$REPO/conductor/tracks/demo"
 }
 
+test_resume_worktree_path_is_enforced() {
+    create_fixture complete resume-worktree
+    cat >"$REMOTE/hooks/update" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+    chmod +x "$REMOTE/hooks/update"
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'setup archive unexpectedly pushed'
+
+    python3 - "$REPO/conductor/archive/demo/metadata.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = json.loads(path.read_text())
+data["worktreePath"] = "/outside/not-this-worktree"
+path.write_text(json.dumps(data, indent=2) + "\n")
+PY
+    git -C "$REPO" add conductor/archive/demo/metadata.json
+    git -C "$REPO" commit -q --amend --no-edit
+    run_helper --resume-push demo
+    [ "$run_status" -ne 0 ] || fail 'resume accepted a mismatched worktree path'
+    assert_contains "$output" 'worktreePath'
+
+    python3 - "$REPO/conductor/archive/demo/metadata.json" "$REPO" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = json.loads(path.read_text())
+data["worktreePath"] = sys.argv[2]
+path.write_text(json.dumps(data, indent=2) + "\n")
+PY
+    git -C "$REPO" add conductor/archive/demo/metadata.json
+    git -C "$REPO" commit -q --amend --no-edit
+    rm "$REMOTE/hooks/update"
+    run_helper --resume-push demo
+    [ "$run_status" -eq 0 ] || fail "resume with correct worktree failed: $output"
+}
+
 test_base_branch_stops() {
     create_fixture complete base-branch
     git -C "$REPO" switch -q -c main
@@ -296,6 +339,45 @@ test_base_branch_stops() {
     assert_preflight_stop
     assert_contains "$output" 'track worktree'
     [ "$(git -C "$REPO" branch --show-current)" = main ] || fail 'base branch changed'
+}
+
+test_registry_exact_link_matching() {
+    create_fixture complete registry-link
+    cat >>"$REPO/conductor/tracks.md" <<'EOF'
+
+- [ ] **Not a track** *Link: [tracks/demo/plan.md.bak](./tracks/demo/plan.md.bak)*
+EOF
+    git -C "$REPO" add conductor/tracks.md
+    git -C "$REPO" commit -q -m 'test: add similar registry link'
+    git -C "$REPO" push -q origin track/demo
+    run_helper --apply demo
+    [ "$run_status" -eq 0 ] || fail "similar registry link blocked archive: $output"
+    assert_pushed_archive
+    grep -F 'plan.md.bak' "$REPO/conductor/tracks.md" >/dev/null || \
+        fail 'similar registry link was removed'
+}
+
+test_hardlink_paths_stop() {
+    for target in metadata registry; do
+        create_fixture complete "hardlink-$target"
+        outside=$FIXTURE/outside-$target
+        mkdir -p "$outside"
+        if [ "$target" = metadata ]; then
+            cp "$REPO/conductor/tracks/demo/metadata.json" "$outside/value"
+            rm "$REPO/conductor/tracks/demo/metadata.json"
+            ln "$outside/value" "$REPO/conductor/tracks/demo/metadata.json"
+        else
+            cp "$REPO/conductor/tracks.md" "$outside/value"
+            rm "$REPO/conductor/tracks.md"
+            ln "$outside/value" "$REPO/conductor/tracks.md"
+        fi
+        original_outside=$(cat "$outside/value")
+        run_helper --apply demo
+        assert_preflight_stop
+        assert_contains "$output" 'hard link'
+        [ "$(cat "$outside/value")" = "$original_outside" ] || \
+            fail "$target hardlink target changed"
+    done
 }
 
 test_post_commit_path_guard_rolls_back() {
@@ -644,7 +726,10 @@ test_local_ahead_push
 test_divergent_stops
 test_missing_remote_stops
 test_resume_push
+test_resume_worktree_path_is_enforced
 test_base_branch_stops
+test_registry_exact_link_matching
+test_hardlink_paths_stop
 test_post_commit_path_guard_rolls_back
 test_post_commit_verification_rolls_back_commit
 test_final_push_descendant_is_accepted

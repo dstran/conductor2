@@ -105,11 +105,20 @@ def ensure_under_repo(path: Path, repo: Path, label: str) -> None:
         stop(f"{label} resolves outside the repository: {path}")
 
 
+def ensure_no_hardlink(path: Path, label: str) -> None:
+    try:
+        if path.stat().st_nlink > 1:
+            stop(f"{label} is a hard link with external inode aliases: {path}")
+    except FileNotFoundError:
+        return
+
+
 def require_file(path: Path, repo: Path, label: str) -> None:
     ensure_no_symlink(path, repo, label)
     ensure_under_repo(path, repo, label)
     if not path.is_file():
         stop(f"missing {label}: {path}")
+    ensure_no_hardlink(path, label)
 
 
 def require_directory(path: Path, repo: Path, label: str) -> None:
@@ -190,13 +199,22 @@ def verify_worktree_path(repo: Path, metadata: dict) -> None:
         stop(f"current worktree does not match metadata worktreePath: {recorded}")
 
 
+def registry_link_pattern(track_id: str) -> re.Pattern[str]:
+    return re.compile(r"\]\(\./tracks/" + re.escape(track_id) + r"/plan\.md\)")
+
+
+REGISTRY_TRACK_LINK = re.compile(
+    r"\]\(\./tracks/[A-Za-z0-9][A-Za-z0-9_-]*/plan\.md\)"
+)
+
+
 def load_registry(repo: Path, track_id: str) -> tuple[Path, str, list[str], int, int, str]:
     path = repo / "conductor" / "tracks.md"
     require_file(path, repo, "tracks registry")
     original = path.read_text(encoding="utf-8")
     lines = original.splitlines(keepends=True)
-    link = f"tracks/{track_id}/plan.md"
-    matches = [index for index, line in enumerate(lines) if link in line]
+    link = registry_link_pattern(track_id)
+    matches = [index for index, line in enumerate(lines) if link.search(line)]
     if len(matches) != 1:
         stop(f"expected exactly one registry entry for {track_id}, found {len(matches)}")
     entry = matches[0]
@@ -244,8 +262,7 @@ def validate_no_other_live_tracks(lines: list[str], entry: int) -> None:
         if (
             index == entry
             or section not in {"## Active", "## Blocked"}
-            or "tracks/" not in line
-            or "/plan.md" not in line
+            or not REGISTRY_TRACK_LINK.search(line)
         ):
             continue
         stop("another live track remains in the registry; shared-branch cleanup is blocked")
@@ -442,6 +459,7 @@ def snapshot_tree(path: Path, repo: Path, label: str) -> dict[str, str]:
         for name in files:
             child = root_path / name
             relative = child.relative_to(path).as_posix()
+            ensure_no_hardlink(child, label)
             manifest[relative] = hashlib.sha256(child.read_bytes()).hexdigest()
     return manifest
 
@@ -466,7 +484,7 @@ def verify_archive_commit(
         stop("source track folder still exists after archive commit")
     if not destination.is_dir():
         stop("archive destination is missing after archive commit")
-    if f"tracks/{track_id}/plan.md" in registry.read_text(encoding="utf-8"):
+    if registry_link_pattern(track_id).search(registry.read_text(encoding="utf-8")):
         stop("registry entry still exists after archive commit")
     if expected_registry is not None and registry.read_text(encoding="utf-8") != expected_registry:
         stop("tracks registry changed after the expected archive snapshot")
@@ -492,11 +510,12 @@ def verify_resume_state(args: argparse.Namespace) -> dict:
     if source.exists():
         stop("--resume-push requires the source track directory to be absent")
     metadata, _ = load_metadata(repo, archive, track_id, branch)
+    verify_worktree_path(repo, metadata)
     if metadata.get("status") != "archived":
         stop("--resume-push requires archived metadata status")
     registry = repo / "conductor" / "tracks.md"
     require_file(registry, repo, "tracks registry")
-    if f"tracks/{track_id}/plan.md" in registry.read_text(encoding="utf-8"):
+    if registry_link_pattern(track_id).search(registry.read_text(encoding="utf-8")):
         stop("--resume-push requires the registry entry to be absent")
     clean = git(repo, "status", "--porcelain=v1", "--untracked-files=all")
     if clean:
@@ -615,6 +634,7 @@ def preflight(args: argparse.Namespace) -> dict:
     for name in ("plan.md", "spec.md", "review.md"):
         require_file(source / name, repo, name)
     validate_plan(source / "plan.md", repo)
+    snapshot_tree(source, repo, "track")
     clean = git(repo, "status", "--porcelain=v1", "--untracked-files=all")
     if clean:
         stop(f"working tree is dirty: {clean.replace(chr(10), '; ')}")
@@ -788,6 +808,15 @@ def mutate_and_push(state: dict) -> int:
         print(
             f"ARCHIVE PUSH STATE UNKNOWN: commit {commit} was submitted but "
             f"remote verification failed: {error}",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        require_current_revision(state, expected_head=commit)
+    except ArchiveError as error:
+        print(
+            f"ARCHIVE PUSHED BUT LOCAL STATE CHANGED: commit {commit} was submitted; "
+            f"local verification after remote fetch failed: {error}",
             file=sys.stderr,
         )
         return 1
