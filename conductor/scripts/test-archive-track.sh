@@ -17,7 +17,7 @@ assert_file() {
 }
 
 assert_absent() {
-    [ ! -e "$1" ] || fail "expected path to be absent: $1"
+    [ ! -e "$1" ] && [ ! -L "$1" ] || fail "expected path to be absent: $1"
 }
 
 assert_contains() {
@@ -27,6 +27,20 @@ assert_contains() {
         *"$expected"*) ;;
         *) fail "expected output to contain: $expected" ;;
     esac
+}
+
+assert_clean_index() {
+    git -C "$REPO" diff --cached --quiet || fail 'Git index contains unexpected staged changes'
+}
+
+assert_preflight_stop() {
+    [ "$run_status" -ne 0 ] || fail 'unsafe archive unexpectedly succeeded'
+    assert_contains "$output" 'STOP:'
+    assert_absent "$REPO/conductor/archive"
+    assert_file "$REPO/conductor/tracks/demo"
+    assert_clean_index
+    [ "$(git -C "$REPO" log -1 --format=%s)" != "chore(conductor): Archive track 'demo'" ] || \
+        fail 'preflight failure created an archive commit'
 }
 
 git_configure() {
@@ -255,6 +269,191 @@ EOF
     assert_absent "$REPO/conductor/tracks/demo"
 }
 
+test_shared_live_track_stops() {
+    create_fixture complete shared-live
+    mkdir -p "$REPO/conductor/tracks/other"
+    printf '%s\n' '# Other plan' >"$REPO/conductor/tracks/other/plan.md"
+    cat >>"$REPO/conductor/tracks.md" <<'EOF'
+
+- [x] **Track: Other** *Link: [tracks/other/plan.md](./tracks/other/plan.md)*
+EOF
+    git -C "$REPO" add conductor
+    git -C "$REPO" commit -q -m 'test: add shared live track'
+    git -C "$REPO" push -q origin track/demo
+
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'shared'
+}
+
+test_symlink_source_stops() {
+    create_fixture complete symlink-source
+    outside=$FIXTURE/outside-source
+    mkdir -p "$outside"
+    printf '%s\n' protected >"$outside/protected.txt"
+    rm -rf "$REPO/conductor/tracks/demo"
+    ln -s "$outside" "$REPO/conductor/tracks/demo"
+
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'symlink'
+    [ "$(cat "$outside/protected.txt")" = protected ] || fail 'source symlink target changed'
+}
+
+test_symlink_metadata_stops() {
+    create_fixture complete symlink-metadata
+    outside=$FIXTURE/outside-metadata
+    mkdir -p "$outside"
+    cp "$REPO/conductor/tracks/demo/metadata.json" "$outside/metadata.json"
+    rm "$REPO/conductor/tracks/demo/metadata.json"
+    ln -s "$outside/metadata.json" "$REPO/conductor/tracks/demo/metadata.json"
+
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'symlink'
+    assert_file "$outside/metadata.json"
+}
+
+test_symlink_registry_stops() {
+    create_fixture complete symlink-registry
+    outside=$FIXTURE/outside-registry
+    mkdir -p "$outside"
+    cp "$REPO/conductor/tracks.md" "$outside/tracks.md"
+    rm "$REPO/conductor/tracks.md"
+    ln -s "$outside/tracks.md" "$REPO/conductor/tracks.md"
+
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'symlink'
+    grep -F 'Track: Demo' "$outside/tracks.md" >/dev/null || fail 'registry symlink target changed'
+}
+
+test_symlink_archive_stops() {
+    create_fixture complete symlink-archive
+    outside=$FIXTURE/outside-archive
+    mkdir -p "$outside"
+    ln -s "$outside" "$REPO/conductor/archive"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'archive symlink unexpectedly accepted'
+    assert_contains "$output" 'STOP:'
+    [ -L "$REPO/conductor/archive" ] || fail 'archive symlink was changed'
+    assert_file "$REPO/conductor/tracks/demo"
+    assert_clean_index
+    assert_contains "$output" 'symlink'
+    assert_absent "$outside/demo"
+}
+
+test_mismatched_metadata_stops() {
+    for field in id branch; do
+        create_fixture complete "mismatched-$field"
+        if [ "$field" = id ]; then
+            sed -i.bak 's/"id": "demo"/"id": "other"/' "$REPO/conductor/tracks/demo/metadata.json"
+        else
+            sed -i.bak 's#"branch": "track/demo"#"branch": "track/other"#' "$REPO/conductor/tracks/demo/metadata.json"
+        fi
+        rm -f "$REPO/conductor/tracks/demo/metadata.json.bak"
+        run_helper --apply demo
+        assert_preflight_stop
+        assert_contains "$output" 'metadata'
+    done
+}
+
+test_malformed_metadata_stops() {
+    create_fixture complete malformed-json
+    printf '%s\n' '{ malformed' >"$REPO/conductor/tracks/demo/metadata.json"
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'valid JSON'
+}
+
+test_invalid_created_timestamp_stops() {
+    create_fixture complete invalid-created
+    sed -i.bak 's/"created": "2026-11-06T00:00:00Z"/"created": "not-a-timestamp"/' \
+        "$REPO/conductor/tracks/demo/metadata.json"
+    rm -f "$REPO/conductor/tracks/demo/metadata.json.bak"
+    git -C "$REPO" add conductor/tracks/demo/metadata.json
+    git -C "$REPO" commit -q -m 'test: corrupt created timestamp'
+    git -C "$REPO" push -q origin track/demo
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'created'
+}
+
+test_orphan_registry_note_stops() {
+    create_fixture complete orphan-note
+    awk '
+        /^## Blocked$/ && !added {
+            print "Status: implementation complete — awaiting review."
+            print ""
+            added = 1
+        }
+        { print }
+    ' "$REPO/conductor/tracks.md" >"$REPO/conductor/tracks.md.tmp"
+    mv "$REPO/conductor/tracks.md.tmp" "$REPO/conductor/tracks.md"
+    git -C "$REPO" add conductor/tracks.md
+    git -C "$REPO" commit -q -m 'test: add orphan registry note'
+    git -C "$REPO" push -q origin track/demo
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'registry'
+}
+
+test_dirty_worktree_stops() {
+    for dirty_kind in untracked staged; do
+        create_fixture complete "dirty-$dirty_kind"
+        if [ "$dirty_kind" = untracked ]; then
+            printf '%s\n' unrelated >"$REPO/unrelated.txt"
+        else
+            printf '%s\n' unrelated >"$REPO/staged.txt"
+            git -C "$REPO" add staged.txt
+        fi
+        run_helper --apply demo
+        if [ "$dirty_kind" = untracked ]; then
+            assert_preflight_stop
+        else
+            [ "$run_status" -ne 0 ] || fail 'staged dirty worktree unexpectedly archived'
+            assert_contains "$output" 'STOP:'
+            assert_absent "$REPO/conductor/archive"
+            assert_file "$REPO/conductor/tracks/demo"
+            [ "$(git -C "$REPO" log -1 --format=%s)" != "chore(conductor): Archive track 'demo'" ] || \
+                fail 'staged dirty worktree created an archive commit'
+        fi
+        assert_contains "$output" 'dirty'
+        if [ "$dirty_kind" = staged ]; then
+            git -C "$REPO" diff --cached --name-only | grep -F 'staged.txt' >/dev/null || \
+                fail 'preflight did not preserve the unrelated staged file'
+        fi
+    done
+}
+
+test_mutation_failure_rolls_back() {
+    create_fixture complete mutation-failure
+    original_metadata=$(cat "$REPO/conductor/tracks/demo/metadata.json")
+    original_registry=$(cat "$REPO/conductor/tracks.md")
+    original_head=$(git -C "$REPO" rev-parse HEAD)
+    hooks_dir="$REPO/$(git -C "$REPO" rev-parse --git-path hooks)"
+    cat >"$hooks_dir/pre-commit" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'injected commit failure' >&2
+exit 1
+EOF
+    chmod +x "$hooks_dir/pre-commit"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'injected mutation failure unexpectedly succeeded'
+    assert_contains "$output" 'rollback'
+    assert_file "$REPO/conductor/tracks/demo"
+    assert_absent "$REPO/conductor/archive"
+    [ "$(cat "$REPO/conductor/tracks/demo/metadata.json")" = "$original_metadata" ] || \
+        fail 'mutation failure did not restore metadata'
+    [ "$(cat "$REPO/conductor/tracks.md")" = "$original_registry" ] || \
+        fail 'mutation failure did not restore registry'
+    [ "$(git -C "$REPO" rev-parse HEAD)" = "$original_head" ] || \
+        fail 'mutation failure changed HEAD'
+    assert_clean_index
+}
+
 test_complete_archive
 test_awaiting_review_archive
 test_hard_stop_status
@@ -264,4 +463,15 @@ test_local_ahead_push
 test_divergent_stops
 test_missing_remote_stops
 test_resume_push
-printf '%s\n' 'PASS: archive helper basic contract'
+test_shared_live_track_stops
+test_symlink_source_stops
+test_symlink_metadata_stops
+test_symlink_registry_stops
+test_symlink_archive_stops
+test_mismatched_metadata_stops
+test_malformed_metadata_stops
+test_invalid_created_timestamp_stops
+test_orphan_registry_note_stops
+test_dirty_worktree_stops
+test_mutation_failure_rolls_back
+printf '%s\n' 'PASS: archive helper safety contract'

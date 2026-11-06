@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -13,7 +12,7 @@ import sys
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, NoReturn
+from typing import NoReturn
 
 
 ARCHIVE_MESSAGE = "chore(conductor): Archive track '{track_id}'"
@@ -143,8 +142,16 @@ def parse_rfc3339_utc(value: object, field: str) -> None:
 def load_metadata(repo: Path, source: Path, track_id: str, branch: str) -> tuple[dict, str]:
     path = source / "metadata.json"
     metadata = read_json(path, repo)
+    required = ("id", "type", "status", "branch", "created", "updatedAt")
+    missing = [field for field in required if field not in metadata]
+    if missing:
+        stop(f"metadata.json is missing required fields: {', '.join(missing)}")
     if metadata.get("id") != track_id:
         stop("metadata id does not match track_id")
+    if not isinstance(metadata.get("type"), str) or not metadata["type"].strip():
+        stop("metadata type must be a non-empty string")
+    if not isinstance(metadata.get("status"), str):
+        stop("metadata status must be a string")
     if not isinstance(metadata.get("branch"), str):
         stop("metadata branch must be a string")
     if metadata["branch"] != branch:
@@ -152,8 +159,13 @@ def load_metadata(repo: Path, source: Path, track_id: str, branch: str) -> tuple
     worktree_path = metadata.get("worktreePath")
     if worktree_path is not None and not isinstance(worktree_path, str):
         stop("metadata worktreePath must be a string when present")
-    if "updatedAt" in metadata:
-        parse_rfc3339_utc(metadata["updatedAt"], "updatedAt")
+    for field in ("created", "updatedAt"):
+        parse_rfc3339_utc(metadata[field], field)
+    for field in ("baseBranch", "baseRef"):
+        if field in metadata and not isinstance(metadata[field], str):
+            stop(f"metadata {field} must be a string when present")
+    if "baseRef" in metadata and not SHA_PATTERN.fullmatch(metadata["baseRef"]):
+        stop("metadata baseRef must be a hexadecimal commit SHA when present")
     return metadata, path.read_text(encoding="utf-8")
 
 
@@ -187,6 +199,11 @@ def load_registry(repo: Path, track_id: str) -> tuple[Path, str, list[str], int,
     note_end = entry + 1
     if note_end < len(lines) and lines[note_end].strip().startswith(("Status:", "Blocker:")):
         note_end += 1
+    for index, line in enumerate(lines):
+        if not line.strip().startswith(("Status:", "Blocker:")):
+            continue
+        if index == 0 or not re.match(r"^\s*-\s*\[[^]]+\]", lines[index - 1]):
+            stop(f"registry contains an orphan lifecycle note at line {index + 1}")
     return path, original, lines, entry, note_end, section
 
 
@@ -195,6 +212,8 @@ def validate_registry(
 ) -> None:
     line = lines[entry]
     if status == "complete":
+        if note_end > entry + 1:
+            stop("complete metadata has an orphan lifecycle note in its registry block")
         if section != "## Active" or not re.search(r"^\s*-\s*\[x\]", line):
             stop("complete metadata requires a completed [x] entry under ## Active")
     elif status == "awaiting-review":
@@ -210,11 +229,18 @@ def validate_registry(
 
 
 def validate_no_other_live_tracks(lines: list[str], entry: int) -> None:
+    section = ""
     for index, line in enumerate(lines):
-        if index == entry or "tracks/" not in line or "/plan.md" not in line:
+        if line.startswith("## "):
+            section = line.strip()
+        if (
+            index == entry
+            or section not in {"## Active", "## Blocked"}
+            or "tracks/" not in line
+            or "/plan.md" not in line
+        ):
             continue
-        if re.search(r"^\s*-\s*\[[ x~]\]", line):
-            stop("another live track remains in the registry; shared-branch cleanup is blocked")
+        stop("another live track remains in the registry; shared-branch cleanup is blocked")
 
 
 def validate_plan(path: Path, repo: Path) -> None:
@@ -455,6 +481,7 @@ def preflight(args: argparse.Namespace) -> dict:
     require_directory(source, repo, "track")
     ensure_no_symlink(archive_root, repo, "archive directory")
     ensure_under_repo(destination, repo, "archive destination")
+    ensure_no_symlink(destination, repo, "archive destination")
     if args.resume_push:
         stop("--resume-push is not available until an archive commit exists")
     metadata, metadata_text = load_metadata(repo, source, track_id, branch)
@@ -549,12 +576,18 @@ def mutate_and_push(state: dict) -> int:
         verify_staged_paths(repo, track_id)
         git(repo, "commit", "-m", ARCHIVE_MESSAGE.format(track_id=track_id))
         commit = verify_archive_commit(repo, track_id, state["branch"])
-    except ArchiveError:
+    except ArchiveError as error:
         rollback(state, original_registry, original_metadata, archive_root_created)
-        raise
+        raise ArchiveError(
+            f"archive mutation failed: {error}; rollback completed; "
+            "no archive commit was created"
+        ) from error
     except Exception as error:
         rollback(state, original_registry, original_metadata, archive_root_created)
-        stop(f"archive mutation failed: {error}")
+        stop(
+            f"archive mutation failed: {error}; rollback completed; "
+            "no archive commit was created"
+        )
 
     push = subprocess.run(
         ["git", "push", state["remote"], f"HEAD:{state['remote_branch']}"],
@@ -581,8 +614,14 @@ def mutate_and_push(state: dict) -> int:
 
 def run(args: argparse.Namespace) -> int:
     if args.resume_push:
-        return resume_push(args)
-    state = preflight(args)
+        try:
+            return resume_push(args)
+        except ArchiveError as error:
+            raise ArchiveError(f"{error}\nNo archive mutation was performed.") from error
+    try:
+        state = preflight(args)
+    except ArchiveError as error:
+        raise ArchiveError(f"{error}\nNo archive mutation was performed.") from error
     repo = state["repo"]
     if args.dry_run:
         print(f"DRY-RUN: track {state['track_id']} is eligible for archive")
