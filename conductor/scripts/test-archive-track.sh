@@ -454,6 +454,25 @@ EOF
     assert_clean_index
 }
 
+test_command_surface() {
+    repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
+    command_file=$repo_root/.opencode/command/archive.md
+    [ -f "$command_file" ] || fail 'archive command wrapper is missing'
+    for mode in --dry-run --apply --resume-push; do
+        grep -F -- "$mode" "$command_file" >/dev/null || \
+            fail "archive command wrapper does not document $mode"
+    done
+    local_line=$(grep -nF 'conductor/scripts/archive-track.py' "$command_file" | head -n 1 | cut -d: -f1)
+    fallback_line=$(grep -nF 'assets/scripts/archive-track.py' "$command_file" | head -n 1 | cut -d: -f1)
+    [ -n "$local_line" ] || fail 'archive command wrapper lacks local helper resolution'
+    [ -n "$fallback_line" ] || fail 'archive command wrapper lacks installed helper fallback'
+    [ "$local_line" -lt "$fallback_line" ] || fail 'installed helper is checked before local helper'
+    grep -F "chore(conductor): Archive track '<track_id>'" "$command_file" >/dev/null || \
+        fail 'archive command wrapper omits the exact archive commit message'
+    grep -F 'archive-track.py' "$repo_root/install.sh" >/dev/null || \
+        fail 'installer does not install archive-track.py'
+}
+
 test_complete_archive
 test_awaiting_review_archive
 test_hard_stop_status
@@ -474,4 +493,5 @@ test_invalid_created_timestamp_stops
 test_orphan_registry_note_stops
 test_dirty_worktree_stops
 test_mutation_failure_rolls_back
+test_command_surface
 printf '%s\n' 'PASS: archive helper safety contract'
