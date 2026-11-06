@@ -261,12 +261,108 @@ EOF
     remote_tip=$(git --git-dir="$REMOTE" rev-parse refs/heads/track/demo)
     [ "$local_tip" != "$remote_tip" ] || fail 'rejected push changed the remote'
 
+    cat >"$REMOTE/hooks/update" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'archive resume rejection' >&2
+exit 1
+EOF
+    chmod +x "$REMOTE/hooks/update"
+    run_helper --resume-push demo
+    [ "$run_status" -ne 0 ] || fail 'rejected resume push unexpectedly succeeded'
+    case $output in
+        *'No archive mutation was performed.'*) fail 'resume failure misreported as no archive mutation' ;;
+    esac
+    assert_contains "$output" 'existing local archive'
+
     rm "$REMOTE/hooks/update"
     run_helper --resume-push demo
     [ "$run_status" -eq 0 ] || fail "resume-push failed: $output"
     [ "$(git --git-dir="$REMOTE" rev-parse refs/heads/track/demo)" = "$local_tip" ] || \
         fail 'resume-push did not publish the archive commit'
     assert_absent "$REPO/conductor/tracks/demo"
+}
+
+test_base_branch_stops() {
+    create_fixture complete base-branch
+    git -C "$REPO" switch -q -c main
+    sed -i.bak 's#"branch": "track/demo"#"branch": "main"#' \
+        "$REPO/conductor/tracks/demo/metadata.json"
+    rm -f "$REPO/conductor/tracks/demo/metadata.json.bak"
+    git -C "$REPO" add conductor/tracks/demo/metadata.json
+    git -C "$REPO" commit -q -m 'test: configure base branch metadata'
+    git -C "$REPO" push -q -u origin main
+
+    run_helper --apply demo
+    assert_preflight_stop
+    assert_contains "$output" 'track worktree'
+    [ "$(git -C "$REPO" branch --show-current)" = main ] || fail 'base branch changed'
+}
+
+test_post_commit_path_guard_rolls_back() {
+    create_fixture complete post-commit-path
+    original_head=$(git -C "$REPO" rev-parse HEAD)
+    hooks_dir="$REPO/$(git -C "$REPO" rev-parse --git-path hooks)"
+    cat >"$hooks_dir/pre-commit" <<'EOF'
+#!/bin/sh
+printf '%s\n' injected > unrelated-hook.txt
+git add unrelated-hook.txt
+EOF
+    chmod +x "$hooks_dir/pre-commit"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'unrelated post-stage path unexpectedly archived'
+    assert_contains "$output" 'rollback'
+    assert_file "$REPO/conductor/tracks/demo"
+    assert_absent "$REPO/conductor/archive"
+    [ "$(git -C "$REPO" rev-parse HEAD)" = "$original_head" ] || \
+        fail 'unrelated post-stage path left an archive commit'
+    assert_clean_index
+    assert_file "$REPO/unrelated-hook.txt"
+}
+
+test_post_commit_verification_rolls_back_commit() {
+    create_fixture complete post-commit-verify
+    original_head=$(git -C "$REPO" rev-parse HEAD)
+    original_registry=$(cat "$REPO/conductor/tracks.md")
+    hooks_dir="$REPO/$(git -C "$REPO" rev-parse --git-path hooks)"
+    cat >"$hooks_dir/post-commit" <<'EOF'
+#!/bin/sh
+printf '%s\n' '- [x] **Track: Demo** *Link: [tracks/demo/plan.md](./tracks/demo/plan.md)*' >> conductor/tracks.md
+EOF
+    chmod +x "$hooks_dir/post-commit"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'post-commit verification failure unexpectedly succeeded'
+    assert_contains "$output" 'rollback'
+    assert_file "$REPO/conductor/tracks/demo"
+    assert_absent "$REPO/conductor/archive"
+    [ "$(git -C "$REPO" rev-parse HEAD)" = "$original_head" ] || \
+        fail 'post-commit verification failure left an archive commit'
+    [ "$(cat "$REPO/conductor/tracks.md")" = "$original_registry" ] || \
+        fail 'post-commit verification failure did not restore registry'
+    assert_clean_index
+}
+
+test_final_push_descendant_is_accepted() {
+    create_fixture complete final-descendant
+    cat >"$REMOTE/hooks/post-receive" <<'EOF'
+#!/bin/sh
+while read -r old new ref; do
+    tree=$(git rev-parse "$new^{tree}")
+    child=$(printf '%s\n' 'remote follow-up' | git commit-tree "$tree" -p "$new")
+    git update-ref "$ref" "$child" "$new"
+done
+EOF
+    chmod +x "$REMOTE/hooks/post-receive"
+
+    run_helper --apply demo
+    [ "$run_status" -eq 0 ] || fail "remote descendant archive failed: $output"
+    assert_absent "$REPO/conductor/tracks/demo"
+    local_tip=$(git -C "$REPO" rev-parse HEAD)
+    remote_tip=$(git --git-dir="$REMOTE" rev-parse refs/heads/track/demo)
+    [ "$local_tip" != "$remote_tip" ] || fail 'remote descendant fixture did not advance remote'
+    git -C "$REPO" merge-base --is-ancestor "$local_tip" "$remote_tip" || \
+        fail 'remote descendant does not contain archive commit'
 }
 
 test_shared_live_track_stops() {
@@ -482,6 +578,10 @@ test_local_ahead_push
 test_divergent_stops
 test_missing_remote_stops
 test_resume_push
+test_base_branch_stops
+test_post_commit_path_guard_rolls_back
+test_post_commit_verification_rolls_back_commit
+test_final_push_descendant_is_accepted
 test_shared_live_track_stops
 test_symlink_source_stops
 test_symlink_metadata_stops

@@ -41,7 +41,8 @@ else
   echo "STOP: archive-track.py is not installed or present in this repository" >&2
   exit 1
 fi
-python3 "$helper" $ARGUMENTS
+read -r -a archive_args <<< "$ARGUMENTS"
+python3 "$helper" "${archive_args[@]}"
 ```
 
 The helper accepts metadata status `complete` or `awaiting-review`. It stops
