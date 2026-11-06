@@ -3,7 +3,9 @@
 An OpenCode port of the Conductor spec-driven development workflow.
 
 Conductor's lifecycle is `setup -> new-track -> implement -> review`, backed by
-per-project state under a `conductor/` directory.
+per-project state under a `conductor/` directory. `/conductor/archive` is the
+optional recovery cleanup for a reviewed track when the review Archive choice
+is no longer available.
 
 - Canonical doctrine: `skill/SKILL.md`
 - OpenCode command docs: `.opencode/command/*.md`
@@ -77,6 +79,8 @@ commands. Run them in your own project's directory:
 - `/conductor/new-track` — plan a new track (spec + phased plan + registry entry).
 - `/conductor/implement` — implement an approved track phase-by-phase.
 - `/conductor/review` — review a completed track before closing it.
+- `/conductor/archive` — safely recover review cleanup: synchronize the track
+  branch, move it to `conductor/archive/`, commit, and push the archive.
 - `/conductor/cleanup` — remove a merged track's worktree and local branch
   after confirming the pull request was merged.
 - `/conductor/status` — summarize active, blocked, and archived tracks.
