@@ -169,8 +169,99 @@ test_dry_run() {
         fail 'dry-run changed the remote'
 }
 
+test_remote_ahead_fast_forward() {
+    create_fixture complete remote-ahead
+    other=$FIXTURE/other
+    git clone -q --branch track/demo "$REMOTE" "$other"
+    git_configure "$other"
+    printf '%s\n' remote >"$other/remote-change.txt"
+    git -C "$other" add remote-change.txt
+    git -C "$other" commit -q -m 'test: advance remote branch'
+    git -C "$other" push -q origin track/demo
+
+    run_helper --apply demo
+    [ "$run_status" -eq 0 ] || fail "remote-ahead archive failed: $output"
+    assert_pushed_archive
+    assert_file "$REPO/remote-change.txt"
+}
+
+test_local_ahead_push() {
+    create_fixture complete local-ahead
+    printf '%s\n' local >"$REPO/local-change.txt"
+    git -C "$REPO" add local-change.txt
+    git -C "$REPO" commit -q -m 'test: advance local branch'
+
+    run_helper --apply demo
+    [ "$run_status" -eq 0 ] || fail "local-ahead archive failed: $output"
+    assert_pushed_archive
+    assert_file "$REPO/local-change.txt"
+}
+
+test_divergent_stops() {
+    create_fixture complete divergent
+    other=$FIXTURE/other
+    git clone -q --branch track/demo "$REMOTE" "$other"
+    git_configure "$other"
+    printf '%s\n' local >"$REPO/local-change.txt"
+    git -C "$REPO" add local-change.txt
+    git -C "$REPO" commit -q -m 'test: local divergence'
+    printf '%s\n' remote >"$other/remote-change.txt"
+    git -C "$other" add remote-change.txt
+    git -C "$other" commit -q -m 'test: remote divergence'
+    git -C "$other" push -q origin track/demo
+    before=$(git -C "$REPO" rev-parse HEAD)
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'divergent branch unexpectedly archived'
+    assert_contains "$output" 'diverg'
+    assert_absent "$REPO/conductor/archive"
+    assert_file "$REPO/conductor/tracks/demo"
+    [ "$(git -C "$REPO" rev-parse HEAD)" = "$before" ] || fail 'divergence changed local HEAD'
+}
+
+test_missing_remote_stops() {
+    create_fixture complete missing-remote
+    git -C "$REPO" push -q origin --delete track/demo
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'missing remote branch unexpectedly recreated'
+    assert_contains "$output" 'remote'
+    assert_absent "$REPO/conductor/archive"
+    assert_file "$REPO/conductor/tracks/demo"
+}
+
+test_resume_push() {
+    create_fixture complete resume-push
+    cat >"$REMOTE/hooks/update" <<'EOF'
+#!/bin/sh
+printf '%s\n' 'archive test rejection' >&2
+exit 1
+EOF
+    chmod +x "$REMOTE/hooks/update"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'rejected archive push unexpectedly succeeded'
+    assert_contains "$output" 'LOCAL-ONLY'
+    assert_absent "$REPO/conductor/tracks/demo"
+    assert_file "$REPO/conductor/archive/demo"
+    local_tip=$(git -C "$REPO" rev-parse HEAD)
+    remote_tip=$(git --git-dir="$REMOTE" rev-parse refs/heads/track/demo)
+    [ "$local_tip" != "$remote_tip" ] || fail 'rejected push changed the remote'
+
+    rm "$REMOTE/hooks/update"
+    run_helper --resume-push demo
+    [ "$run_status" -eq 0 ] || fail "resume-push failed: $output"
+    [ "$(git --git-dir="$REMOTE" rev-parse refs/heads/track/demo)" = "$local_tip" ] || \
+        fail 'resume-push did not publish the archive commit'
+    assert_absent "$REPO/conductor/tracks/demo"
+}
+
 test_complete_archive
 test_awaiting_review_archive
 test_hard_stop_status
 test_dry_run
+test_remote_ahead_fast_forward
+test_local_ahead_push
+test_divergent_stops
+test_missing_remote_stops
+test_resume_push
 printf '%s\n' 'PASS: archive helper basic contract'

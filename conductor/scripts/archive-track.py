@@ -333,6 +333,87 @@ def verify_archive_commit(repo: Path, track_id: str, branch: str) -> str:
     return commit
 
 
+def verify_resume_state(args: argparse.Namespace) -> dict:
+    track_id = args.track_id
+    ensure_track_id(track_id)
+    repo = repo_root()
+    branch = current_branch(repo)
+    source = repo / "conductor" / "tracks" / track_id
+    archive = repo / "conductor" / "archive" / track_id
+    require_directory(archive, repo, "archive destination")
+    ensure_no_symlink(source, repo, "source track directory")
+    if source.exists():
+        stop("--resume-push requires the source track directory to be absent")
+    metadata, _ = load_metadata(repo, archive, track_id, branch)
+    if metadata.get("status") != "archived":
+        stop("--resume-push requires archived metadata status")
+    registry = repo / "conductor" / "tracks.md"
+    require_file(registry, repo, "tracks registry")
+    if f"tracks/{track_id}/plan.md" in registry.read_text(encoding="utf-8"):
+        stop("--resume-push requires the registry entry to be absent")
+    clean = git(repo, "status", "--porcelain=v1", "--untracked-files=all")
+    if clean:
+        stop(f"working tree is dirty: {clean.replace(chr(10), '; ')}")
+    remote, remote_branch, remote_ref = resolve_upstream(repo, branch)
+    commit = git(repo, "rev-parse", "HEAD")
+    if git(repo, "log", "-1", "--format=%s") != ARCHIVE_MESSAGE.format(track_id=track_id):
+        stop("latest local commit is not the expected archive commit")
+    changed = git(repo, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD")
+    allowed = (
+        "conductor/tracks.md",
+        f"conductor/tracks/{track_id}/",
+        f"conductor/archive/{track_id}/",
+    )
+    if any(
+        path
+        and path != allowed[0]
+        and not path.startswith(allowed[1])
+        and not path.startswith(allowed[2])
+        for path in changed.splitlines()
+    ):
+        stop("latest archive commit contains unexpected paths")
+    return {
+        "repo": repo,
+        "track_id": track_id,
+        "branch": branch,
+        "remote": remote,
+        "remote_branch": remote_branch,
+        "remote_ref": remote_ref,
+        "commit": commit,
+    }
+
+
+def resume_push(args: argparse.Namespace) -> int:
+    state = verify_resume_state(args)
+    repo = state["repo"]
+    with archive_lock(repo, state["track_id"]):
+        fetch_upstream(repo, state["remote"], state["remote_branch"])
+        remote_tip = git(repo, "rev-parse", "--verify", state["remote_ref"])
+        local_tip = state["commit"]
+        if remote_tip != local_tip and not ancestry(repo, remote_tip, local_tip):
+            if ancestry(repo, local_tip, remote_tip):
+                print(f"ARCHIVE ALREADY PUSHED: {local_tip}")
+                return 0
+            stop("remote branch diverged from the local archive commit")
+        if remote_tip != local_tip:
+            push = subprocess.run(
+                ["git", "push", state["remote"], f"HEAD:{state['remote_branch']}"],
+                cwd=repo,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if push.returncode != 0:
+                stop(f"archive resume push failed: {push.stderr.strip() or push.stdout.strip()}")
+        fetch_upstream(repo, state["remote"], state["remote_branch"])
+        remote_tip = git(repo, "rev-parse", "--verify", state["remote_ref"])
+        if not ancestry(repo, local_tip, remote_tip):
+            stop("remote branch does not contain the archive commit after resume push")
+        print(f"ARCHIVED: {state['track_id']}")
+        print(f"COMMIT: {local_tip}")
+        return 0
+
+
 @contextmanager
 def archive_lock(repo: Path, track_id: str):
     common_git = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir"))
@@ -499,6 +580,8 @@ def mutate_and_push(state: dict) -> int:
 
 
 def run(args: argparse.Namespace) -> int:
+    if args.resume_push:
+        return resume_push(args)
     state = preflight(args)
     repo = state["repo"]
     if args.dry_run:
@@ -508,10 +591,28 @@ def run(args: argparse.Namespace) -> int:
         prompt_confirmation(state["track_id"])
     with archive_lock(repo, state["track_id"]):
         fetch_upstream(repo, state["remote"], state["remote_branch"])
-        current = git(repo, "rev-parse", "HEAD")
-        remote_tip = git(repo, "rev-parse", "--verify", state["remote_ref"])
-        if current != remote_tip:
-            stop("branch changed after confirmation; re-run archive after reviewing the new state")
+        sync_state, _ = branch_state(repo, state["remote_ref"])
+        if sync_state == "diverged":
+            stop("local and remote branches have diverged")
+        if sync_state == "remote-ahead":
+            git(repo, "merge", "--ff-only", state["remote_ref"])
+            state = preflight(args)
+            fetch_upstream(repo, state["remote"], state["remote_branch"])
+            sync_state, _ = branch_state(repo, state["remote_ref"])
+        if sync_state == "local-ahead":
+            push = subprocess.run(
+                ["git", "push", state["remote"], f"HEAD:{state['remote_branch']}"],
+                cwd=repo,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            if push.returncode != 0:
+                stop(f"implementation push failed: {push.stderr.strip() or push.stdout.strip()}")
+            fetch_upstream(repo, state["remote"], state["remote_branch"])
+            sync_state, _ = branch_state(repo, state["remote_ref"])
+        if sync_state != "equal":
+            stop("branch could not be synchronized without divergent history")
         return mutate_and_push(state)
 
 
