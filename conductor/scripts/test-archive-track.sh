@@ -365,6 +365,72 @@ EOF
         fail 'remote descendant does not contain archive commit'
 }
 
+test_archive_content_guard_rolls_back() {
+    create_fixture complete archive-content
+    original_head=$(git -C "$REPO" rev-parse HEAD)
+    hooks_dir="$REPO/$(git -C "$REPO" rev-parse --git-path hooks)"
+    cat >"$hooks_dir/pre-commit" <<'EOF'
+#!/bin/sh
+printf '%s\n' tampered > conductor/archive/demo/spec.md
+git add conductor/archive/demo/spec.md
+EOF
+    chmod +x "$hooks_dir/pre-commit"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'tampered archive content unexpectedly succeeded'
+    assert_contains "$output" 'contents'
+    assert_contains "$output" 'rollback'
+    assert_file "$REPO/conductor/tracks/demo"
+    assert_absent "$REPO/conductor/archive"
+    [ "$(git -C "$REPO" rev-parse HEAD)" = "$original_head" ] || \
+        fail 'tampered archive content left an archive commit'
+    assert_clean_index
+}
+
+test_post_push_local_change_is_reported() {
+    create_fixture complete post-push-local-change
+    original_head=$(git -C "$REPO" rev-parse HEAD)
+    hooks_dir="$REPO/$(git -C "$REPO" rev-parse --git-path hooks)"
+    cat >"$hooks_dir/pre-push" <<'EOF'
+#!/bin/sh
+printf '%s\n' follow-up > local-follow-up.txt
+git add local-follow-up.txt
+git commit -q -m 'test: advance local branch during push'
+EOF
+    chmod +x "$hooks_dir/pre-push"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'local post-push change was falsely reported as success'
+    assert_contains "$output" 'LOCAL STATE CHANGED'
+    assert_absent "$REPO/conductor/tracks/demo"
+    assert_file "$REPO/conductor/archive/demo"
+    [ "$(git -C "$REPO" rev-parse HEAD)" != "$original_head" ] || \
+        fail 'pre-push hook did not advance local branch'
+    archive_commit=$(git -C "$REPO" log --all --format='%H %s' | awk '$0 ~ /chore\(conductor\): Archive track/ {print $1; exit}')
+    [ -n "$archive_commit" ] || fail 'archive commit was not created'
+    remote_tip=$(git --git-dir="$REMOTE" rev-parse refs/heads/track/demo)
+    [ "$remote_tip" = "$archive_commit" ] || fail 'remote did not receive archive commit'
+}
+
+test_remote_deletion_race_does_not_recreate_branch() {
+    create_fixture complete remote-deletion-race
+    hooks_dir="$REPO/$(git -C "$REPO" rev-parse --git-path hooks)"
+    cat >"$hooks_dir/pre-push" <<EOF
+#!/bin/sh
+git --git-dir="$REMOTE" update-ref -d refs/heads/track/demo
+EOF
+    chmod +x "$hooks_dir/pre-push"
+
+    run_helper --apply demo
+    [ "$run_status" -ne 0 ] || fail 'deleted remote branch was recreated during push'
+    assert_contains "$output" 'LOCAL-ONLY'
+    if git --git-dir="$REMOTE" show-ref --verify --quiet refs/heads/track/demo; then
+        fail 'remote deletion race recreated the branch'
+    fi
+    assert_absent "$REPO/conductor/tracks/demo"
+    assert_file "$REPO/conductor/archive/demo"
+}
+
 test_shared_live_track_stops() {
     create_fixture complete shared-live
     mkdir -p "$REPO/conductor/tracks/other"
@@ -582,6 +648,9 @@ test_base_branch_stops
 test_post_commit_path_guard_rolls_back
 test_post_commit_verification_rolls_back_commit
 test_final_push_descendant_is_accepted
+test_archive_content_guard_rolls_back
+test_post_push_local_change_is_reported
+test_remote_deletion_race_does_not_recreate_branch
 test_shared_live_track_stops
 test_symlink_source_stops
 test_symlink_metadata_stops

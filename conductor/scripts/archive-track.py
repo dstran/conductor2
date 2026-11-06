@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -294,6 +296,39 @@ def fetch_upstream(repo: Path, remote: str, branch: str) -> None:
         stop(f"could not fetch remote branch {remote}/{branch}: {detail}")
 
 
+def require_remote_tip(repo: Path, remote_ref: str, expected: str | None = None) -> str:
+    observed = git(repo, "rev-parse", "--verify", remote_ref, check=False)
+    if not observed:
+        stop(f"remote tracking branch is missing: {remote_ref}")
+    if expected is not None and observed != expected:
+        stop(
+            f"remote tracking branch changed before push: "
+            f"expected {expected}, observed {observed}"
+        )
+    return observed
+
+
+def push_existing_branch(
+    repo: Path,
+    remote: str,
+    branch: str,
+    remote_ref: str,
+    commit: str,
+    expected_remote: str,
+) -> None:
+    require_remote_tip(repo, remote_ref, expected_remote)
+    result = subprocess.run(
+        ["git", "push", remote, f"{commit}:{branch}"],
+        cwd=repo,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        stop(f"push to existing remote branch failed: {detail}")
+
+
 def ancestry(repo: Path, ancestor: str, descendant: str) -> bool:
     return subprocess.run(
         ["git", "merge-base", "--is-ancestor", ancestor, descendant],
@@ -394,7 +429,36 @@ def verify_commit_paths(repo: Path, track_id: str, commit: str) -> None:
         stop(f"archive commit contains unexpected paths: {', '.join(unexpected)}")
 
 
-def verify_archive_commit(repo: Path, track_id: str, branch: str) -> str:
+def snapshot_tree(path: Path, repo: Path, label: str) -> dict[str, str]:
+    ensure_no_symlink(path, repo, label)
+    manifest: dict[str, str] = {}
+    for root, directories, files in os.walk(path, followlinks=False):
+        root_path = Path(root)
+        for name in directories + files:
+            child = root_path / name
+            if child.is_symlink():
+                stop(f"{label} contains symlink: {child}")
+            ensure_under_repo(child, repo, label)
+        for name in files:
+            child = root_path / name
+            relative = child.relative_to(path).as_posix()
+            manifest[relative] = hashlib.sha256(child.read_bytes()).hexdigest()
+    return manifest
+
+
+def verify_archive_manifest(path: Path, repo: Path, expected: dict[str, str]) -> None:
+    observed = snapshot_tree(path, repo, "archive destination")
+    if observed != expected:
+        stop("archive contents changed after the expected archive snapshot")
+
+
+def verify_archive_commit(
+    repo: Path,
+    track_id: str,
+    branch: str,
+    expected_manifest: dict[str, str] | None = None,
+    expected_registry: str | None = None,
+) -> str:
     source = repo / "conductor" / "tracks" / track_id
     destination = repo / "conductor" / "archive" / track_id
     registry = repo / "conductor" / "tracks.md"
@@ -404,11 +468,15 @@ def verify_archive_commit(repo: Path, track_id: str, branch: str) -> str:
         stop("archive destination is missing after archive commit")
     if f"tracks/{track_id}/plan.md" in registry.read_text(encoding="utf-8"):
         stop("registry entry still exists after archive commit")
+    if expected_registry is not None and registry.read_text(encoding="utf-8") != expected_registry:
+        stop("tracks registry changed after the expected archive snapshot")
     commit = git(repo, "rev-parse", "HEAD")
     message = git(repo, "log", "-1", "--format=%s")
     if message != ARCHIVE_MESSAGE.format(track_id=track_id):
         stop("archive commit message is incorrect")
     verify_commit_paths(repo, track_id, commit)
+    if expected_manifest is not None:
+        verify_archive_manifest(destination, repo, expected_manifest)
     return commit
 
 
@@ -459,7 +527,7 @@ def resume_push(args: argparse.Namespace) -> int:
         repo = state["repo"]
         fetch_upstream(repo, state["remote"], state["remote_branch"])
         require_current_revision(state)
-        remote_tip = git(repo, "rev-parse", "--verify", state["remote_ref"])
+        remote_tip = require_remote_tip(repo, state["remote_ref"])
         local_tip = state["commit"]
         if remote_tip != local_tip and not ancestry(repo, remote_tip, local_tip):
             if ancestry(repo, local_tip, remote_tip):
@@ -467,17 +535,20 @@ def resume_push(args: argparse.Namespace) -> int:
                 return 0
             stop("remote branch diverged from the local archive commit")
         if remote_tip != local_tip:
-            push = subprocess.run(
-                ["git", "push", state["remote"], f"{local_tip}:{state['remote_branch']}"],
-                cwd=repo,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+            push_existing_branch(
+                repo,
+                state["remote"],
+                state["remote_branch"],
+                state["remote_ref"],
+                local_tip,
+                remote_tip,
             )
-            if push.returncode != 0:
-                stop(f"archive resume push failed: {push.stderr.strip() or push.stdout.strip()}")
+            try:
+                require_current_revision(state)
+            except ArchiveError as error:
+                stop(f"archive resume push completed but local state changed: {error}")
         fetch_upstream(repo, state["remote"], state["remote_branch"])
-        remote_tip = git(repo, "rev-parse", "--verify", state["remote_ref"])
+        remote_tip = require_remote_tip(repo, state["remote_ref"])
         if not ancestry(repo, local_tip, remote_tip):
             stop("remote branch does not contain the archive commit after resume push")
         print(f"ARCHIVED: {state['track_id']}")
@@ -610,7 +681,7 @@ def rollback(
 
         ensure_no_symlink(destination, repo, "archive destination during rollback")
         if destination.exists() and not source.exists():
-            shutil.move(str(destination), str(source))
+            os.rename(destination, source)
         if archive_root_created and state["archive_root"].is_dir() and not any(state["archive_root"].iterdir()):
             state["archive_root"].rmdir()
         git(repo, "read-tree", state["original_head"])
@@ -635,14 +706,23 @@ def mutate_and_push(state: dict) -> int:
     original_metadata = state["metadata_text"]
     try:
         require_current_revision(state)
+        require_directory(state["source"], repo, "track")
+        require_file(state["source"] / "metadata.json", repo, "metadata.json")
+        require_file(state["registry_path"], repo, "tracks registry")
+        ensure_no_symlink(state["archive_root"], repo, "archive directory")
+        ensure_no_symlink(state["destination"], repo, "archive destination")
         state["archive_root"].mkdir(parents=True, exist_ok=True)
         ensure_no_symlink(state["archive_root"], repo, "archive directory")
-        shutil.move(str(state["source"]), str(state["destination"]))
+        os.rename(state["source"], state["destination"])
+        ensure_no_symlink(state["destination"], repo, "archive destination")
         registry_text = registry_without_block(
             state["registry_lines"], state["entry"], state["note_end"]
         )
         state["registry_path"].write_text(registry_text, encoding="utf-8")
         write_metadata(state["destination"] / "metadata.json", state["metadata"])
+        state["archive_manifest"] = snapshot_tree(
+            state["destination"], repo, "archive destination"
+        )
         git(
             repo,
             "add",
@@ -655,39 +735,68 @@ def mutate_and_push(state: dict) -> int:
         verify_staged_paths(repo, track_id)
         git(repo, "commit", "-m", ARCHIVE_MESSAGE.format(track_id=track_id))
         state["archive_commit"] = git(repo, "rev-parse", "HEAD")
-        commit = verify_archive_commit(repo, track_id, state["branch"])
+        commit = verify_archive_commit(
+            repo,
+            track_id,
+            state["branch"],
+            state["archive_manifest"],
+            registry_text,
+        )
         require_current_revision(state, expected_head=commit)
     except ArchiveError as error:
         rollback(state, original_registry, original_metadata, archive_root_created)
         raise ArchiveError(
             f"archive mutation failed: {error}; rollback completed; "
-            "no archive commit was created"
+            "no archive commit remains on the branch"
         ) from error
     except Exception as error:
         rollback(state, original_registry, original_metadata, archive_root_created)
         stop(
             f"archive mutation failed: {error}; rollback completed; "
-            "no archive commit was created"
+            "no archive commit remains on the branch"
         )
 
-    push = subprocess.run(
-        ["git", "push", state["remote"], f"{commit}:{state['remote_branch']}"],
-        cwd=repo,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if push.returncode != 0:
+    try:
+        expected_remote = require_remote_tip(repo, state["remote_ref"])
+        push_existing_branch(
+            repo,
+            state["remote"],
+            state["remote_branch"],
+            state["remote_ref"],
+            commit,
+            expected_remote,
+        )
+    except ArchiveError as error:
         print(
-            f"ARCHIVE LOCAL-ONLY: commit {commit} exists locally but push failed: "
-            f"{push.stderr.strip() or push.stdout.strip()}",
+            f"ARCHIVE LOCAL-ONLY: commit {commit} exists locally but push failed: {error}",
             file=sys.stderr,
         )
         return 1
-    fetch_upstream(repo, state["remote"], state["remote_branch"])
-    remote_tip = git(repo, "rev-parse", "--verify", state["remote_ref"])
+    try:
+        require_current_revision(state, expected_head=commit)
+    except ArchiveError as error:
+        print(
+            f"ARCHIVE PUSHED BUT LOCAL STATE CHANGED: commit {commit} was submitted; "
+            f"local verification failed: {error}",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        fetch_upstream(repo, state["remote"], state["remote_branch"])
+        remote_tip = require_remote_tip(repo, state["remote_ref"])
+    except ArchiveError as error:
+        print(
+            f"ARCHIVE PUSH STATE UNKNOWN: commit {commit} was submitted but "
+            f"remote verification failed: {error}",
+            file=sys.stderr,
+        )
+        return 1
     if not ancestry(repo, commit, remote_tip):
-        stop("remote branch does not contain the archive commit after push")
+        print(
+            f"ARCHIVE LOCAL-ONLY: remote branch does not contain archive commit {commit}",
+            file=sys.stderr,
+        )
+        return 1
     print(f"ARCHIVED: {track_id}")
     print(f"COMMIT: {commit}")
     return 0
@@ -712,36 +821,51 @@ def run(args: argparse.Namespace) -> int:
     if not args.apply:
         prompt_confirmation(state["track_id"])
     with archive_lock(repo, state["track_id"]):
-        state = preflight(args)
-        fetch_upstream(repo, state["remote"], state["remote_branch"])
-        require_current_revision(state)
-        sync_state, _ = branch_state(repo, state["remote_ref"])
-        if sync_state == "diverged":
-            stop("local and remote branches have diverged")
-        if sync_state == "remote-ahead":
-            require_current_revision(state)
-            git(repo, "merge", "--ff-only", state["remote_ref"])
+        sync_events: list[str] = []
+        try:
             state = preflight(args)
             fetch_upstream(repo, state["remote"], state["remote_branch"])
             require_current_revision(state)
             sync_state, _ = branch_state(repo, state["remote_ref"])
-        if sync_state == "local-ahead":
-            require_current_revision(state)
-            push = subprocess.run(
-                ["git", "push", state["remote"], f"{state['original_head']}:{state['remote_branch']}"],
-                cwd=repo,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            if push.returncode != 0:
-                stop(f"implementation push failed: {push.stderr.strip() or push.stdout.strip()}")
-            fetch_upstream(repo, state["remote"], state["remote_branch"])
-            require_current_revision(state)
-            sync_state, _ = branch_state(repo, state["remote_ref"])
-        if sync_state != "equal":
-            stop("branch could not be synchronized without divergent history")
-        return mutate_and_push(state)
+            if sync_state == "diverged":
+                stop("local and remote branches have diverged")
+            if sync_state == "remote-ahead":
+                require_current_revision(state)
+                git(repo, "merge", "--ff-only", state["remote_ref"])
+                sync_events.append(
+                    f"local branch fast-forwarded to {git(repo, 'rev-parse', 'HEAD')}"
+                )
+                state = preflight(args)
+                fetch_upstream(repo, state["remote"], state["remote_branch"])
+                require_current_revision(state)
+                sync_state, _ = branch_state(repo, state["remote_ref"])
+            if sync_state == "local-ahead":
+                require_current_revision(state)
+                expected_remote = require_remote_tip(repo, state["remote_ref"])
+                push_existing_branch(
+                    repo,
+                    state["remote"],
+                    state["remote_branch"],
+                    state["remote_ref"],
+                    state["original_head"],
+                    expected_remote,
+                )
+                sync_events.append(
+                    f"implementation commits through {state['original_head']} pushed"
+                )
+                fetch_upstream(repo, state["remote"], state["remote_branch"])
+                require_current_revision(state)
+                sync_state, _ = branch_state(repo, state["remote_ref"])
+            if sync_state != "equal":
+                stop("branch could not be synchronized without divergent history")
+            return mutate_and_push(state)
+        except ArchiveError as error:
+            if sync_events:
+                raise ArchiveError(
+                    f"{error}\nSynchronization changes already applied: "
+                    f"{'; '.join(sync_events)}"
+                ) from error
+            raise ArchiveError(f"{error}\nNo archive mutation was performed.") from error
 
 
 def main() -> int:
