@@ -31,6 +31,9 @@ do not vendor Impeccable or add a parallel lifecycle.
   Impeccable-owned product record described in the specification.
 - Impeccable initialization requires explicit opt-in, reuses approved Conductor
   context, and preserves existing product files and configuration consent.
+- Assisted Impeccable installation requires explicit approval of its command,
+  source, scope, and configuration effects. Verify session discovery afterward;
+  a required restart defers initialization without blocking Conductor setup.
 
 ## Classification blocker
 
@@ -65,7 +68,7 @@ does not change the global taxonomy.
   and `.opencode/command/setup.md`.
   **Consumes:** Existing brainstorming, specification approval (Gate A), and
   plan approval sequence.
-  **Produces:** An optional web initialization handoff during setup and a
+  **Produces:** An optional assisted installation and web initialization handoff during setup and a
   first-use fallback; a design decision checkpoint before Gate A; track-local
   `design.md` persisted only when applicable after approval, alongside the
   existing spec/plan/metadata artifacts.
@@ -75,7 +78,19 @@ does not change the global taxonomy.
   2. Route web to available Impeccable `shape` or a direct equivalent brief;
      route iOS/Android to their current official guidance. Detect availability
      through the host's skill discovery, not a hard-coded home directory.
-     Never install a missing skill. Native use requires an explicit request.
+     Never install a missing skill automatically. Native use requires an explicit request.
+     If unavailable for a consuming web project, offer "Install with approval",
+     "Show instructions", or "Continue without it". Consult current official
+     installation instructions at `https://impeccable.style/`; explain the
+     exact command, source, target agent, project-local/global scope, and effects
+     on existing configuration before obtaining approval to run it. If the
+     instructions cannot be verified or execution is unavailable, say so and
+     provide the official link or continue without it; never guess a command.
+     Recheck host skill discovery after installation. A successful installer
+     exit or a file on disk does not establish current-session availability.
+     If a restart is needed, finish Conductor setup and defer `init` until the
+     skill is discoverable. Installation refusal or failure also permits setup
+     completion and the direct design-brief fallback.
      Consult the installed skill's current `init` and `shape` references rather
      than assuming command behavior from their names.
      In setup, offer `/impeccable init` for web projects after product context
@@ -111,14 +126,17 @@ does not change the global taxonomy.
   5. Incorporate design consequences into the specification before approval
      and into plan tasks before plan approval. Material later design changes
      require reconciliation and approval, not silent scope expansion.
-  6. Walk scenarios: web skill present; absent; setup init accepted; skipped;
+   6. Walk scenarios: web skill present; absent; assisted installation accepted;
+     declined; failed; instructions unavailable; installation succeeds but
+     discovery requires restart; setup init accepted; skipped;
      declined; first-use init after skipped setup; existing valid `PRODUCT.md`;
      conflicting product facts; missing/incomplete product record after init;
      approved external design;
      iOS-only; Android-only; shared mobile framework targeting both platforms;
      backend-only; label correction using an existing component.
      Assert correct routing, no duplicate interview, no silent file overwrite,
-     no implicit configuration consent, no `shape` before required initialization,
+     no installation before command/scope approval, no implicit configuration
+     consent, no `init` before skill discovery, no `shape` before required initialization,
      and no coding before approval. Confirm setup can finish when init is skipped
      and a direct design brief remains available when Impeccable cannot be used.
   7. Run `git diff --check`; inspect the existing lifecycle gates for preserved
@@ -184,8 +202,9 @@ does not change the global taxonomy.
      applicable. Required acceptance criteria without evidence block closure
      unless explicitly revised with approval; maintain the existing final
      approval gate and correction loop.
-   6. Update README usage with the platform split, optional web skill and setup
-      initialization handoff, first-use fallback, derived `PRODUCT.md` authority,
+   6. Update README usage with the platform split, optional web skill, consent-based
+      installation and setup initialization handoff, restart and first-use fallback,
+      derived `PRODUCT.md` authority,
       native guidance, Swift guide selection, and unchanged lifecycle.
   7. Walk scenarios: legacy track without design artifact; native browser-only
      preview; missing device; missing screen-reader verification; unavailable
@@ -233,6 +252,9 @@ does not change the global taxonomy.
 - Specification approved before artifact creation.
 - Optional setup initialization and first-use fallback approved as a specification
   amendment; this amendment updates planning artifacts only.
+- Assisted installation, post-install discovery checks, and restart deferral
+  reflect the subsequent agreed setup behavior; no installation or initialization
+  is performed by this tooling track.
 - Scope, artifact shapes, routing, fallback/error behavior, compatibility,
   acceptance criteria, and verification approach are defined.
 - Runtime application data models and service API contracts are not applicable.
