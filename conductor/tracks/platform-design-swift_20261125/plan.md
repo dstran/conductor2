@@ -237,7 +237,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 
 ## Phase 3: End-to-end verification [manual-checkpoint]
 
-- [~] Task: Verify installed assets and full lifecycle scenario coverage [e2e-flow]
+- [x] Task: Verify installed assets and full lifecycle scenario coverage [e2e-flow] 4fee211
 
   **Files:** Create `conductor/scripts/test-installer.sh`;
   evidence goes in the existing phase git note and track review report.
@@ -265,8 +265,18 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
   5. If host tools cannot execute a scenario, record that limitation and apply
      the approved acceptance/evidence policy rather than inventing results.
      No mobile or web application is created merely to exercise this tooling.
-  6. Commit the test and plan update separately. Follow the manual phase
-     checkpoint, then stop for the separately invoked `/conductor/review`.
+   6. Commit the test and plan update separately. Follow the manual phase
+      checkpoint, then stop for the separately invoked `/conductor/review`.
+
+  **Execution evidence:** Isolated installation and repeat installation passed;
+  lifecycle docs/skill/Swift/helper assets matched source; workflow version
+  marker matched; unrelated configuration was preserved; no Impeccable was
+  installed. A disposable-source negative control omitting Swift distribution
+  was correctly rejected by the smoke test. Both existing regression suites,
+  shell syntax, and whitespace checks passed. Tasks 1–3 were verified through
+  instruction/source walkthroughs, not autonomous host-agent or application
+  executions; criterion-level review reporting remains `/conductor/review`'s
+  responsibility. Phase 3 manual approval is pending.
 
 ## Planning readiness
 
