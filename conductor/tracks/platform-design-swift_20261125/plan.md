@@ -34,6 +34,9 @@ do not vendor Impeccable or add a parallel lifecycle.
 - Assisted Impeccable installation requires explicit approval of its command,
   source, scope, and configuration effects. Verify session discovery afterward;
   a required restart defers initialization without blocking Conductor setup.
+- Preserve applicable design alternatives, user selection, and revision rounds.
+  Product requirements approval is not visual-direction approval; only an
+  explicit delegation permits the agent to select on the user's behalf.
 
 ## Classification blocker
 
@@ -54,7 +57,8 @@ does not change the global taxonomy.
 - External designs and existing product context must be reused, with no competing
   requirements document or duplicate discovery interview. Existing `PRODUCT.md`
   conflicts need explicit reconciliation; skipped setup must still support
-  first-use initialization (Task 1 scenarios).
+  first-use initialization. Context reuse must not skip unresolved design choices
+  or treat requirements approval as direction selection (Task 1 scenarios).
 - Existing SwiftFormat/SwiftLint/formatter configuration must not be overwritten
   or confused with `swiftlang/swift-format` (Task 2 scenarios).
 - Unavailable devices, accessibility tools, or formatter executables must not
@@ -115,11 +119,22 @@ does not change the global taxonomy.
      keep that derived record aligned without giving it independent requirements
      authority. If the user declines or initialization cannot complete, use a
      direct design brief instead; do not bypass the skill's prerequisites.
-  3. Reuse already answered discovery questions and approved external artifacts.
+   3. Reuse already answered discovery questions and approved external artifacts.
      The brief records task/audience, flow, significant states, layout intent,
      platform behavior, accessibility, references, and acceptance criteria.
      Summarize an external artifact's approved decisions and link it rather
      than requiring readers to reconstruct requirements from an inaccessible URL.
+     Preserve the installed skill's applicable alternatives, user selection,
+     and revision rounds. Present design choices and wait for selection and
+     confirmation of the resulting brief; do not auto-select based on approval
+     of requirements, installation, or initialization. Explicit delegation is
+     the only exception and must be recorded as such.
+     Record the selected direction and references in `design.md`; reconcile
+     consequences with the spec/plan. For narrow refinements, preserve the
+     incumbent direction instead of forcing fresh alternatives.
+     Browser previews and live variants depend on tool availability and a
+     runnable target. Explain limitations and use a supported alternative
+     presentation, without inventing a preview or dropping the selection gate.
   4. Backend-only work records design as not applicable; established-pattern
      fixes record their justification in the specification without a new brief.
      Do not require this tooling-only track itself to produce a UI design.
@@ -131,14 +146,19 @@ does not change the global taxonomy.
      discovery requires restart; setup init accepted; skipped;
      declined; first-use init after skipped setup; existing valid `PRODUCT.md`;
      conflicting product facts; missing/incomplete product record after init;
-     approved external design;
+     approved external design; alternatives selected; revision requested before
+     selection; requirements approved but direction not chosen; selection
+     explicitly delegated; preview tooling unavailable;
      iOS-only; Android-only; shared mobile framework targeting both platforms;
      backend-only; label correction using an existing component.
      Assert correct routing, no duplicate interview, no silent file overwrite,
      no installation before command/scope approval, no implicit configuration
      consent, no `init` before skill discovery, no `shape` before required initialization,
-     and no coding before approval. Confirm setup can finish when init is skipped
-     and a direct design brief remains available when Impeccable cannot be used.
+      and no coding before approval. Confirm setup can finish when init is skipped
+      and a direct design brief remains available when Impeccable cannot be used.
+     Confirm a requested revision returns to design selection, a chosen direction
+     is recorded, and missing previews do not silently transfer the decision to
+     the agent. Established-pattern fixes must not reopen settled visual choices.
   7. Run `git diff --check`; inspect the existing lifecycle gates for preserved
      approval ordering. Commit task files, then update this plan separately
      using the task commit procedure.
@@ -186,9 +206,11 @@ does not change the global taxonomy.
   **Produces:** Consistent execution and evidence requirements without changing
   track metadata statuses, adding new commands, or breaking legacy tracks.
 
-  1. Make implementation read a track's design artifact when applicable and
-     selected style guides before coding. Do not require legacy or non-UI tracks
-     to have `design.md`; honor existing approved scope rather than inventing one.
+   1. Make implementation read a track's design artifact when applicable and
+      selected style guides before coding. Do not require legacy or non-UI tracks
+      to have `design.md`; honor existing approved scope rather than inventing one.
+      Preserve the user's selected direction; material deviations require
+      reconciliation and approval rather than an agent-chosen replacement.
   2. Add scoped review checks for web viewport/responsive behavior, keyboard
      access, and accessibility. For iOS/Android, use simulator/device evidence,
      text scaling, VoiceOver/TalkBack checks, and platform navigation/interaction.
@@ -204,11 +226,13 @@ does not change the global taxonomy.
      approval gate and correction loop.
    6. Update README usage with the platform split, optional web skill, consent-based
       installation and setup initialization handoff, restart and first-use fallback,
-      derived `PRODUCT.md` authority,
+      derived `PRODUCT.md` authority, preserved design-choice/revision workflow,
       native guidance, Swift guide selection, and unchanged lifecycle.
   7. Walk scenarios: legacy track without design artifact; native browser-only
      preview; missing device; missing screen-reader verification; unavailable
-     formatter; required criterion failed; explicitly approved criterion revision.
+      formatter; required criterion failed; explicitly approved criterion revision.
+      Also compare implementation against the selected direction and report
+      unapproved material deviations as plan/design noncompliance.
      Assert accurate **not verified** reporting and appropriate closure behavior.
   8. Run `git diff --check`; compare canonical doctrine with command instructions
      and wrappers. Update a compatibility wrapper only if it conflicts.
@@ -254,7 +278,9 @@ does not change the global taxonomy.
   amendment; this amendment updates planning artifacts only.
 - Assisted installation, post-install discovery checks, and restart deferral
   reflect the subsequent agreed setup behavior; no installation or initialization
-  is performed by this tooling track.
+   is performed by this tooling track.
+- Applicable design alternatives, user selection, revision rounds, and separation
+  of requirements approval from visual-direction approval are explicit.
 - Scope, artifact shapes, routing, fallback/error behavior, compatibility,
   acceptance criteria, and verification approach are defined.
 - Runtime application data models and service API contracts are not applicable.

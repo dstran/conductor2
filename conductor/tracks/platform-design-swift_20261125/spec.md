@@ -35,6 +35,13 @@ Use track-local `design.md` for user tasks, flows, significant states, layout in
 
 `spec.md` remains requirements authority; `plan.md` incorporates the approved design work. Reuse existing product/design documentation without creating competing sources of truth.
 
+### User-controlled design decisions
+- Preserve Impeccable's applicable design-option presentation, user selection, and revision rounds. Reusing confirmed product context must not skip unresolved visual or interaction decisions.
+- Approval of product requirements or installation/initialization does not approve a visual direction. Obtain explicit selection and confirmation of the resulting brief before final specification and implementation-plan approval; do not choose on the user's behalf unless explicitly delegated.
+- Record the selected direction and supporting references in track-local `design.md` and carry its consequences into `spec.md` and `plan.md`.
+- Preserve the established direction for narrow refinements; do not force alternatives or reopen already approved decisions unnecessarily.
+- Browser previews and live variants remain dependent on the installed skill, available tools, and a runnable project. Report unavailable capabilities and use a supported alternative presentation without fabricating previews or bypassing user choice.
+
 ### Swift standards
 Add a bundled Swift guide and recommend it during setup for Swift projects:
 - Swift API Design Guidelines for naming and API clarity.
@@ -54,7 +61,7 @@ The `swift-format` project explicitly says its default formatting is **not a uni
 ### Boundaries and verification
 No new top-level command, mandatory design dependency, automatic reformatting, or implementation of an actual app.
 
-Verify routing and lifecycle instructions against scenarios covering web with/without Impeccable, assisted installation accepted/declined/failed, installation requiring restart, setup initialization accepted/skipped/declined, first-use initialization, existing or conflicting `PRODUCT.md`, native, cross-platform, backend-only, existing designs, existing Swift tooling, and unavailable verification tools. Run existing regression suites and an isolated installer smoke test.
+Verify routing and lifecycle instructions against scenarios covering web with/without Impeccable, assisted installation accepted/declined/failed, installation requiring restart, setup initialization accepted/skipped/declined, first-use initialization, existing or conflicting `PRODUCT.md`, design alternatives selected/revised, requirements approved without design selection, unavailable preview tools, native, cross-platform, backend-only, existing designs, existing Swift tooling, and unavailable verification tools. Run existing regression suites and an isolated installer smoke test.
 
 ## Assumptions & agent-made decisions
 
