@@ -61,7 +61,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 - Unavailable devices, accessibility tools, or formatter executables must not
   produce a pass or silently waive a required acceptance criterion (Task 3 scenarios).
 
-## Phase 1: Design planning and Swift standards
+## Phase 1: Design planning and Swift standards [checkpoint: a6bf5e3]
 
 - [x] Task: Integrate platform-aware design planning into canonical doctrine and new-track [documentation] 7d3f74b
 
@@ -193,7 +193,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 
 ## Phase 2: Implementation and review evidence
 
-- [ ] Task: Carry approved design decisions and platform evidence through implementation and review [documentation]
+- [~] Task: Carry approved design decisions and platform evidence through implementation and review [documentation]
 
   **Files:** Modify `.opencode/command/implement.md`,
   `.opencode/command/review.md`, `README.md`, and `skill/SKILL.md` only as needed
