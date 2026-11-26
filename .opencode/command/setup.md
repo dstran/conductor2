@@ -74,6 +74,55 @@ For Gradle projects, also read `build.gradle[.kts]`, `settings.gradle[.kts]`, an
 
 5. Write `conductor/tech-stack.md`, including a **Verification Commands** section and, where applicable, a **Modules** section.
 
+## 5.5. Optional web design integration
+
+After product context and tech stack approval, and before setup completes,
+offer the following handoff for a consuming **web project**. Native-only,
+backend-only, and Conductor tooling projects skip it. For multi-app projects,
+scope the handoff to the web app and confirm shared versus app-specific context.
+This section is also the first-use handoff used by `/conductor/new-track`;
+resuming it does not rerun setup or bypass setup's existing initialized-project guard.
+
+1. Verify Impeccable is discoverable through the current host's skill discovery.
+   An installed directory or successful installer exit is not proof of availability.
+2. If unavailable, explain that it is optional. Offer **Install with approval**
+   `(Recommended)` for users wanting the integration, **Show instructions**, or
+   **Continue without it**. Consult current official instructions at
+   <https://impeccable.style/>; never invent a command or fetch/run an installer
+   silently. Before execution, show the exact command, its source, target agent,
+   project-local/global scope, and effects on existing configuration; obtain
+   explicit approval of those changes. If instructions cannot be verified,
+   provide the official link and continue without it.
+3. After an approved installation, recheck skill discovery. If a restart is
+   required, explain how to resume the handoff in a new session and finish
+   Conductor setup normally. On failure or refusal, continue without Impeccable.
+   Do not offer `init` until the skill is discoverable.
+4. Read the available skill's current setup/context and `init` instructions.
+   Reuse a valid existing resolved `PRODUCT.md` rather than reinitializing it.
+   If facts are stale or conflict with approved Conductor context, present the
+   conflict and ask what to reconcile; never silently overwrite the file.
+5. When initialization is needed, ask **"Initialize Impeccable for this web
+   project?"** with **Initialize now** `(Recommended)` and **Skip for now**.
+   Explain that initialization reuses approved context, asks only about material
+   gaps, and can be deferred to the first relevant web design track.
+6. On explicit opt-in, hand off to the skill's `init` workflow, not a shell
+   command named `/impeccable init`. Supply the approved product definition,
+   product guidelines, tech stack, source paths, and confirmed answers. Preserve
+   its human confirmation round, asking only about gaps or conflicts. Honor
+   separate consent for its configuration/workflow choices; do not infer a
+   visual direction or build preference from approval of product requirements.
+7. `PRODUCT.md` is the skill's derived product record: link applicable Conductor
+   sources, preserve useful existing content, and keep shared facts aligned
+   through explicit reconciliation. Track requirements remain in `spec.md`.
+   `init` captures product truth; it does not establish a visual world or create
+   `DESIGN.md`. Follow its own completion check before declaring initialization
+   complete. It does not build the app.
+
+Skipping this handoff never blocks setup. If it cannot complete, report the
+actual state, and let a later web track use the first-use handoff or a direct
+design brief. Do not repeatedly offer an installation or initialization the
+user already declined in the current setup/track conversation.
+
 ## 6. Code Style Guides (`conductor/code_styleguides/`)
 
 The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `android`, `compose`, `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `java`, `javascript`, `kotlin`, `python`, `typescript`.
