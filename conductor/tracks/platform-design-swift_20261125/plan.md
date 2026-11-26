@@ -193,7 +193,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 
 ## Phase 2: Implementation and review evidence
 
-- [~] Task: Carry approved design decisions and platform evidence through implementation and review [documentation]
+- [x] Task: Carry approved design decisions and platform evidence through implementation and review [documentation] 8685d3f
 
   **Files:** Modify `.opencode/command/implement.md`,
   `.opencode/command/review.md`, `README.md`, and `skill/SKILL.md` only as needed
