@@ -235,7 +235,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
      and wrappers. Update a compatibility wrapper only if it conflicts.
      Commit task files, then the plan update separately.
 
-## Phase 3: End-to-end verification [manual-checkpoint]
+## Phase 3: End-to-end verification [manual-checkpoint] [checkpoint: 4fee211]
 
 - [x] Task: Verify installed assets and full lifecycle scenario coverage [e2e-flow] 4fee211
 
@@ -276,7 +276,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
   shell syntax, and whitespace checks passed. Tasks 1–3 were verified through
   instruction/source walkthroughs, not autonomous host-agent or application
   executions; criterion-level review reporting remains `/conductor/review`'s
-  responsibility. Phase 3 manual approval is pending.
+  responsibility. The user explicitly approved the Phase 3 manual checkpoint.
 
 ## Planning readiness
 
