@@ -191,7 +191,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
   6. Run `git diff --check`; check source citations and guide-selection consistency.
      Commit task files, then the plan update separately.
 
-## Phase 2: Implementation and review evidence
+## Phase 2: Implementation and review evidence [checkpoint: 8685d3f]
 
 - [x] Task: Carry approved design decisions and platform evidence through implementation and review [documentation] 8685d3f
 
@@ -237,7 +237,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 
 ## Phase 3: End-to-end verification [manual-checkpoint]
 
-- [ ] Task: Verify installed assets and full lifecycle scenario coverage [e2e-flow]
+- [~] Task: Verify installed assets and full lifecycle scenario coverage [e2e-flow]
 
   **Files:** Create `conductor/scripts/test-installer.sh`;
   evidence goes in the existing phase git note and track review report.
