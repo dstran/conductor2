@@ -160,7 +160,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
      approval ordering. Commit task files, then update this plan separately
      using the task commit procedure.
 
-- [~] Task: Bundle Swift guidance and integrate stack-specific setup selection [documentation]
+- [x] Task: Bundle Swift guidance and integrate stack-specific setup selection [documentation] a6bf5e3
 
   **Files:** Create `conductor/assets/code_styleguides/swift.md`;
   modify `.opencode/command/setup.md`.
