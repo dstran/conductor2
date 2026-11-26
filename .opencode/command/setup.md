@@ -28,12 +28,18 @@ Check which Conductor artifacts already exist:
 
 Determine whether this is a Brownfield (existing) or Greenfield (new) project.
 
-- **Brownfield indicators:** dependency manifests (`package.json`, `go.mod`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts`), an `AndroidManifest.xml` anywhere in the tree, source directories (`src/`, `app/`, `lib/`, `bin/`) with code, or a `.git` directory. If `.git` exists, run `git status --porcelain`; ignore changes under `conductor/`. If other uncommitted changes exist, warn: "You have uncommitted changes — consider committing or stashing before proceeding," then continue and classify as Brownfield.
+- **Brownfield indicators:** dependency manifests (`package.json`, `go.mod`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `Package.swift`, `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts`), an Xcode project/workspace or `AndroidManifest.xml`, source directories (`src/`, `app/`, `lib/`, `bin/`) with code, or a `.git` directory. If `.git` exists, run `git status --porcelain`; ignore changes under `conductor/`. If other uncommitted changes exist, warn: "You have uncommitted changes — consider committing or stashing before proceeding," then continue and classify as Brownfield.
 - **Greenfield:** none of the above (ignoring `conductor/`, a clean `.git`, and `README.md`).
 
 **If Brownfield:** ask permission for a read-only scan. On approval, analyze efficiently: use `git ls-files`, respect `.gitignore`, skip `node_modules`/`dist`/`build`/`.gradle`/`.cxx`, and read `README.md` plus manifests to infer the tech stack and architecture. Hold the findings in context.
 
 For Gradle projects, also read `build.gradle[.kts]`, `settings.gradle[.kts]`, and `gradle/libs.versions.toml` to infer the language, `compileSdk`/`minSdk`, and whether Compose is enabled — a `buildFeatures { compose true }` block, an `androidx.compose` BOM dependency, or the `org.jetbrains.kotlin.plugin.compose` plugin each answer the UI-toolkit question directly. Read the `include(...)` entries in `settings.gradle[.kts]` to list the project's modules. Hold all of this in context; steps 5 and 6 record it.
+
+For Swift projects, inspect `Package.swift`, Xcode build settings, project-owned
+`.swift` files, and existing formatter/linter configuration. Infer language and
+platform targets separately: a Swift library need not have an iOS UI, and an
+iOS target does not prove a Flutter/React Native project owns Swift source.
+Ignore generated code and vendored dependencies when recommending guides.
 
 **If Greenfield:** if there is no `.git`, run `git init`. Then ask an open question: "What do you want to build?" Hold the answer as the Initial Concept.
 
@@ -73,6 +79,17 @@ For Gradle projects, also read `build.gradle[.kts]`, `settings.gradle[.kts]`, an
 4. For a multi-module project, record the **module list** — each module's path (e.g. `:app`, `:core:data`, `:feature:login`) and its role (application, library, feature) where inferable. On Gradle projects read these from the `include(...)` entries in `settings.gradle[.kts]`. This lets `/conductor/new-track` place tasks in specific modules and scope test commands to one module (`./gradlew :feature:login:testDebugUnitTest`) instead of always running the whole suite. Single-module projects record nothing here.
 
 5. Write `conductor/tech-stack.md`, including a **Verification Commands** section and, where applicable, a **Modules** section.
+
+For confirmed Swift code, preserve existing formatter/linter choices and
+configuration. If none is established, recommend `swiftlang/swift-format` and
+confirm that choice. Verify the available version and help before confirming
+the project's non-mutating check command, source paths, and config; distinguish
+the toolchain's `swift format` from standalone `swift-format` and other tools
+named SwiftFormat. If using its lint command as enforcement, include `--strict`
+so warnings fail the check, and `--recursive` for directory inputs. Do not
+overwrite configuration, reformat files, install a formatter, or record an
+unrun check as passing. Missing tooling is **not verified** and is recorded as
+a prerequisite rather than a fabricated executable command.
 
 ## 5.5. Optional web design integration
 
@@ -125,9 +142,14 @@ user already declined in the current setup/track conversation.
 
 ## 6. Code Style Guides (`conductor/code_styleguides/`)
 
-The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `android`, `compose`, `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `java`, `javascript`, `kotlin`, `python`, `typescript`.
+The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `android`, `compose`, `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `java`, `javascript`, `kotlin`, `python`, `swift`, `typescript`.
 
 1. Recommend the guides that match the confirmed tech stack (always include `general`). Do NOT invent style rules — only copy from the bundled assets.
+
+   **Swift code.** Recommend `general` and `swift` whenever the confirmed project
+   owns Swift source (including libraries or native modules). Add other guides
+   only for languages genuinely present. Do not select `swift` solely because
+   a cross-platform framework targets iOS without project-owned Swift source.
 
    **Android stacks.** Recommend the whole set at once rather than making the
    user assemble it, keyed on the language and UI toolkit confirmed in step 5:
