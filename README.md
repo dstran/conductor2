@@ -90,3 +90,54 @@ commands. Run them in your own project's directory:
 
 Setup creates the project state under `conductor/` in your working directory;
 later commands read and update it.
+
+## Design planning and platform standards
+
+The lifecycle is unchanged. Material UI changes are designed during
+`/conductor/new-track`, **before** specification/implementation-plan approval
+and `/conductor/implement`:
+
+```text
+draft requirements -> design alternatives -> user selection/revisions
+-> confirmed design brief -> approved spec and plan -> implementation
+```
+
+- **Web:** prefer the optional [Impeccable](https://impeccable.style/) skill's
+  planning-only `shape` workflow. Conductor preserves applicable design
+  alternatives, your selection, and revision rounds; requirements approval
+  is not visual-direction approval. Narrow refinements preserve the established
+  design, and approved external designs can be reused.
+- **iOS / Android:** use Apple HIG / Android design guidance. Cross-platform
+  apps share product intent but honor each deployment platform's interactions.
+  Impeccable is not automatically invoked for native work.
+- **No UI change:** backend/tooling tracks record design as not applicable;
+  established-pattern fixes need only a short justification, not a design exercise.
+
+For consuming web projects, setup offers optional Impeccable initialization
+after product and stack approval. It verifies current-session skill discovery.
+If unavailable, choose assisted installation, official instructions, or
+continuation without it. Installation requires separate approval of the command,
+source, local/global scope, and configuration effects; the Conductor installer
+does **not** bundle or automatically install Impeccable. A required agent restart
+defers initialization without blocking setup.
+
+With the skill available, opt into `init` to reuse approved product context and
+confirm only gaps/conflicts. Existing valid `PRODUCT.md` is reused; it is derived
+context linking back to Conductor's approved sources, not competing requirements.
+`init` does not establish a visual design or create `DESIGN.md`. If skipped, the
+first relevant web design track can resume the handoff. Direct design planning
+remains available when Impeccable is unavailable or declined. Browser previews
+and live variants depend on its available tooling and a runnable project.
+
+The selected direction, states, references, platform decisions, and acceptance
+criteria live in track-local `design.md` when applicable. Implementation reads
+them; review checks rendered behavior and platform/accessibility evidence.
+Unavailable checks are **not verified**, not passes. Missing required evidence
+blocks closure unless the requirement is explicitly revised with approval.
+
+For project-owned Swift code, setup recommends the bundled `swift` guide:
+Swift API Design Guidelines for naming/API clarity, plus the project's selected
+formatter. Existing tools/configuration are preserved; `swiftlang/swift-format`
+is recommended only when no formatter is established. Its default formatting
+is not a universal official Swift style. Swift selection is independent of
+whether the project has an iOS UI.

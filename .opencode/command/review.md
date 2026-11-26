@@ -42,6 +42,14 @@ explanation of the failure mode — not just "this looks risky."
 If `conductor/code_styleguides/` exists, check the new/changed files
 against it. Flag deviations — don't silently fix them, report them.
 
+Run the project's confirmed non-mutating formatter/linter commands from
+`conductor/tech-stack.md` against the applicable source/configuration. Preserve
+existing tools and settings; do not install a tool, replace a config, or run an
+in-place formatter during review. For Swift, distinguish `swiftlang/swift-format`
+from other tools named SwiftFormat and SwiftLint, and use the confirmed strict
+lint command where it is the selected enforcement check. A missing executable,
+unsupported version, or unrun command is **not verified**, not a pass.
+
 ## 4. Security pass
 Scan the diff for: hardcoded API keys or secrets, credentials in
 plaintext, PII appearing in logs or committed files, and obvious
@@ -52,6 +60,44 @@ template render).
 Run the entire test suite for the project — not just the tests added
 in this track. Confirm everything passes, including previously
 existing tests (regression check).
+
+## 5.1. Design, platform, and accessibility evidence
+
+Read the track's `design.md` when present, applicable shared design guidance,
+and the approved spec/plan. Check the implementation against the selected
+direction and acceptance criteria; report unapproved material deviations as
+plan/design noncompliance, not an opportunity to select a different design.
+Legacy and non-UI tracks need no retroactive design artifact. If an approved
+plan explicitly required a brief that is absent, flag that missing evidence.
+
+Scope checks to the changed surfaces and deployment targets, not the framework:
+
+| Target | Evidence to collect |
+| --- | --- |
+| Web | Inspect the rendered UI at its supported viewport sizes; exercise keyboard navigation/focus, responsive layout, accessibility semantics, and affected interactions/states. |
+| iOS | Build/run on simulator or device; inspect relevant device classes, safe areas, navigation/back gestures, Dynamic Type, light/dark appearance, VoiceOver behavior, and affected interactions/states against Apple HIG. |
+| Android | Build/run on emulator or device; inspect relevant window/device classes, insets and keyboard handling, system/predictive Back, font scaling, light/dark appearance, TalkBack behavior, and affected interactions/states against Android guidance. |
+| Cross-platform | Record evidence separately for each affected deployment platform; a browser preview or phone-sized web viewport never verifies native behavior. |
+
+Include relevant loading, empty, error, success, permissions, recovery, and
+realistic content extremes identified in the approved brief. Screenshots
+support visual checks but do not prove gestures, screen-reader behavior, or
+performance. Static source inspection does not establish runtime accessibility.
+Use available tools and permitted manual checks; report unsupported device or
+screen-reader checks honestly rather than fabricating results.
+
+For each applicable acceptance criterion record **pass**, **fail**,
+**not verified**, or **not applicable**, with the command/manual procedure,
+platform/viewport or device, actual result, and evidence path where available.
+Mark a check not applicable only with a scope-based reason. Label documentation
+walkthroughs separately from actual host-agent or app executions.
+
+Failed or unverified **required** acceptance criteria prevent closure. Missing
+tools do not waive them. Resolve the issue and collect evidence, or obtain
+explicit approval to revise the criterion in the specification, plan, and
+design brief where affected, then re-evaluate against the revised requirement.
+A general "yes, finalize" is not consent to silently remove an acceptance
+criterion. Do not claim full accessibility compliance from a partial audit.
 
 ## 6. Write the report, with severity
 Write your findings to `conductor/tracks/$ARGUMENTS/review.md` with
@@ -66,6 +112,10 @@ Medium, or Low:
    - **Low**: minor/cosmetic, worth mentioning, not worth blocking on.
 A section with no issues is marked clean, not omitted. Every issue
 needs a file and line — not just "looks fine" or "some concerns here."
+For UI tracks add **Design/Platform Evidence** with the criterion-level results
+from section 5.1; for non-UI tracks state why that section is not applicable.
+Required criteria that fail or are not verified are blocking findings even
+when the cause is unavailable infrastructure, not faulty implementation.
 
 ## 7. Pause and ask — do not proceed without an explicit yes
 Do NOT commit. Do NOT mark the track as done in `tracks.md`. Present
@@ -107,6 +157,10 @@ If the user gives feedback instead of approving:
    no cap.
 
 ## 9. After explicit approval only — closure commit
+Before closure, confirm that no required criterion remains failed or
+**not verified**. If any remains, return to the evidence/correction loop;
+explicit final approval does not bypass this check.
+
 1. Re-run the full test suite one final time.
 2. Mark the track complete in the tracks registry in the track's worktree (`conductor/tracks.md`): remove the
    awaiting-review note and change the track entry to `[x]`. The entry

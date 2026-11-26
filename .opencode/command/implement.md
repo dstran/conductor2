@@ -27,6 +27,26 @@ Read `conductor/tracks/$ARGUMENTS/metadata.json`. If it contains a `worktreePath
 If `metadata.json` has no `worktreePath` field, this track was created before worktree-per-track support existed — grandfather it: proceed exactly as before, operating on the current worktree with no worktree resolution step.
 
 ## 1. In-flight corrections (applies throughout, at any point below)
+
+Before coding, read the applicable guides selected under
+`conductor/code_styleguides/`, the confirmed verification commands, and the
+track's `design.md` when present. Follow its selected direction, references,
+platform decisions, states, and evidence requirements alongside `spec.md` and
+`plan.md`. Requirements live in the approved specification; reconcile a conflict
+instead of silently choosing between records.
+
+If a newly approved plan requires a design brief and it is missing or unresolved,
+stop and return to `/conductor/new-track` to recover the approved design
+decisions. Do not generate alternatives or choose a replacement during
+implementation. Legacy/non-UI tracks without a design artifact remain valid;
+do not retroactively invent an approval gate or broaden their scope.
+Material deviations from the selected direction require explicit approval and
+reconciliation of the design, spec, and plan before affected work continues.
+Reuse applicable shared visual guidance and skill-owned records without
+creating competing requirements. If a plan calls for Impeccable execution,
+follow the installed skill's current references and consent boundaries, not an
+assumed shell command.
+
 If the user sends a message while you are actively implementing a
 task — a correction, a different approach, a spotted mistake — treat
 it as an immediate instruction, not something to defer to the next

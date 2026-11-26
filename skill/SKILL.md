@@ -67,6 +67,10 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 
 - `implement` works from an existing track selected from the tracks registry in the track's worktree (`conductor/tracks.md`).
 - `implement` reads `conductor/index.md`, the selected track's `spec.md`, `plan.md`, and the linked workflow before coding.
+- `implement` also reads applicable selected style guides and track design
+  decisions. Preserve the approved direction; material changes require renewed
+  reconciliation and approval. Do not invent design requirements for legacy or
+  non-UI tracks.
 - `implement` must not create a brand-new track opportunistically when the user asked to execute an approved plan.
 - `implement` updates track and plan state as work progresses, then hands the track to `review` when implementation is complete.
 
@@ -75,6 +79,11 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - `review` verifies the completed track against its `spec.md`, `plan.md`, and linked workflow.
 - `review` owns completion and closure of the selected track in `conductor/tracks.md`.
 - `review` should keep project-level truth honest by rejecting overstated completion claims.
+- Review applicable design decisions, platform behavior, accessibility, and
+  confirmed formatter checks with actual evidence. Report unperformed checks
+  as **not verified**. Required acceptance criteria without passing evidence
+  prevent closure unless explicitly revised with approval and rechecked;
+  final track approval alone does not waive them.
 
 ## Unbias Contract
 
