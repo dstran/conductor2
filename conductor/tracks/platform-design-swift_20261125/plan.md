@@ -26,7 +26,11 @@ do not vendor Impeccable or add a parallel lifecycle.
 - Report unavailable checks as **not verified**, never as passes.
 - Missing evidence for a required acceptance criterion prevents closure until
   resolved or explicitly revised with approval.
-- Do not create new doctrine mirrors, global product files, or design tools.
+- Do not create new doctrine mirrors or design tools. This tooling track does
+  not create its own `PRODUCT.md`; consumer web projects may opt into the
+  Impeccable-owned product record described in the specification.
+- Impeccable initialization requires explicit opt-in, reuses approved Conductor
+  context, and preserves existing product files and configuration consent.
 
 ## Classification blocker
 
@@ -45,7 +49,9 @@ does not change the global taxonomy.
 - Cross-platform frameworks must route by deployment platform, not language or
   framework name; a browser preview does not verify native behavior (Tasks 1 and 3).
 - External designs and existing product context must be reused, with no competing
-  requirements document or duplicate discovery interview (Task 1 scenarios).
+  requirements document or duplicate discovery interview. Existing `PRODUCT.md`
+  conflicts need explicit reconciliation; skipped setup must still support
+  first-use initialization (Task 1 scenarios).
 - Existing SwiftFormat/SwiftLint/formatter configuration must not be overwritten
   or confused with `swiftlang/swift-format` (Task 2 scenarios).
 - Unavailable devices, accessibility tools, or formatter executables must not
@@ -55,19 +61,45 @@ does not change the global taxonomy.
 
 - [ ] Task: Integrate platform-aware design planning into canonical doctrine and new-track [needs classification]
 
-  **Files:** Modify `skill/SKILL.md`, `.opencode/command/new-track.md`.
+  **Files:** Modify `skill/SKILL.md`, `.opencode/command/new-track.md`,
+  and `.opencode/command/setup.md`.
   **Consumes:** Existing brainstorming, specification approval (Gate A), and
   plan approval sequence.
-  **Produces:** A design decision checkpoint before Gate A; track-local
+  **Produces:** An optional web initialization handoff during setup and a
+  first-use fallback; a design decision checkpoint before Gate A; track-local
   `design.md` persisted only when applicable after approval, alongside the
   existing spec/plan/metadata artifacts.
 
-  1. Read both files and the approved spec. Add a concise canonical contract
+  1. Read the three files and the approved spec. Add a concise canonical contract
      for material UI design decisions; put operational detail in `new-track`.
   2. Route web to available Impeccable `shape` or a direct equivalent brief;
      route iOS/Android to their current official guidance. Detect availability
      through the host's skill discovery, not a hard-coded home directory.
      Never install a missing skill. Native use requires an explicit request.
+     Consult the installed skill's current `init` and `shape` references rather
+     than assuming command behavior from their names.
+     In setup, offer `/impeccable init` for web projects after product context
+     and tech stack approval, before completion. Run only with explicit opt-in;
+     absence or refusal does not block Conductor setup.
+     Use one structured question: "Initialize Impeccable for this web project?"
+     with "Initialize now (Recommended)" and "Skip for now". Explain that the
+     first reuses approved context and asks only about gaps, while the second
+     finishes setup and defers the offer to a relevant web design track.
+     A positive answer hands off to the available skill's `init` workflow,
+     not a shell command or an installation step. A valid existing product
+     record is reused rather than triggering a redundant initialization offer.
+     Feed it the approved Conductor context, reuse settled answers, and ask only
+     about material gaps or conflicts. Honor the skill's confirmations and
+     separate consent for configuration changes; do not auto-select visual or
+     workflow preferences. `init` does not create `DESIGN.md`.
+     If deferred, offer initialization before the first web design track that
+     needs it. Before using Impeccable's new-design `shape` flow, verify its
+     resolved `PRODUCT.md` exists and contains the confirmed product record.
+     Reuse an existing valid record; reconcile stale or conflicting facts with
+     approval, never silent replacement. Link applicable Conductor sources and
+     keep that derived record aligned without giving it independent requirements
+     authority. If the user declines or initialization cannot complete, use a
+     direct design brief instead; do not bypass the skill's prerequisites.
   3. Reuse already answered discovery questions and approved external artifacts.
      The brief records task/audience, flow, significant states, layout intent,
      platform behavior, accessibility, references, and acceptance criteria.
@@ -79,10 +111,16 @@ does not change the global taxonomy.
   5. Incorporate design consequences into the specification before approval
      and into plan tasks before plan approval. Material later design changes
      require reconciliation and approval, not silent scope expansion.
-  6. Walk scenarios: web skill present; absent; approved external design;
+  6. Walk scenarios: web skill present; absent; setup init accepted; skipped;
+     declined; first-use init after skipped setup; existing valid `PRODUCT.md`;
+     conflicting product facts; missing/incomplete product record after init;
+     approved external design;
      iOS-only; Android-only; shared mobile framework targeting both platforms;
      backend-only; label correction using an existing component.
-     Assert correct routing, no duplicate interview, and no coding before approval.
+     Assert correct routing, no duplicate interview, no silent file overwrite,
+     no implicit configuration consent, no `shape` before required initialization,
+     and no coding before approval. Confirm setup can finish when init is skipped
+     and a direct design brief remains available when Impeccable cannot be used.
   7. Run `git diff --check`; inspect the existing lifecycle gates for preserved
      approval ordering. Commit task files, then update this plan separately
      using the task commit procedure.
@@ -146,8 +184,9 @@ does not change the global taxonomy.
      applicable. Required acceptance criteria without evidence block closure
      unless explicitly revised with approval; maintain the existing final
      approval gate and correction loop.
-  6. Update README usage with the platform split, optional web skill, native
-     guidance, Swift guide selection, and unchanged lifecycle.
+   6. Update README usage with the platform split, optional web skill and setup
+      initialization handoff, first-use fallback, derived `PRODUCT.md` authority,
+      native guidance, Swift guide selection, and unchanged lifecycle.
   7. Walk scenarios: legacy track without design artifact; native browser-only
      preview; missing device; missing screen-reader verification; unavailable
      formatter; required criterion failed; explicitly approved criterion revision.
@@ -192,6 +231,8 @@ does not change the global taxonomy.
 ## Planning readiness
 
 - Specification approved before artifact creation.
+- Optional setup initialization and first-use fallback approved as a specification
+  amendment; this amendment updates planning artifacts only.
 - Scope, artifact shapes, routing, fallback/error behavior, compatibility,
   acceptance criteria, and verification approach are defined.
 - Runtime application data models and service API contracts are not applicable.
