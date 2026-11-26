@@ -195,6 +195,28 @@ Every track gets its own isolated git worktree and branch, created from
 current `HEAD`, so parallel tracks never contend for the same working
 directory or registry file:
 
+**Approved web context handoff.** Before creating the worktree, list only the
+durable `PRODUCT.md` and local design/reference files that the user approved
+as inputs to this track. Do not include secrets, environment files,
+machine-local configuration, Impeccable runtime/answer/preview state, or
+unrelated changes. For selected paths, run the installed read-only checker
+from the project root (or `python3 conductor/scripts/check-design-context.py
+-- <paths>` from the Conductor source checkout):
+
+```bash
+python3 ~/.config/opencode/command/conductor/assets/scripts/check-design-context.py -- PRODUCT.md path/to/approved-reference.md
+```
+
+Pass only paths actually selected for this track; omit `PRODUCT.md` if the
+track does not rely on it. A failed check means a selected file is missing,
+unsafe, or not committed unchanged at `HEAD`. Stop before branching. Show the
+user the exact selected paths and their diff, then ask whether to make a
+selective commit of those paths; stage no other files and commit only with
+explicit approval. If declined, ask whether to remove those files as
+dependencies and proceed with a context-independent/direct design brief, or
+stop. Never silently copy files, stage/commit them, or proceed as if unavailable
+references were carried over.
+
 ```bash
 git worktree add .worktrees/<track_id> -b track/<track_id>
 ```
@@ -211,6 +233,9 @@ immediately before running this command — this is `baseRef`, written
 into `metadata.json` in Step 3. All remaining steps in this command
 (Step 3 onward) run inside the new worktree at `.worktrees/<track_id>`,
 not in the directory `/conductor/new-track` was invoked from.
+Immediately in that destination, verify every selected context/reference path
+is present and readable before continuing. If any is absent or differs, stop
+and report the exact path; do not reconstruct or silently substitute it.
 
 ## 3. Create the track artifacts
 

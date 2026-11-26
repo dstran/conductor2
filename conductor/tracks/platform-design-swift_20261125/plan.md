@@ -294,3 +294,35 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 - No auto-decided open specification questions were recorded.
 - The user invoked implementation and approved the track-local documentation
   classification. Phase 3 retains its manual checkpoint.
+
+## Phase 4: Review Fixes
+
+- [~] Task: Preserve approved design context across track worktrees with a read-only committed-file preflight [backend-logic]
+
+  **Finding:** H1 in `review.md`; the user requested this correction.
+  **Files:** Create `conductor/scripts/check-design-context.py` and
+  `conductor/scripts/test-design-context.py`; update setup/new-track instructions,
+  canonical contract, installer asset copying, installer smoke test, and README.
+
+  1. Write regression tests and confirm failure before adding the helper.
+     Cover untracked, unstaged, staged, missing, unsafe, and committed inputs;
+     selected committed context and references must survive a new Git worktree.
+  2. Implement a read-only CLI accepting explicit project-relative file paths.
+     Reject missing/nonregular/symlink/escaping files, machine-local/skill runtime
+     records, and any selected file not committed unchanged at HEAD. Never
+     stage, commit, copy, overwrite, or print file contents.
+  3. Setup inventories newly approved durable integration files, shows the
+     exact set/diff, and obtains consent before including them in its commit.
+     New-track repeats the inventory for first-use initialization and selected
+     references before branching. If not yet committed, ask the user to approve
+     a selective commit or explicitly choose context-independent direct planning;
+     do not branch with references that are only present in the source checkout.
+  4. Keep temporary previews private; if needed as implementation references,
+     obtain consent to preserve only the selected reference at a durable
+     project-relative path. Do not copy whole runtime directories or local config.
+     Verify selected paths in the destination before coding, including reuse.
+  5. Ship the helper as an installed script asset and verify its bytes in the
+     isolated installer test. Run the new tests and all existing regression
+     suites. Commit the fix, then update this plan separately.
+  6. Re-evaluate H1 and update `review.md` with fresh evidence. Remain awaiting
+     review and ask for final approval; do not close the track automatically.

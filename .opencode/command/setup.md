@@ -134,6 +134,14 @@ resuming it does not rerun setup or bypass setup's existing initialized-project 
    `init` captures product truth; it does not establish a visual world or create
    `DESIGN.md`. Follow its own completion check before declaring initialization
    complete. It does not build the app.
+8. Before setup's commit, inventory only the approved durable project context
+   selected for future tracks (normally `PRODUCT.md` and explicitly approved
+   project-level Impeccable design records). Show the exact paths and diff;
+   obtain consent before adding these user-project files to the setup commit.
+   Keep temporary previews, answers, generated runtime state, machine-local
+   settings, secrets, and unrelated changes out. If the user declines, do not
+   claim these files will be available in future track worktrees; explain that
+   they must remain committed independently or be omitted as shared inputs.
 
 Skipping this handoff never blocks setup. If it cannot complete, report the
 actual state, and let a later web track use the first-use handoff or a direct
@@ -250,7 +258,12 @@ Integrity check: verify every linked file and directory above exists on disk, ex
 
 ## 11. Commit setup
 
-Stage the `conductor/` directory and commit with the message `conductor(setup): Initialize project context and standards`.
+Stage the `conductor/` directory and commit with the message
+`conductor(setup): Initialize project context and standards`. Add only the
+explicitly approved durable integration paths from step 5.5; never use `git add
+-A` or stage the entire project. Before committing any added project paths,
+show the exact staged path list and diff and obtain explicit consent. If no
+additional paths were approved, stage only `conductor/`.
 
 ## 12. Completion
 

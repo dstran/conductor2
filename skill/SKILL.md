@@ -62,6 +62,12 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
   and specifications remain requirements authority; Impeccable's `PRODUCT.md`
   is derived context linking back to them. Reconcile conflicts with approval;
   never silently replace existing product or design files.
+- Before creating a track worktree, explicitly select only the durable
+  project-relative context/reference files that track needs and verify they
+  are committed unchanged at `HEAD` with the read-only design-context checker.
+  Obtain explicit consent before any selective commit; never stage broadly,
+  auto-copy, or carry secrets, machine-local settings, or runtime previews.
+  Verify selected files in the destination worktree before proceeding.
 
 ## Implement Contract
 

@@ -46,6 +46,8 @@ for pass in first second; do
         "$command_dir/assets/scripts/open-pr.sh"
     assert_same "$repo_root/conductor/scripts/archive-track.py" \
         "$command_dir/assets/scripts/archive-track.py"
+    assert_same "$repo_root/conductor/scripts/check-design-context.py" \
+        "$command_dir/assets/scripts/check-design-context.py"
 
     # The only installed template difference is the installer-added version.
     template="$command_dir/assets/workflow-template.md"

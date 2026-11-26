@@ -129,6 +129,14 @@ first relevant web design track can resume the handoff. Direct design planning
 remains available when Impeccable is unavailable or declined. Browser previews
 and live variants depend on its available tooling and a runnable project.
 
+Track worktrees start from committed `HEAD`, not uncommitted files in the
+original checkout. Before branching, Conductor checks only the explicitly
+selected durable product/design context and references; if any are missing or
+uncommitted, it stops for a selective-commit decision. It never stages or
+copies those files automatically. Secrets, machine-local configuration, and
+temporary Impeccable runtime/preview state are excluded. The destination
+worktree is checked again before planning continues.
+
 The selected direction, states, references, platform decisions, and acceptance
 criteria live in track-local `design.md` when applicable. Implementation reads
 them; review checks rendered behavior and platform/accessibility evidence.
