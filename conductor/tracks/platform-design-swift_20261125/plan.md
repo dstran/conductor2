@@ -38,15 +38,12 @@ do not vendor Impeccable or add a parallel lifecycle.
   Product requirements approval is not visual-direction approval; only an
   explicit delegation permits the agent to select on the user's behalf.
 
-## Classification blocker
+## Approved track-local classification
 
-The existing workflow does not classify documentation-only changes. Tasks 1–3
-are marked `[needs classification]` as required by `conductor/workflow.md`.
-Before implementation, ask the user to classify these tasks and confirm the
-verification policy. Proposed track-local classification: `documentation`,
-verified by the specified source checks and scenario walkthroughs, without
-inventing executable tests for prose. This proposal is not yet approved and
-does not change the global taxonomy.
+The user approved `documentation` for Tasks 1–3 when starting implementation.
+Verify these tasks through the specified source checks and scenario walkthroughs,
+without inventing executable tests for prose. This is a track-local exception;
+the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`.
 
 ## Review focus
 
@@ -66,7 +63,7 @@ does not change the global taxonomy.
 
 ## Phase 1: Design planning and Swift standards
 
-- [ ] Task: Integrate platform-aware design planning into canonical doctrine and new-track [needs classification]
+- [~] Task: Integrate platform-aware design planning into canonical doctrine and new-track [documentation]
 
   **Files:** Modify `skill/SKILL.md`, `.opencode/command/new-track.md`,
   and `.opencode/command/setup.md`.
@@ -163,7 +160,7 @@ does not change the global taxonomy.
      approval ordering. Commit task files, then update this plan separately
      using the task commit procedure.
 
-- [ ] Task: Bundle Swift guidance and integrate stack-specific setup selection [needs classification]
+- [ ] Task: Bundle Swift guidance and integrate stack-specific setup selection [documentation]
 
   **Files:** Create `conductor/assets/code_styleguides/swift.md`;
   modify `.opencode/command/setup.md`.
@@ -196,7 +193,7 @@ does not change the global taxonomy.
 
 ## Phase 2: Implementation and review evidence
 
-- [ ] Task: Carry approved design decisions and platform evidence through implementation and review [needs classification]
+- [ ] Task: Carry approved design decisions and platform evidence through implementation and review [documentation]
 
   **Files:** Modify `.opencode/command/implement.md`,
   `.opencode/command/review.md`, `README.md`, and `skill/SKILL.md` only as needed
@@ -285,4 +282,5 @@ does not change the global taxonomy.
   acceptance criteria, and verification approach are defined.
 - Runtime application data models and service API contracts are not applicable.
 - No auto-decided open specification questions were recorded.
-- Documentation task classification and implementation-plan approval remain pending.
+- The user invoked implementation and approved the track-local documentation
+  classification. Phase 3 retains its manual checkpoint.
