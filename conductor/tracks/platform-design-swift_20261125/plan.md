@@ -63,7 +63,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 
 ## Phase 1: Design planning and Swift standards
 
-- [~] Task: Integrate platform-aware design planning into canonical doctrine and new-track [documentation]
+- [x] Task: Integrate platform-aware design planning into canonical doctrine and new-track [documentation] 7d3f74b
 
   **Files:** Modify `skill/SKILL.md`, `.opencode/command/new-track.md`,
   and `.opencode/command/setup.md`.
@@ -160,7 +160,7 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
      approval ordering. Commit task files, then update this plan separately
      using the task commit procedure.
 
-- [ ] Task: Bundle Swift guidance and integrate stack-specific setup selection [documentation]
+- [~] Task: Bundle Swift guidance and integrate stack-specific setup selection [documentation]
 
   **Files:** Create `conductor/assets/code_styleguides/swift.md`;
   modify `.opencode/command/setup.md`.
