@@ -295,9 +295,9 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
 - The user invoked implementation and approved the track-local documentation
   classification. Phase 3 retains its manual checkpoint.
 
-## Phase 4: Review Fixes
+## Phase 4: Review Fixes [checkpoint: 0fe06bc]
 
-- [~] Task: Preserve approved design context across track worktrees with a read-only committed-file preflight [backend-logic]
+- [x] Task: Preserve approved design context across track worktrees with a read-only committed-file preflight [backend-logic] 0fe06bc
 
   **Finding:** H1 in `review.md`; the user requested this correction.
   **Files:** Create `conductor/scripts/check-design-context.py` and
@@ -323,6 +323,14 @@ the global workflow taxonomy is unchanged. The installer test remains `e2e-flow`
      Verify selected paths in the destination before coding, including reuse.
   5. Ship the helper as an installed script asset and verify its bytes in the
      isolated installer test. Run the new tests and all existing regression
-     suites. Commit the fix, then update this plan separately.
+      suites. Commit the fix, then update this plan separately.
   6. Re-evaluate H1 and update `review.md` with fresh evidence. Remain awaiting
      review and ask for final approval; do not close the track automatically.
+
+  **Execution evidence:** All seven isolated Git-fixture tests passed, including
+  committed byte-for-byte transfer into a new worktree and rejection of
+  untracked/staged/unstaged, missing, unsafe, symlinked, and private/runtime
+  inputs without mutation. Installer, open-pr, and archive suites passed;
+  installer verified checker installation; shell syntax and whitespace checks
+  passed. H1 resolution is documented in `review.md`. No consuming agent,
+  browser, app, or device execution is claimed. Fix commit: `0fe06bc`.
