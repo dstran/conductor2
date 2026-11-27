@@ -41,6 +41,7 @@ install_opencode_surface() {
   cp "$ROOT"/conductor/assets/code_styleguides/*.md "$styleguides_dir/"
   cp "$ROOT/conductor/scripts/open-pr.sh" "$scripts_dir/open-pr.sh"
   cp "$ROOT/conductor/scripts/archive-track.py" "$scripts_dir/archive-track.py"
+  cp "$ROOT/conductor/scripts/check-design-context.py" "$scripts_dir/check-design-context.py"
   cp "$ROOT/conductor/assets/workflow-template.md" "$command_dir/assets/workflow-template.md"
   echo "<!-- conductor-workflow-version: $sha -->" >> "$command_dir/assets/workflow-template.md"
   echo "  $skill_dir"

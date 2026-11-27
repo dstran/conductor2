@@ -28,12 +28,18 @@ Check which Conductor artifacts already exist:
 
 Determine whether this is a Brownfield (existing) or Greenfield (new) project.
 
-- **Brownfield indicators:** dependency manifests (`package.json`, `go.mod`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts`), an `AndroidManifest.xml` anywhere in the tree, source directories (`src/`, `app/`, `lib/`, `bin/`) with code, or a `.git` directory. If `.git` exists, run `git status --porcelain`; ignore changes under `conductor/`. If other uncommitted changes exist, warn: "You have uncommitted changes — consider committing or stashing before proceeding," then continue and classify as Brownfield.
+- **Brownfield indicators:** dependency manifests (`package.json`, `go.mod`, `requirements.txt`, `pom.xml`, `Cargo.toml`, `Package.swift`, `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts`), an Xcode project/workspace or `AndroidManifest.xml`, source directories (`src/`, `app/`, `lib/`, `bin/`) with code, or a `.git` directory. If `.git` exists, run `git status --porcelain`; ignore changes under `conductor/`. If other uncommitted changes exist, warn: "You have uncommitted changes — consider committing or stashing before proceeding," then continue and classify as Brownfield.
 - **Greenfield:** none of the above (ignoring `conductor/`, a clean `.git`, and `README.md`).
 
 **If Brownfield:** ask permission for a read-only scan. On approval, analyze efficiently: use `git ls-files`, respect `.gitignore`, skip `node_modules`/`dist`/`build`/`.gradle`/`.cxx`, and read `README.md` plus manifests to infer the tech stack and architecture. Hold the findings in context.
 
 For Gradle projects, also read `build.gradle[.kts]`, `settings.gradle[.kts]`, and `gradle/libs.versions.toml` to infer the language, `compileSdk`/`minSdk`, and whether Compose is enabled — a `buildFeatures { compose true }` block, an `androidx.compose` BOM dependency, or the `org.jetbrains.kotlin.plugin.compose` plugin each answer the UI-toolkit question directly. Read the `include(...)` entries in `settings.gradle[.kts]` to list the project's modules. Hold all of this in context; steps 5 and 6 record it.
+
+For Swift projects, inspect `Package.swift`, Xcode build settings, project-owned
+`.swift` files, and existing formatter/linter configuration. Infer language and
+platform targets separately: a Swift library need not have an iOS UI, and an
+iOS target does not prove a Flutter/React Native project owns Swift source.
+Ignore generated code and vendored dependencies when recommending guides.
 
 **If Greenfield:** if there is no `.git`, run `git init`. Then ask an open question: "What do you want to build?" Hold the answer as the Initial Concept.
 
@@ -74,11 +80,84 @@ For Gradle projects, also read `build.gradle[.kts]`, `settings.gradle[.kts]`, an
 
 5. Write `conductor/tech-stack.md`, including a **Verification Commands** section and, where applicable, a **Modules** section.
 
+For confirmed Swift code, preserve existing formatter/linter choices and
+configuration. If none is established, recommend `swiftlang/swift-format` and
+confirm that choice. Verify the available version and help before confirming
+the project's non-mutating check command, source paths, and config; distinguish
+the toolchain's `swift format` from standalone `swift-format` and other tools
+named SwiftFormat. If using its lint command as enforcement, include `--strict`
+so warnings fail the check, and `--recursive` for directory inputs. Do not
+overwrite configuration, reformat files, install a formatter, or record an
+unrun check as passing. Missing tooling is **not verified** and is recorded as
+a prerequisite rather than a fabricated executable command.
+
+## 5.5. Optional web design integration
+
+After product context and tech stack approval, and before setup completes,
+offer the following handoff for a consuming **web project**. Native-only,
+backend-only, and Conductor tooling projects skip it. For multi-app projects,
+scope the handoff to the web app and confirm shared versus app-specific context.
+This section is also the first-use handoff used by `/conductor/new-track`;
+resuming it does not rerun setup or bypass setup's existing initialized-project guard.
+
+1. Verify Impeccable is discoverable through the current host's skill discovery.
+   An installed directory or successful installer exit is not proof of availability.
+2. If unavailable, explain that it is optional. Offer **Install with approval**
+   `(Recommended)` for users wanting the integration, **Show instructions**, or
+   **Continue without it**. Consult current official instructions at
+   <https://impeccable.style/>; never invent a command or fetch/run an installer
+   silently. Before execution, show the exact command, its source, target agent,
+   project-local/global scope, and effects on existing configuration; obtain
+   explicit approval of those changes. If instructions cannot be verified,
+   provide the official link and continue without it.
+3. After an approved installation, recheck skill discovery. If a restart is
+   required, explain how to resume the handoff in a new session and finish
+   Conductor setup normally. On failure or refusal, continue without Impeccable.
+   Do not offer `init` until the skill is discoverable.
+4. Read the available skill's current setup/context and `init` instructions.
+   Reuse a valid existing resolved `PRODUCT.md` rather than reinitializing it.
+   If facts are stale or conflict with approved Conductor context, present the
+   conflict and ask what to reconcile; never silently overwrite the file.
+5. When initialization is needed, ask **"Initialize Impeccable for this web
+   project?"** with **Initialize now** `(Recommended)` and **Skip for now**.
+   Explain that initialization reuses approved context, asks only about material
+   gaps, and can be deferred to the first relevant web design track.
+6. On explicit opt-in, hand off to the skill's `init` workflow, not a shell
+   command named `/impeccable init`. Supply the approved product definition,
+   product guidelines, tech stack, source paths, and confirmed answers. Preserve
+   its human confirmation round, asking only about gaps or conflicts. Honor
+   separate consent for its configuration/workflow choices; do not infer a
+   visual direction or build preference from approval of product requirements.
+7. `PRODUCT.md` is the skill's derived product record: link applicable Conductor
+   sources, preserve useful existing content, and keep shared facts aligned
+   through explicit reconciliation. Track requirements remain in `spec.md`.
+   `init` captures product truth; it does not establish a visual world or create
+   `DESIGN.md`. Follow its own completion check before declaring initialization
+   complete. It does not build the app.
+8. Before setup's commit, inventory only the approved durable project context
+   selected for future tracks (normally `PRODUCT.md` and explicitly approved
+   project-level Impeccable design records). Show the exact paths and diff;
+   obtain consent before adding these user-project files to the setup commit.
+   Keep temporary previews, answers, generated runtime state, machine-local
+   settings, secrets, and unrelated changes out. If the user declines, do not
+   claim these files will be available in future track worktrees; explain that
+   they must remain committed independently or be omitted as shared inputs.
+
+Skipping this handoff never blocks setup. If it cannot complete, report the
+actual state, and let a later web track use the first-use handoff or a direct
+design brief. Do not repeatedly offer an installation or initialization the
+user already declined in the current setup/track conversation.
+
 ## 6. Code Style Guides (`conductor/code_styleguides/`)
 
-The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `android`, `compose`, `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `java`, `javascript`, `kotlin`, `python`, `typescript`.
+The bundled guides live at `~/.config/opencode/command/conductor/assets/code_styleguides/`. Available guides: `android`, `compose`, `cpp`, `csharp`, `dart`, `general`, `go`, `html-css`, `java`, `javascript`, `kotlin`, `python`, `swift`, `typescript`.
 
 1. Recommend the guides that match the confirmed tech stack (always include `general`). Do NOT invent style rules — only copy from the bundled assets.
+
+   **Swift code.** Recommend `general` and `swift` whenever the confirmed project
+   owns Swift source (including libraries or native modules). Add other guides
+   only for languages genuinely present. Do not select `swift` solely because
+   a cross-platform framework targets iOS without project-owned Swift source.
 
    **Android stacks.** Recommend the whole set at once rather than making the
    user assemble it, keyed on the language and UI toolkit confirmed in step 5:
@@ -179,7 +258,12 @@ Integrity check: verify every linked file and directory above exists on disk, ex
 
 ## 11. Commit setup
 
-Stage the `conductor/` directory and commit with the message `conductor(setup): Initialize project context and standards`.
+Stage the `conductor/` directory and commit with the message
+`conductor(setup): Initialize project context and standards`. Add only the
+explicitly approved durable integration paths from step 5.5; never use `git add
+-A` or stage the entire project. Before committing any added project paths,
+show the exact staged path list and diff and obtain explicit consent. If no
+additional paths were approved, stage only `conductor/`.
 
 ## 12. Completion
 

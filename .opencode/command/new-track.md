@@ -17,9 +17,16 @@ Before starting, run the read-only merge-proof checks from `/conductor/cleanup` 
 
 Treat `$ARGUMENTS` as a **seed** for this step, not a final description and not the track's shortname. If `$ARGUMENTS` is empty, ask the user for a brief description of what they want to build before continuing. Infer and confirm the track type (feature, bug, chore, refactor, MVP) before continuing — independently of whether the rest of this step's brainstorming loop runs or is skipped.
 
-**Skip hatch:** if the user's request explicitly says the spec is already decided and to skip brainstorming (e.g. "skip brainstorming", "spec is already decided"), do not run the loop below — proceed directly to Step 2 using `$ARGUMENTS` as the final description, exactly as this command behaved before this step existed.
+**Skip hatch:** if the user's request explicitly says the spec is already decided
+and to skip brainstorming (e.g. "skip brainstorming", "spec is already decided"),
+reuse that specification instead of repeating the discovery loop. This does not
+waive the applicable design checkpoint in section 1.1: reuse an approved design
+or resolve remaining design decisions before proceeding to Step 2.
 
-Otherwise, run the following loop before generating a track ID or creating any artifact:
+Otherwise, run the following loop before generating a track ID or creating track
+artifacts. Skill-owned initialization/context and decision-preview artifacts
+are permitted only within the consented handoff in section 1.1; they are not
+production implementation.
 
 1. **Draft understanding.** From the seed, identify the purpose, constraints, and success criteria as currently understood.
    - **Domain-language and scenario pass:** identify domain-significant terms that may have multiple meanings. Compare each with existing project terminology and inspect relevant code or documentation. Use concrete scenarios to distinguish meanings. Ask the user only when the distinction affects behavior or scope; otherwise choose a precise term and use it consistently in the draft. Do not create a glossary for every track; record ordinary clarifications in the draft spec and promote terminology to durable project documentation only when it matters across tracks.
@@ -43,13 +50,77 @@ Otherwise, run the following loop before generating a track ID or creating any a
      - **"You decide the rest"** — for every fork still open (this one and all remaining), pick the recommended/sane option and record each under a running "Open questions auto-decided by agent" list (value + one-line rationale). Stop asking and go to step 4.
      - **"Exit brainstorming now"** — treat exactly like "you decide the rest": auto-decide everything still open, record each, stop asking, go to step 4.
    - Repeat step 2 (re-check the dry-run and checklist against the now-updated draft) after each answered fork — resolving one fork can surface new ones. There is no cap on how many rounds this takes.
-4. **Draft `spec.md` content** from the fully-resolved understanding. Include, verbatim as section headers:
+4. **Resolve the design checkpoint in section 1.1**, then **draft `spec.md`
+   content** from the fully-resolved understanding, including the approved design's
+   requirements and consequences. Include, verbatim as section headers:
    - `## Assumptions & agent-made decisions` — every fork resolved via "you decide this one"/"I don't know", each as a bullet: the decision and a one-line rationale. Leave the header with no bullets beneath it if this never happened.
    - `## Open questions auto-decided by agent — PLEASE DOUBLE-CHECK` — every fork resolved via "you decide the rest"/"exit brainstorming now", each as a bullet: the decision and a one-line rationale. Leave the header with no bullets beneath it if this never happened.
 5. **Self-review the draft once**, inline, before presenting it: scan for placeholders ("TBD", "TODO", incomplete sections), internal contradictions, and any requirement that could be read two ways — fix issues directly in the draft, no separate re-review pass.
 6. **Present the design** (the drafted spec content) to the user and ask for approval. If they ask for changes, revise and re-present — loop with no round cap until they approve. This is Gate A; it is separate from, and earlier than, the pause-for-approval in Step 7 below — approving here does not start `/conductor/implement`, it only unlocks artifact creation in Step 3.
 
 Do not proceed to Step 2 until either the skip hatch was used, or Gate A above has an explicit approval.
+
+## 1.1. Design checkpoint — before specification approval
+
+Run this checkpoint during Step 1, before its final specification approval
+(Gate A), not as deferred discovery in `/conductor/implement`.
+
+**Applicability.** Material changes to user flows, navigation, interaction, or
+visual structure need an approved brief. Backend-only or tooling-only work
+records design as not applicable in the specification. An established-pattern
+fix (for example, correcting a label on an existing component) records a short
+justification instead of triggering a new design exercise. Reuse an approved
+external design by summarizing its decisions and linking its source; ask only
+about material gaps. Do not require an inaccessible URL to supply unstated
+requirements.
+
+**Route by deployment target.**
+
+- Web: prefer available Impeccable `shape`. Verify current-session discovery.
+  If missing, initialization was deferred, or its product record is missing or
+  stale, follow only `/conductor/setup`'s **5.5 Optional web design integration**
+  handoff with the context already approved here; do not rerun setup. Installation
+  and `init` remain opt-in. If declined, unavailable, failed, or awaiting restart,
+  produce the same design brief directly and make the fallback explicit.
+- Before using Impeccable's new-design flow, read its installed `shape` and
+  prerequisite references and verify a valid resolved `PRODUCT.md` exists.
+  Do not substitute interview notes for required initialization. Reuse settled
+  answers with a compact confirmation; do not repeat the product interview.
+- Native iOS: use current [Apple HIG](https://developer.apple.com/design/human-interface-guidelines/).
+  Android: use current [Android design guidance](https://developer.android.com/design).
+  Cross-platform products share intent but document per-platform navigation,
+  controls, gestures, adaptivity, and accessibility. React Native, Flutter, and
+  Expo do not automatically route to web or to Swift. Invoke Impeccable for
+  native work only when explicitly requested.
+
+**Keep the user in control.** Follow the installed skill's planning-only
+`shape` workflow through applicable visual-world/concept alternatives,
+presentation, user selection, and revision rounds. Requirements approval,
+installation consent, and `init` completion are not visual-direction approval.
+Wait for selection and explicit confirmation of the resulting brief; return to
+the choices when revisions are requested. Do not choose for the user unless
+explicitly delegated, and record that delegation in the existing provenance
+sections. Preserve an incumbent direction for narrow refinements rather than
+forcing alternatives. Decision previews/live variants depend on the skill,
+available tools, and a runnable target: explain unavailable capabilities and
+use a supported alternative presentation, never fabricated previews or an
+agent-selected substitute. `shape` stops before production code, direction
+contract persistence, or implementation; do not continue its build workflow.
+
+**Brief and reconciliation.** Prepare the smallest useful brief covering:
+audience and primary task; selected direction and references; flow, interaction,
+layout and responsive/adaptive intent; realistic data/content ranges and relevant
+first-run, loading, empty, error, success, permission and recovery states;
+platform conventions, accessibility, constraints, acceptance criteria, and
+verification evidence needed. Reference shared product/design docs rather than
+duplicating their contents. The selected direction belongs to track-local
+`design.md`; Conductor's `spec.md` remains requirements authority.
+
+Confirm the brief, reconcile its consequences into the draft specification,
+then obtain Gate A approval. Persist the approved brief at Step 3 and carry its
+work and evidence requirements into `plan.md` before plan approval. A material
+later design change requires explicit reconciliation and approval, not silent
+scope expansion during implementation.
 
 ## 2. Generate the track ID
 
@@ -124,6 +195,28 @@ Every track gets its own isolated git worktree and branch, created from
 current `HEAD`, so parallel tracks never contend for the same working
 directory or registry file:
 
+**Approved web context handoff.** Before creating the worktree, list only the
+durable `PRODUCT.md` and local design/reference files that the user approved
+as inputs to this track. Do not include secrets, environment files,
+machine-local configuration, Impeccable runtime/answer/preview state, or
+unrelated changes. For selected paths, run the installed read-only checker
+from the project root (or `python3 conductor/scripts/check-design-context.py
+-- <paths>` from the Conductor source checkout):
+
+```bash
+python3 ~/.config/opencode/command/conductor/assets/scripts/check-design-context.py -- PRODUCT.md path/to/approved-reference.md
+```
+
+Pass only paths actually selected for this track; omit `PRODUCT.md` if the
+track does not rely on it. A failed check means a selected file is missing,
+unsafe, or not committed unchanged at `HEAD`. Stop before branching. Show the
+user the exact selected paths and their diff, then ask whether to make a
+selective commit of those paths; stage no other files and commit only with
+explicit approval. If declined, ask whether to remove those files as
+dependencies and proceed with a context-independent/direct design brief, or
+stop. Never silently copy files, stage/commit them, or proceed as if unavailable
+references were carried over.
+
 ```bash
 git worktree add .worktrees/<track_id> -b track/<track_id>
 ```
@@ -140,6 +233,9 @@ immediately before running this command — this is `baseRef`, written
 into `metadata.json` in Step 3. All remaining steps in this command
 (Step 3 onward) run inside the new worktree at `.worktrees/<track_id>`,
 not in the directory `/conductor/new-track` was invoked from.
+Immediately in that destination, verify every selected context/reference path
+is present and readable before continuing. If any is absent or differs, stop
+and report the exact path; do not reconstruct or silently substitute it.
 
 ## 3. Create the track artifacts
 
@@ -149,6 +245,8 @@ create:
 - `conductor/tracks/<track_id>/spec.md`
 - `conductor/tracks/<track_id>/plan.md`
 - `conductor/tracks/<track_id>/metadata.json`
+- `conductor/tracks/<track_id>/design.md` when the design checkpoint required a
+  brief, using the confirmed content and selected direction from Step 1.
 
 Write `spec.md` using the exact content approved in Step 1's Gate A (do not re-draft it here), including its two provenance sections.
 

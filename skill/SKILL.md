@@ -39,10 +39,44 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - If no suitable approved track exists, the next step is `new-track`, not ad hoc execution.
 - Workflow guidance linked from `conductor/index.md` is part of the execution contract for track plans.
 
+## Design and Platform Contract
+
+- During `new-track`, material changes to user flows, navigation, interaction,
+  or visual structure require an approved design brief before final specification
+  and implementation-plan approval. Record it in the track's `design.md`;
+  backend-only work and established-pattern fixes record a brief justification
+  in the specification instead.
+- Prefer available Impeccable `shape` for web design, with direct design planning
+  as the optional integration's fallback. Preserve applicable alternatives,
+  user selection, and revision rounds; requirements approval is not approval
+  of a visual direction. Only explicit delegation allows an agent to select it.
+- For native iOS use Apple HIG; for Android use Android design guidance.
+  Route cross-platform work by deployment platform, not framework name.
+  Do not invoke Impeccable for native work unless requested.
+- Setup may offer web projects assisted Impeccable installation and initialization
+  after product/stack approval. Verify current-session discovery; obtain approval
+  of installation scope and command, and explicit opt-in to `init`. A missing
+  skill, declined handoff, or required restart never blocks Conductor setup.
+  `new-track` can resume the same handoff at first use.
+- Reuse confirmed context and existing designs. Conductor's approved context
+  and specifications remain requirements authority; Impeccable's `PRODUCT.md`
+  is derived context linking back to them. Reconcile conflicts with approval;
+  never silently replace existing product or design files.
+- Before creating a track worktree, explicitly select only the durable
+  project-relative context/reference files that track needs and verify they
+  are committed unchanged at `HEAD` with the read-only design-context checker.
+  Obtain explicit consent before any selective commit; never stage broadly,
+  auto-copy, or carry secrets, machine-local settings, or runtime previews.
+  Verify selected files in the destination worktree before proceeding.
+
 ## Implement Contract
 
 - `implement` works from an existing track selected from the tracks registry in the track's worktree (`conductor/tracks.md`).
 - `implement` reads `conductor/index.md`, the selected track's `spec.md`, `plan.md`, and the linked workflow before coding.
+- `implement` also reads applicable selected style guides and track design
+  decisions. Preserve the approved direction; material changes require renewed
+  reconciliation and approval. Do not invent design requirements for legacy or
+  non-UI tracks.
 - `implement` must not create a brand-new track opportunistically when the user asked to execute an approved plan.
 - `implement` updates track and plan state as work progresses, then hands the track to `review` when implementation is complete.
 
@@ -51,6 +85,11 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - `review` verifies the completed track against its `spec.md`, `plan.md`, and linked workflow.
 - `review` owns completion and closure of the selected track in `conductor/tracks.md`.
 - `review` should keep project-level truth honest by rejecting overstated completion claims.
+- Review applicable design decisions, platform behavior, accessibility, and
+  confirmed formatter checks with actual evidence. Report unperformed checks
+  as **not verified**. Required acceptance criteria without passing evidence
+  prevent closure unless explicitly revised with approval and rechecked;
+  final track approval alone does not waive them.
 
 ## Unbias Contract
 
