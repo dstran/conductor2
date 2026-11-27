@@ -5,7 +5,8 @@
 - Markdown: canonical doctrine, OpenCode commands, compatibility wrappers,
   lifecycle templates, and code style guides.
 - Shell: installers, review-request dispatcher, and regression test harnesses.
-- Python 3: archive recovery helper, using the standard library.
+- Python 3: archive recovery and design-context verification helpers, using the
+  standard library.
 - Git: branches, worktrees, commits, and notes for track lifecycle state.
 - GitHub CLI / GitLab CLI: provider-specific pull-request integration.
 
@@ -25,9 +26,12 @@ Run from the repository root:
 | --- | --- |
 | `sh conductor/scripts/test-open-pr.sh` | Review dispatcher regression tests |
 | `sh conductor/scripts/test-archive-track.sh` | Archive helper regression tests |
+| `python3 conductor/scripts/test-design-context.py` | Design-context and worktree handoff regression tests |
+| `sh conductor/scripts/test-installer.sh` | Isolated installer and asset distribution smoke test |
 
 These scripts create temporary repositories and stub external provider
-commands. They require a shell and Git; archive tests also require Python 3.
+commands. They require a shell and Git; Python tests require Python 3. Installer
+tests run with a temporary HOME and require Bash.
 
 No application build command or repository-wide lint command has been
 identified. The installer is not a build or a read-only verification command:

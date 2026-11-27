@@ -21,6 +21,8 @@ changes in their own repositories.
 - Approve specifications and implementation plans before coding starts.
 - Keep project context and track state discoverable under `conductor/`.
 - Isolate new tracks in dedicated worktrees and branches by default.
+- Route design planning by platform, carry approved context into track worktrees,
+  and provide optional project-matched code-style guidance.
 - Verify completed work and require explicit approval before track closure.
 
 ## Supported Surface
