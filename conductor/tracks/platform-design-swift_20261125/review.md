@@ -1,4 +1,82 @@
-# Review: Platform-aware design gates and Swift standards
+# Current Re-review — 2026-11-27
+
+This review supersedes the initial verdict below. The H1 worktree-context
+handoff finding is addressed by the review-fix task and its tests. Current
+status: **no High findings; one Medium security/side-effect finding**.
+
+## Plan Compliance
+
+**Clean.** The four original tasks and the review-fix task are marked complete
+with code commits in `plan.md`; all referenced task/phase commits exist. The
+worktree handoff correction now requires explicit input selection, committed
+unchanged files, consent for selective commits, and destination verification.
+At review time, the registry remained `[~]` with the required awaiting-review
+note and metadata was `awaiting-review`. The user approved this report on
+2026-11-27; closure state is recorded in the closure commit.
+
+The original H1 finding and its resolution evidence are retained below.
+Scenario walkthroughs are source/instruction checks, not claims of autonomous
+host-agent or application execution.
+
+## Code Quality
+
+**Clean.** No additional correctness, concurrency, resource-lifecycle, or
+boundary defect found in the changed executable code. The committed-context
+checker uses argument-array subprocess calls (not a shell), rejects unsafe
+paths and changed/uncommitted contents, and the disposable worktree regression
+confirms selected committed files arrive byte-for-byte while unrelated
+untracked files do not.
+
+## Style/Guidelines
+
+**Clean.** Changed Python, shell, Swift-guide, and documentation files follow
+the available `conductor/code_styleguides/general.md` principles. The Swift
+guide clearly distinguishes API guidance from local formatting policy. No
+unconfigured formatter or linter is claimed as run.
+
+## Security
+
+### [Medium] Configured Git clean filters execute during the “read-only” check
+
+**File:** `conductor/scripts/check-design-context.py:51`.
+
+`git hash-object --path=...` applies Git path filters. If the repository marks
+a selected path with a clean filter and Git has that filter configured, this
+command executes the configured filter while the helper presents itself as
+read-only. A disposable repository reproduction confirmed the filter ran
+(recorded a marker file) while the checker returned `PASS`. This can cause
+arbitrary configured side effects and weakens the helper's read-only contract.
+No credentials or PII were found in the changed diff, and user-supplied paths
+are passed as subprocess arguments rather than interpolated into a shell
+command. Recommend avoiding filter execution or documenting/consenting to it
+before treating the helper as read-only. Medium does not block finalization
+under the specified severity definitions.
+
+## Test Results
+
+| Check | Result |
+| --- | --- |
+| `python3 conductor/scripts/test-design-context.py` | PASS — 7 tests |
+| `sh conductor/scripts/test-installer.sh` | PASS |
+| `sh conductor/scripts/test-open-pr.sh` | PASS |
+| `sh conductor/scripts/test-archive-track.sh` | PASS |
+| `git diff --check b589fb6044b80647918cc05d5b43c7cf695e6542..HEAD` | PASS |
+| `sh -n install.sh conductor/scripts/test-installer.sh` | PASS |
+| Python bytecode compilation of checker and test | PASS |
+| Added-diff credential/private-key scan | PASS — no obvious matches |
+| Disposable clean-filter behavior reproduction | Reproduced the Medium finding above |
+| Final post-documentation-sync full suite | PASS — all 4 repository test scripts |
+| Architecture audit | PASS — 8 pages, 7 linked nodes, all cited paths exist; `mmdc` unavailable, diagram not rendered |
+
+These are all tracked repository test scripts; no package-manager test suite
+or additional test target was found. Device/browser/assistive-technology checks
+are not applicable to this workflow-tooling track. The Medium clean-filter
+finding remains documented; it is not a High finding or a blocker under the
+agreed review severity definitions.
+
+---
+
+# Historical First Review: Platform-aware design gates and Swift standards
 
 **Track:** `platform-design-swift_20261125`
 **Range:** `b589fb6044b80647918cc05d5b43c7cf695e6542..b83cf3f`

@@ -1,11 +1,11 @@
 {
   "id": "platform-design-swift_20261125",
   "type": "feature",
-  "status": "awaiting-review",
+  "status": "complete",
   "worktreePath": ".worktrees/platform-design-swift_20261125",
   "branch": "track/platform-design-swift_20261125",
   "baseBranch": "main",
   "baseRef": "b589fb6044b80647918cc05d5b43c7cf695e6542",
   "created": "2026-11-26T02:40:36Z",
-  "updated": "2026-11-26T03:23:42Z"
+  "updated": "2026-11-27T15:53:17Z"
 }

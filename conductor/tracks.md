@@ -34,8 +34,7 @@ Exact lifecycle encodings:
 
 <!-- /conductor/new-track adds new entries here and links each entry to plan.md. -->
 
-- [~] **Track: Platform-aware design gates and Swift standards** *Link: [tracks/platform-design-swift_20261125/plan.md](./tracks/platform-design-swift_20261125/plan.md)*
-  Status: implementation complete — awaiting review.
+- [x] **Track: Platform-aware design gates and Swift standards** *Link: [tracks/platform-design-swift_20261125/plan.md](./tracks/platform-design-swift_20261125/plan.md)*
 
 ## Blocked
 
