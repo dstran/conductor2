@@ -72,13 +72,28 @@ For each task in the current phase, in order:
       `conductor/workflow.md`, matching the task's enforcement level exactly.
       Do not skip the "confirm it fails first" step for test-first
       tasks.
-   d. Mark the task `[~]` in `plan.md` while in progress. Once its
+   d. Before the task code commit, review only that task's diff for readability
+      and idiomatic implementation. Read `conductor/code_styleguides/general.md`
+      and every applicable copied project guide. From the caller's perspective,
+      check names, control flow, indirection, comments, and supported language
+      idioms. Separate concrete clarity or correctness issues from judgment
+      calls; do not churn a sound implementation to satisfy a numeric quota or
+      personal preference. Use a design pattern only to solve a concrete need
+      present in the code.
+   e. Fix concrete issues within the task scope. Run the required task checks
+      recorded in `conductor/tech-stack.md` at their documented scopes, preserving
+      their test-first/test-after ordering. Any edit after a check invalidates
+      that check's result when affected; rerun all affected checks before
+      committing. If a required check fails or is unavailable, do not mark the
+      task complete or claim it passed; report the result or blocker. Deferred
+      checks remain deferred and are not task-completion gates.
+   f. Mark the task `[~]` in `plan.md` while in progress. Once its
       test(s) actually run and pass, follow the **task commit
       procedure** in `conductor/workflow.md` exactly: commit the code,
       then commit `plan.md` with the task marked
       `- [x] Task: <description> [<task-type>] <sha>` (two separate
       commits, in that order).
-   e. If a task turns out to be blocked (missing dependency, unclear
+   g. If a task turns out to be blocked (missing dependency, unclear
       requirement, conflicts with `spec.md`), stop immediately and
       report the blocker. Do not skip ahead to later tasks or into
       the next phase.

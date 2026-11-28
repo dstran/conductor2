@@ -95,6 +95,11 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
   decisions. Preserve the approved direction; material changes require renewed
   reconciliation and approval. Do not invent design requirements for legacy or
   non-UI tracks.
+- Before each code-task commit, `implement` reviews that task's diff using the
+  general and applicable project style guides, fixes concrete readability or
+  idiom issues, and reruns every required check affected by edits. Deferred or
+  unavailable checks are not claimed as passes; a failed or unavailable
+  required check prevents task completion.
 - `implement` must not create a brand-new track opportunistically when the user asked to execute an approved plan.
 - `implement` updates track and plan state as work progresses, then hands the track to `review` when implementation is complete.
 
