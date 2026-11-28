@@ -78,9 +78,7 @@ approved verification baseline and the bundled general guide for readability cri
      a supported idiom versus a newer unavailable one, justified versus premature
      abstraction, and a post-test edit that requires re-verification.
 
-### Task 3: Verify the full baseline and document adoption
-
-- [ ] Task: Verify the full baseline and document adoption [documentation]
+- [x] Task: Verify the full baseline and document adoption [documentation] a821ab5
 
   **Files:** `.opencode/command/review.md`, `skill/SKILL.md`, `README.md`.
 
