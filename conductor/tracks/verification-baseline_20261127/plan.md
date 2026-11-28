@@ -34,7 +34,7 @@ approved verification baseline and the bundled general guide for readability cri
 - Simplification can invalidate earlier test results.
 - A missing verification entry or tool must not become a false pass.
 
-## Phase 1: Establish the baseline
+## Phase 1: Establish the baseline [checkpoint: bc4480d]
 
 - [x] Task: Add baseline discovery, consent, and verification-only setup [documentation] bc4480d
 
