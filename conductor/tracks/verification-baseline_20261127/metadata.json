@@ -1,7 +1,7 @@
 {
   "id": "verification-baseline_20261127",
   "type": "feature",
-  "status": "in-progress",
+  "status": "awaiting-review",
   "worktreePath": ".worktrees/verification-baseline_20261127",
   "branch": "track/verification-baseline_20261127",
   "baseBranch": "main",
