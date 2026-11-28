@@ -1,0 +1,11 @@
+{
+  "id": "verification-baseline_20261127",
+  "type": "feature",
+  "status": "new",
+  "worktreePath": ".worktrees/verification-baseline_20261127",
+  "branch": "track/verification-baseline_20261127",
+  "baseBranch": "main",
+  "baseRef": "f0feaadb32b15e3a8e255a86439afcd230315add",
+  "created": "2026-11-28T04:07:11Z",
+  "updated": "2026-11-28T04:07:11Z"
+}
