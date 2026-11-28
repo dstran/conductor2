@@ -34,8 +34,6 @@ Exact lifecycle encodings:
 
 <!-- /conductor/new-track adds new entries here and links each entry to plan.md. -->
 
-- [x] **Track: Verification baseline and readable implementation** *Link: [tracks/verification-baseline_20261127/plan.md](./tracks/verification-baseline_20261127/plan.md)*
-
 ## Blocked
 
 <!-- Move blocked track entries here as [~] and include the Blocker note below the entry. -->
