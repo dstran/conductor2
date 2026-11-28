@@ -8,13 +8,19 @@ operations through the OpenCode command surface.
 ## Responsibilities
 
 - Initialize project context and discover available guidance.
+- Audit verification commands during setup, including a verification-only mode
+  for initialized projects.
 - Plan tracks before implementation; route material design decisions by platform.
-- Implement approved plans and require evidence-based review before closure.
+- Implement approved plans with a task-diff readability pass and required-check
+  re-verification after edits.
+- Review the full recorded verification baseline and require evidence before
+  closure.
 - Provide explicit archive, cleanup, status, revert, and update workflows.
 
 ## Key interfaces
 
 - `/conductor/setup`
+- `/conductor/setup verification`
 - `/conductor/new-track`
 - `/conductor/implement`
 - `/conductor/review`
