@@ -36,7 +36,7 @@ approved verification baseline and the bundled general guide for readability cri
 
 ## Phase 1: Establish the baseline
 
-- [ ] Task: Add baseline discovery, consent, and verification-only setup [documentation]
+- [x] Task: Add baseline discovery, consent, and verification-only setup [documentation] bc4480d
 
   **Files:** `.opencode/command/setup.md`, `skill/SKILL.md`.
 
@@ -60,6 +60,8 @@ approved verification baseline and the bundled general guide for readability cri
 
 ## Phase 2: Apply and verify the baseline
 
+### Task 2: Apply readability and idiom checks before task commits
+
 - [ ] Task: Apply readability and idiom checks before task commits [documentation]
 
   **Files:** `.opencode/command/implement.md`, `skill/SKILL.md`,
@@ -77,6 +79,8 @@ approved verification baseline and the bundled general guide for readability cri
   3. Walk through a clear readability issue, a legitimate explanatory comment,
      a supported idiom versus a newer unavailable one, justified versus premature
      abstraction, and a post-test edit that requires re-verification.
+
+### Task 3: Verify the full baseline and document adoption
 
 - [ ] Task: Verify the full baseline and document adoption [documentation]
 
