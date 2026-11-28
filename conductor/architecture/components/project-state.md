@@ -8,6 +8,8 @@ Store project-approved context, lifecycle state, and auditable track artifacts.
 
 - Link product definition, product guidelines, tech stack, workflow, and style
   guidance through the project handshake.
+- Record exact verification commands, scope, task/review timing, and
+  required/deferred status in the technology stack.
 - Track planned, active, awaiting-review, blocked, complete, and archived work.
 - Preserve specifications, plans, metadata, review reports, and design decisions.
 

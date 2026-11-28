@@ -15,6 +15,9 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 ## Lifecycle
 
 - `setup` initializes the Conductor project context and handshake artifacts.
+- `/conductor/setup verification` audits or refreshes verification commands for
+  an initialized project without repeating the product interview or changing
+  unrelated project context.
 - `new-track` creates and approves a track specification and implementation plan before coding starts.
 - `implement` executes an approved track plan and updates registry state as work advances.
 - `review` verifies the completed track and closes it only after explicit approval.
@@ -31,6 +34,21 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - `conductor/tracks.md` and the linked `conductor/tracks/` directory are part of the method, not incidental paperwork.
 - `new-track` creates a dedicated git worktree and branch for every track by default (`.worktrees/<track_id>` on branch `track/<track_id>`, from current `HEAD`). `conductor/tracks.md` and `conductor/tracks/` are therefore per-worktree once a track has its own worktree — each track's registry and artifacts live only in that track's checkout until the track's branch is merged back. Tracks created before this convention existed have no recorded worktree and continue operating on whichever worktree they're run from, unchanged.
 - If the handshake or required linked artifacts are missing or stale, repair the project surface through `setup` or `new-track` rather than bypassing it.
+
+## Verification Baseline
+
+- Setup discovers existing checks from scripts, CI, build configuration, and
+  supported language/framework versions before recommending gaps. It preserves
+  established tools and avoids duplicate coverage.
+- Obtain explicit approval before installing tools or changing configuration.
+  Record exact commands, working directory and module/variant scope, task or
+  review timing, and required/deferred status in `conductor/tech-stack.md`.
+  Agree on an adoption plan before making an existing failing check required.
+- A missing tool or unavailable check is not a pass. Keep deferred and unverified
+  checks distinct from required checks, and report actual results only.
+- For initialized projects, `/conductor/setup verification` uses the existing
+  handshake and tech stack, skips the product interview and unrelated setup,
+  and directs uninitialized projects to regular setup.
 
 ## Planning Discipline
 
@@ -77,6 +95,11 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
   decisions. Preserve the approved direction; material changes require renewed
   reconciliation and approval. Do not invent design requirements for legacy or
   non-UI tracks.
+- Before each code-task commit, `implement` reviews that task's diff using the
+  general and applicable project style guides, fixes concrete readability or
+  idiom issues, and reruns every required check affected by edits. Deferred or
+  unavailable checks are not claimed as passes; a failed or unavailable
+  required check prevents task completion.
 - `implement` must not create a brand-new track opportunistically when the user asked to execute an approved plan.
 - `implement` updates track and plan state as work progresses, then hands the track to `review` when implementation is complete.
 
@@ -85,6 +108,11 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - `review` verifies the completed track against its `spec.md`, `plan.md`, and linked workflow.
 - `review` owns completion and closure of the selected track in `conductor/tracks.md`.
 - `review` should keep project-level truth honest by rejecting overstated completion claims.
+- `review` runs the complete required verification baseline recorded in
+  `conductor/tech-stack.md`, including track-level checks, and reports
+  pass/fail/deferred/not-verified outcomes with reasons. It reruns affected
+  checks after corrections and the full required baseline at closure. Missing
+  required evidence is not a pass.
 - Review applicable design decisions, platform behavior, accessibility, and
   confirmed formatter checks with actual evidence. Report unperformed checks
   as **not verified**. Required acceptance criteria without passing evidence

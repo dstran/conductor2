@@ -17,11 +17,25 @@ You are the **Conductor Architect**. Initialize this project for spec-driven dev
 
 ## 1. Audit and resume
 
+First inspect the command arguments. If the user invoked
+`/conductor/setup verification`, enter verification-only mode **before** applying
+the initialized-project guard below:
+
+- If `conductor/index.md` is missing, explain that verification-only setup
+  requires an initialized project and offer regular `/conductor/setup`.
+- If initialized, read `conductor/index.md` and `conductor/tech-stack.md`, then
+  run the shared verification-baseline audit in section 5.1. Do not run the
+  product interview, rewrite project context, copy style guides, or perform
+  unrelated setup steps. Finish after reporting and recording the approved
+  baseline changes.
+
 Check which Conductor artifacts already exist:
 
 !`for f in product.md product-guidelines.md tech-stack.md code_styleguides workflow.md index.md; do if [ -e "conductor/$f" ]; then echo "present: $f"; else echo "missing: $f"; fi; done`
 
-- If `conductor/index.md` is present, the project is already initialized. Announce that and HALT.
+- If `conductor/index.md` is present, the project is already initialized.
+  Announce that `/conductor/setup verification` is available for a baseline
+  audit, then HALT.
 - Otherwise, summarize what is already done and what is missing in plain language (do not mention this checklist's mechanics). Resume at the first missing artifact in this order: Product Definition, Product Guidelines, Technology Stack, Code Style Guides, Workflow. If nothing exists, start at Product Definition.
 
 ## 2. Maturity detection
@@ -63,7 +77,12 @@ Ignore generated code and vendored dependencies when recommending guides.
    **Brownfield:** state the stack you inferred and ask a Yes/No question to confirm; if wrong, ask an open question for the correct stack.
    For an Android project, state the UI toolkit inferred from the build files (see step 2's Gradle inference) and confirm it rather than asking blind.
 2. Present the drafted stack; ask **Approve** / **Manual Edit** / **Refine**. Loop until Approved.
-3. Determine the project's **verification commands**, which `/conductor/implement` and `/conductor/review` need in order to run tests at all. Brownfield: infer them from the build files and ask a Yes/No question to confirm. Greenfield: derive them from the confirmed stack and confirm. Record at minimum a unit-test command, a build command, and a lint command where one exists.
+3. Determine the project's **verification baseline** for `/conductor/implement`
+   and `/conductor/review`. Once the stack and modules are confirmed, run the
+   shared audit in section 5.1. Confirm inferred commands and applicable gaps;
+   do not impose a universal build, lint, formatter, or test tool where none is
+   appropriate. Verification-only mode starts from recorded commands and
+   preserves them pending explicit reconciliation.
 
    Where a stack separates tests that run anywhere from tests that need external infrastructure, record both separately and label which is which. On Android the distinction is load-bearing, because the commands are not interchangeable:
 
@@ -78,7 +97,46 @@ Ignore generated code and vendored dependencies when recommending guides.
 
 4. For a multi-module project, record the **module list** — each module's path (e.g. `:app`, `:core:data`, `:feature:login`) and its role (application, library, feature) where inferable. On Gradle projects read these from the `include(...)` entries in `settings.gradle[.kts]`. This lets `/conductor/new-track` place tasks in specific modules and scope test commands to one module (`./gradlew :feature:login:testDebugUnitTest`) instead of always running the whole suite. Single-module projects record nothing here.
 
-5. Write `conductor/tech-stack.md`, including a **Verification Commands** section and, where applicable, a **Modules** section.
+5. Write `conductor/tech-stack.md`, including a **Verification Commands** section and, where applicable, a **Modules** section. Record each command using the fields defined in section 5.1.
+
+## 5.1. Verification baseline audit
+
+Use this audit both during initial setup (after the stack and modules are
+confirmed) and in `/conductor/setup verification` mode. Work from the repository
+root unless a command's recorded working directory says otherwise.
+
+1. Discover existing checks from project scripts, CI workflows, build files,
+   package/dependency manifests, and formatter/linter/type-checker configuration.
+   Identify the supported language and framework versions before comparing
+   recommendations. Read the applicable official guidance for those versions;
+   do not recommend a tool merely because it is common or newer.
+2. Inventory checks by category (formatting, linting, type checking or
+   compilation, and tests), exact command, working directory and module/variant
+   scope, and whether the command is deterministic and available in this
+   environment. Treat a build as type-checking only when its actual configuration
+   establishes that coverage. Keep platform-specific distinctions: for example,
+   Swift tools and targets must be confirmed from the project, and Android JVM
+   tests are distinct from device/emulator instrumented tests.
+3. Preserve existing commands and their wording as legacy entries until the user
+   explicitly approves reconciliation. Map their known coverage; do not add a
+   second command for coverage they already provide. Propose only applicable,
+   deterministic gaps, showing the source/version guidance, exact command,
+   dependencies, and configuration changes. State when an item cannot be
+   determined or run rather than guessing.
+4. Before installing a dependency or changing configuration, show the exact
+   dependency or diff, purpose, commands, and affected scope, then obtain
+   explicit approval. If declined, do not install or change it; record the
+   recommendation as deferred. Run agreed checks and report their real results.
+   For an existing failure, agree on an adoption plan before making that check
+   required. A failed or unavailable check is not a pass.
+5. In `conductor/tech-stack.md` under `## Verification Commands`, preserve legacy
+   rows and record every audited check with its exact command, working
+   directory/module/variant scope, when it runs (task or track review), status
+   (`required` or `deferred`), and notes. Deferred rows must state why and what
+   would unblock adoption. Record failures and their approved adoption plan;
+   do not mark a failing baseline required without that agreement. Missing
+   tools or unknown coverage are **not verified**, not assumed passes. Do not
+   turn an unapproved recommendation into a project command or configuration.
 
 For confirmed Swift code, preserve existing formatter/linter choices and
 configuration. If none is established, recommend `swiftlang/swift-format` and

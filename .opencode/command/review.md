@@ -42,12 +42,13 @@ explanation of the failure mode — not just "this looks risky."
 If `conductor/code_styleguides/` exists, check the new/changed files
 against it. Flag deviations — don't silently fix them, report them.
 
-Run the project's confirmed non-mutating formatter/linter commands from
-`conductor/tech-stack.md` against the applicable source/configuration. Preserve
-existing tools and settings; do not install a tool, replace a config, or run an
-in-place formatter during review. For Swift, distinguish `swiftlang/swift-format`
-from other tools named SwiftFormat and SwiftLint, and use the confirmed strict
-lint command where it is the selected enforcement check. A missing executable,
+Check applicable source/configuration against the confirmed style guides and
+recorded formatter/linter choices. Execute and report these commands only as
+part of the verification-baseline pass in section 5.1. Preserve existing tools
+and settings; do not install a tool, replace a config, or run an in-place
+formatter during review. For Swift, distinguish `swiftlang/swift-format` from
+other tools named SwiftFormat and SwiftLint, and use the confirmed strict lint
+command where it is the selected enforcement check. A missing executable,
 unsupported version, or unrun command is **not verified**, not a pass.
 
 ## 4. Security pass
@@ -57,11 +58,39 @@ injection risk (unsanitized input reaching a query, shell command, or
 template render).
 
 ## 5. Full test suite
-Run the entire test suite for the project — not just the tests added
-in this track. Confirm everything passes, including previously
-existing tests (regression check).
+The full test suite is part of the verification-baseline pass in section 5.1.
+Run each required test command once at its recorded scope, covering existing
+tests as well as this track; do not rerun a command solely because it appears in
+both this section and the baseline.
 
-## 5.1. Design, platform, and accessibility evidence
+## 5.1. Verification baseline
+
+Read `conductor/tech-stack.md`'s `## Verification Commands` and compare it with
+the approved track plan. Run every agreed **required** check at its recorded
+working directory and module/variant scope, including required checks marked
+for task timing and track-review timing. This includes applicable formatting,
+linting, type-checking/compilation, and tests; do not infer coverage from a
+command name. Preserve distinct platform checks such as Android JVM and
+device/emulator tests. Do not install missing tools or change configuration
+during review.
+
+For each check, report its exact command, scope, and outcome as **pass**,
+**fail**, **deferred**, or **not verified**. A deferred check needs its recorded
+reason; a failed or not-verified required check needs the failure/unavailability
+reason and blocks closure. Do not relabel a failed required check as deferred
+without explicit agreement and a recorded adoption plan. Deferred checks are
+reported separately and are not passes. When a legacy baseline lacks structured
+coverage or status, run its confirmed commands, describe what is known, mark
+unknown coverage **not verified**, and offer `/conductor/setup verification`;
+do not silently infer missing commands or coverage.
+
+After any correction, rerun every affected check. At closure, rerun the complete
+required baseline, not only checks that changed. Include a **Verification
+Baseline** section in `review.md` with commands, scopes, outcomes, and reasons.
+Distinguish walkthroughs of these instructions from checks actually executed by
+the reviewing agent.
+
+## 5.2. Design, platform, and accessibility evidence
 
 Read the track's `design.md` when present, applicable shared design guidance,
 and the approved spec/plan. Check the implementation against the selected
@@ -102,8 +131,8 @@ criterion. Do not claim full accessibility compliance from a partial audit.
 ## 6. Write the report, with severity
 Write your findings to `conductor/tracks/$ARGUMENTS/review.md` with
 sections: Plan Compliance, Code Quality, Style/Guidelines, Security,
-Test Results. Within each section, tag every flagged issue High,
-Medium, or Low:
+Verification Baseline, and Test Results. Within each section, tag every
+flagged issue High, Medium, or Low:
    - **High**: breaks functionality, a security exposure, or directly
      contradicts `spec.md`/`plan.md`. Recommend against finalizing
      until resolved.
@@ -161,7 +190,9 @@ Before closure, confirm that no required criterion remains failed or
 **not verified**. If any remains, return to the evidence/correction loop;
 explicit final approval does not bypass this check.
 
-1. Re-run the full test suite one final time.
+1. Re-run the complete required verification baseline one final time, including
+   the full test suite and all required formatting, linting, compilation, and
+   track-only checks recorded for review.
 2. Mark the track complete in the tracks registry in the track's worktree (`conductor/tracks.md`): remove the
    awaiting-review note and change the track entry to `[x]`. The entry
    stays in `## Active` — there is no separate completed section. Also

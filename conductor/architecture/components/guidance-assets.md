@@ -10,6 +10,8 @@ language-specific implementation conventions.
 - Route web, iOS, Android, and cross-platform design planning appropriately.
 - Preserve explicit user choice and revision rounds for material design work.
 - Supply bundled style guides without imposing unrelated tools or formatting.
+- Describe caller-oriented naming, straightforward control flow, supported
+  idioms, and abstractions justified by a present need.
 
 ## Key interfaces
 
@@ -30,6 +32,7 @@ language-specific implementation conventions.
 - `.opencode/command/new-track.md`
 - `.opencode/command/implement.md`
 - `.opencode/command/review.md`
+- `README.md`
 
 ## Gotchas
 
