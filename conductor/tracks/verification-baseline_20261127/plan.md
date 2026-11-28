@@ -22,9 +22,9 @@ approved verification baseline and the bundled general guide for readability cri
 - Use official guidance for supported versions. Do not add duplicate checks or
   claim unverified checks passed.
 - Existing projects need a verification-only path without a setup interview.
-- Tasks are instruction changes. Proposed track-local classification:
-  `documentation`, using source checks and scenario walkthroughs. Confirm before
-  implementation; do not alter the global task taxonomy.
+- The user approved the plan and the track-local `documentation` classification
+  for all three tasks. Verify these instruction changes with source checks and
+  scenario walkthroughs. The global task taxonomy is unchanged.
 
 ## Review focus
 
@@ -36,7 +36,7 @@ approved verification baseline and the bundled general guide for readability cri
 
 ## Phase 1: Establish the baseline
 
-- [ ] Task: Add baseline discovery, consent, and verification-only setup [needs classification]
+- [ ] Task: Add baseline discovery, consent, and verification-only setup [documentation]
 
   **Files:** `.opencode/command/setup.md`, `skill/SKILL.md`.
 
@@ -60,7 +60,7 @@ approved verification baseline and the bundled general guide for readability cri
 
 ## Phase 2: Apply and verify the baseline
 
-- [ ] Task: Apply readability and idiom checks before task commits [needs classification]
+- [ ] Task: Apply readability and idiom checks before task commits [documentation]
 
   **Files:** `.opencode/command/implement.md`, `skill/SKILL.md`,
   `conductor/assets/code_styleguides/general.md`.
@@ -78,7 +78,7 @@ approved verification baseline and the bundled general guide for readability cri
      a supported idiom versus a newer unavailable one, justified versus premature
      abstraction, and a post-test edit that requires re-verification.
 
-- [ ] Task: Verify the full baseline and document adoption [needs classification]
+- [ ] Task: Verify the full baseline and document adoption [documentation]
 
   **Files:** `.opencode/command/review.md`, `skill/SKILL.md`, `README.md`.
 
