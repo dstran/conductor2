@@ -60,9 +60,7 @@ approved verification baseline and the bundled general guide for readability cri
 
 ## Phase 2: Apply and verify the baseline
 
-### Task 2: Apply readability and idiom checks before task commits
-
-- [ ] Task: Apply readability and idiom checks before task commits [documentation]
+- [x] Task: Apply readability and idiom checks before task commits [documentation] 1c20269
 
   **Files:** `.opencode/command/implement.md`, `skill/SKILL.md`,
   `conductor/assets/code_styleguides/general.md`.
