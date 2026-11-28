@@ -58,7 +58,7 @@ approved verification baseline and the bundled general guide for readability cri
      failing pre-existing baseline. Verify the correct route, scope, and status
      with no unauthorized configuration changes.
 
-## Phase 2: Apply and verify the baseline
+## Phase 2: Apply and verify the baseline [checkpoint: a821ab5]
 
 - [x] Task: Apply readability and idiom checks before task commits [documentation] 1c20269
 
