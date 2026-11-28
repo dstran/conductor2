@@ -74,8 +74,11 @@ commands. Run them in your own project's directory:
 
 - `/conductor/setup` — initialize the project: an interactive interview that
   audits the codebase, defines `product.md`, `product-guidelines.md`, and
-  `tech-stack.md`, copies matching code style guides, writes `workflow.md`, and
-  builds the `conductor/index.md` handshake.
+  `tech-stack.md`, audits its verification baseline, copies matching code style
+  guides, writes `workflow.md`, and builds the `conductor/index.md` handshake.
+- `/conductor/setup verification` — audit or refresh verification commands in
+  an initialized project without repeating the product interview or changing
+  unrelated project context.
 - `/conductor/new-track` — plan a new track (spec + phased plan + registry entry).
 - `/conductor/implement` — implement an approved track phase-by-phase.
 - `/conductor/review` — review a completed track before closing it.
@@ -90,6 +93,15 @@ commands. Run them in your own project's directory:
 
 Setup creates the project state under `conductor/` in your working directory;
 later commands read and update it.
+
+The verification baseline records exact commands, working directory and module
+scope, task or review timing, and required or deferred status in
+`conductor/tech-stack.md`. Setup discovers existing checks before recommending
+gaps and asks before installing tools or changing configuration. Implement
+reviews each code-task diff for readability and supported idioms before its
+commit, then reruns affected required checks after edits. Review runs the full
+required baseline and reports passes separately from failures, deferred checks,
+and checks not verified; unavailable required evidence does not become a pass.
 
 ## Design planning and platform standards
 

@@ -108,6 +108,11 @@ OpenCode adaptation is secondary to upstream Conductor behavior.
 - `review` verifies the completed track against its `spec.md`, `plan.md`, and linked workflow.
 - `review` owns completion and closure of the selected track in `conductor/tracks.md`.
 - `review` should keep project-level truth honest by rejecting overstated completion claims.
+- `review` runs the complete required verification baseline recorded in
+  `conductor/tech-stack.md`, including track-level checks, and reports
+  pass/fail/deferred/not-verified outcomes with reasons. It reruns affected
+  checks after corrections and the full required baseline at closure. Missing
+  required evidence is not a pass.
 - Review applicable design decisions, platform behavior, accessibility, and
   confirmed formatter checks with actual evidence. Report unperformed checks
   as **not verified**. Required acceptance criteria without passing evidence
